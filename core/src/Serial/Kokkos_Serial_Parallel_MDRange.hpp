@@ -31,16 +31,16 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
 
   void exec() const {
     // Choose between nested for loop based direct iteration over the
-    // elements and loop over tiles based iteration
+    // elements and a single loop over the tiles based iteration
     if (std::all_of(m_rp.m_tile.begin(), m_rp.m_tile.end(),
                     [](auto x) { return x == 1; })) {
-      const iter_nestloopwotile_type m_iter(m_rp, m_func);
-      m_iter.execute();
+      const iter_nestloopwotile_type iter(m_rp, m_func);
+      iter.execute();
     } else {
       const typename Policy::member_type e = m_rp.m_num_tiles;
-      const iter_loopwithtile_type m_iter(m_rp, m_func);
+      const iter_loopwithtile_type iter(m_rp, m_func);
       for (typename Policy::member_type i = 0; i < e; ++i) {
-        m_iter(i);
+        iter(i);
       }
     }
   }
