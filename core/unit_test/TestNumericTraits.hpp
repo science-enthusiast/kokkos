@@ -233,6 +233,8 @@ TEST(TEST_CATEGORY, numeric_traits_norm_min) {
 }
 
 TEST(TEST_CATEGORY, numeric_traits_denorm_min) {
+  TestNumericTraits<TEST_EXECSPACE, Kokkos::Experimental::half_t, DenormMin>();
+  TestNumericTraits<TEST_EXECSPACE, Kokkos::Experimental::bhalf_t, DenormMin>();
   TestNumericTraits<TEST_EXECSPACE, float, DenormMin>();
   TestNumericTraits<TEST_EXECSPACE, double, DenormMin>();
   TestNumericTraits<TEST_EXECSPACE, long double, DenormMin>();
