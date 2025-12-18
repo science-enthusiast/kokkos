@@ -148,6 +148,8 @@ struct Kokkos::Experimental::Impl::norm_min_helper<
 ///             [s  e  e  e  e  e  f f f f f f f f f f]
 ///             [0  0  0  0  0  0  0 0 0 0 0 0 0 0 0 1]
 /// bit index:   15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0
+///
+/// and in base10: 2**-24 = 5.96046e-08
 template <>
 struct Kokkos::Experimental::Impl::denorm_min_helper<
     Kokkos::Experimental::half_t> {
@@ -302,7 +304,7 @@ struct Kokkos::Experimental::Impl::norm_min_helper<
 template <>
 struct Kokkos::Experimental::Impl::denorm_min_helper<
     Kokkos::Experimental::bhalf_t> {
-  static constexpr Kokkos::Experimental::bhalf_t::bit_comparison_type value{0b0'00000000'0000001};
+  static constexpr Kokkos::Experimental::bhalf_t::bit_comparison_type value{0b0'00000000'0000001}; // 2^(-133)=9.18355e-41
 };
 // Quiet not a bhalf number
 template <>
