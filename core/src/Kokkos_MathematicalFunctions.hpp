@@ -388,7 +388,8 @@ inline long double exp2(long double val) {
   return exp(ln2 * val);
 }
 template <class T>
-KOKKOS_INLINE_FUNCTION double exp2(T val) {
+KOKKOS_INLINE_FUNCTION std::enable_if_t<std::is_integral_v<T>, double> exp2(
+    T val) {
   constexpr double ln2 = 0.693147180559945309417232121458176568L;
   return exp(ln2 * static_cast<double>(val));
 }
@@ -513,6 +514,7 @@ KOKKOS_IMPL_MATH_UNARY_PREDICATE(signbit)
 #undef KOKKOS_IMPL_MATH_UNARY_PREDICATE
 #undef KOKKOS_IMPL_MATH_BINARY_FUNCTION
 #undef KOKKOS_IMPL_MATH_TERNARY_FUNCTION
+#undef KOKKOS_IMPL_MATH_TERNARY_INT_PTR_FUNCTION
 
 // non-standard math functions provided by CUDA/HIP/SYCL
 KOKKOS_INLINE_FUNCTION float rsqrt(float val) {
