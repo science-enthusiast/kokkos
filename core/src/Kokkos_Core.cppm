@@ -524,6 +524,9 @@ export {
   using ::Kokkos::lround;
   using ::Kokkos::lroundf;
   using ::Kokkos::lroundl;
+  using ::Kokkos::modf;
+  using ::Kokkos::modff;
+  using ::Kokkos::modfl;
   using ::Kokkos::nan;
   using ::Kokkos::nanf;
   using ::Kokkos::nanl;
