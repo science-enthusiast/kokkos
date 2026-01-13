@@ -276,18 +276,6 @@ function(kokkos_use_neon_if_compiler_allows_it)
   endif()
 
   unset(KOKKOS_COMPILER_HAS_ARM_NEON CACHE)
-  check_source_compiles(
-    ${KOKKOS_COMPILE_LANGUAGE}
-    "
-    #include <arm_neon.h>
-    int main() {
-        float32x2_t a;
-        a = vadd_f32(a, a);
-    }
-    "
-    KOKKOS_COMPILER_HAS_ARM_NEON
-  )
-
   #FIXME_Kokkos_launch_compiler
   get_property(kokkos_global_rule_compile GLOBAL PROPERTY RULE_LAUNCH_COMPILE)
   if("${kokkos_global_rule_compile}" MATCHES "kokkos_launch_compiler")
@@ -295,10 +283,19 @@ function(kokkos_use_neon_if_compiler_allows_it)
                     "You can force the use of NEON by using the Kokkos_ARCH_* flag specific to your target "
                     "processor instead of Kokkos_ARCH_NATIVE."
     )
-    set(KOKKOS_COMPILER_HAS_ARM_NEON OFF)
+  else()
+    check_source_compiles(
+      ${KOKKOS_COMPILE_LANGUAGE}
+      "
+      #include <arm_neon.h>
+      int main() {
+          float32x2_t a;
+          a = vadd_f32(a, a);
+      }
+      "
+      KOKKOS_COMPILER_HAS_ARM_NEON
+    )
   endif()
-
-  set(KOKKOS_ARCH_ARM_NEON ${KOKKOS_COMPILER_HAS_ARM_NEON} PARENT_SCOPE)
 endfunction()
 
 function(kokkos_use_sve_if_compiler_allows_it)
@@ -312,18 +309,6 @@ function(kokkos_use_sve_if_compiler_allows_it)
   endif()
 
   unset(KOKKOS_COMPILER_HAS_ARM_SVE CACHE)
-  check_source_compiles(
-    ${KOKKOS_COMPILE_LANGUAGE}
-    "
-    #include <arm_sve.h>
-    int main() {
-    auto a = svcntb();
-    return 0;
-    }
-    "
-    KOKKOS_COMPILER_HAS_ARM_SVE
-  )
-
   #FIXME_Kokkos_launch_compiler
   get_property(kokkos_global_rule_compile GLOBAL PROPERTY RULE_LAUNCH_COMPILE)
   if("${kokkos_global_rule_compile}" MATCHES "kokkos_launch_compiler")
@@ -331,10 +316,19 @@ function(kokkos_use_sve_if_compiler_allows_it)
                     "You can force the use of SVE by using the Kokkos_ARCH_* flag specific to your target "
                     "processor instead of Kokkos_ARCH_NATIVE."
     )
-    set(KOKKOS_COMPILER_HAS_ARM_SVE OFF)
+  else()
+    check_source_compiles(
+      ${KOKKOS_COMPILE_LANGUAGE}
+      "
+      #include <arm_sve.h>
+      int main() {
+      auto a = svcntb();
+      return 0;
+      }
+      "
+      KOKKOS_COMPILER_HAS_ARM_SVE
+    )
   endif()
-
-  set(KOKKOS_ARCH_ARM_SVE ${KOKKOS_COMPILER_HAS_ARM_SVE} PARENT_SCOPE)
 endfunction()
 
 if(KOKKOS_ARCH_ARMV80)
