@@ -351,3 +351,25 @@ jobs:
       - name: test_kokkos
         working-directory: kokkos/build
         run: KOKKOS_NUM_THREADS=64 ctest --output-on-failure --timeout 3600
+
+  NextSilicon_1_0_0:
+    name: SNL_NextSilicon_1_0_0
+    runs-on: [ns-1.0.0]
+    continue-on-error: true
+
+    steps:
+      - name: Environment Information
+        run: |
+          nextcli --version
+          nextcxx --version
+          cmake --version
+      # Give nextsystemd 20s to get going and check that everything is up
+      - name: Initialize Hardware
+        run: |
+          nextsystemd --ui-collector-address none &
+          sleep 20
+          nextcli system status
+          nextcli system status | grep "Service: UP"
+          nextcli system status | grep "Maverick 2"
+          nextcli system status | grep "Status: OK"
+          nextcli system terminate
