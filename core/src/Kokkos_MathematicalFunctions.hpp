@@ -8,6 +8,7 @@
 #define KOKKOS_IMPL_PUBLIC_INCLUDE_NOTDEFINED_MATHFUNCTIONS
 #endif
 
+#include <Kokkos_NumericTraits.hpp>
 #include <Kokkos_Macros.hpp>
 #include <cmath>
 #include <cstdlib>
@@ -525,7 +526,23 @@ KOKKOS_IMPL_MATH_BINARY_FUNCTION(copysign)
 KOKKOS_IMPL_MATH_UNARY_PREDICATE(isfinite)
 KOKKOS_IMPL_MATH_UNARY_PREDICATE(isinf)
 KOKKOS_IMPL_MATH_UNARY_PREDICATE(isnan)
-// isnormal
+#if defined(KOKKOS_ENABLE_CUDA)
+template <class T>
+KOKKOS_INLINE_FUNCTION std::enable_if_t<std::is_floating_point_v<T>, bool>
+isnormal(T x) {
+  const T abs = Kokkos::abs(x);
+  return (abs >= Kokkos::Experimental::norm_min_v<T>)&&(
+      abs <= Kokkos::Experimental::finite_max_v<T>);
+}
+
+template <class T>
+KOKKOS_INLINE_FUNCTION std::enable_if_t<std::is_integral_v<T>, bool> isnormal(
+    T x) {
+  return x != T(0);
+}
+#else
+KOKKOS_IMPL_MATH_UNARY_PREDICATE(isnormal)
+#endif
 KOKKOS_IMPL_MATH_UNARY_PREDICATE(signbit)
 // isgreater
 // isgreaterequal
