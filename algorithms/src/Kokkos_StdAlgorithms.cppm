@@ -38,6 +38,7 @@ export {
   using ::Kokkos::Experimental::generate;
   using ::Kokkos::Experimental::generate_n;
   using ::Kokkos::Experimental::inclusive_scan;
+  using ::Kokkos::Experimental::inclusive_scan_by_key;
   using ::Kokkos::Experimental::is_partitioned;
   using ::Kokkos::Experimental::is_sorted;
   using ::Kokkos::Experimental::is_sorted_until;

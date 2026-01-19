@@ -367,13 +367,13 @@ void expect_equal_host_views(ViewType1 A, const ViewType2 B) {
   ASSERT_EQ(A.extent(0), B.extent(0));
   ASSERT_EQ(A.extent(1), B.extent(1));
 
-  constexpr bool values_are_floast =
+  constexpr bool values_are_floats =
       std::is_floating_point_v<typename ViewType1::value_type> ||
       std::is_floating_point_v<typename ViewType2::value_type>;
 
   for (std::size_t i = 0; i < A.extent(0); i++) {
     for (std::size_t j = 0; j < A.extent(1); j++) {
-      if constexpr (values_are_floast) {
+      if constexpr (values_are_floats) {
         EXPECT_FLOAT_EQ(A(i, j), B(i, j));
       } else {
         ASSERT_EQ(A(i, j), B(i, j));
@@ -440,6 +440,14 @@ struct CustomValueType {
   CustomValueType(const CustomValueType& other) { this->value = other.value; }
 
   KOKKOS_INLINE_FUNCTION
+  CustomValueType(const volatile CustomValueType& other) {
+    this->value = other.value;
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  CustomValueType(CustomValueType&& other) = default;
+
+  KOKKOS_INLINE_FUNCTION
   explicit operator value_type() const { return value; }
 
   KOKKOS_INLINE_FUNCTION
@@ -455,10 +463,21 @@ struct CustomValueType {
   }
 
   KOKKOS_INLINE_FUNCTION
+  void operator=(const volatile CustomValueType& other) volatile {
+    this->value = other.value;
+  }
+
+  KOKKOS_INLINE_FUNCTION
   CustomValueType& operator=(const CustomValueType& other) {
     this->value = other.value;
     return *this;
   }
+
+  KOKKOS_INLINE_FUNCTION
+  CustomValueType& operator=(CustomValueType&& other) = default;
+
+  KOKKOS_INLINE_FUNCTION
+  ~CustomValueType() = default;
 
   KOKKOS_INLINE_FUNCTION
   CustomValueType operator+(const CustomValueType& other) const {

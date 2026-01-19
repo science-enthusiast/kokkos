@@ -1,0 +1,431 @@
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-FileCopyrightText: Copyright Contributors to the Kokkos project
+
+#include <TestStdAlgorithmsCommon.hpp>
+#include <TestScanByKey.hpp>
+#ifdef KOKKOS_ENABLE_EXPERIMENTAL_CXX20_MODULES
+#include <std_algorithms/impl/Kokkos_InclusiveScanByKey.hpp>
+#endif
+
+#include <utility>
+#include <iomanip>
+#include <iostream>
+
+namespace Test {
+namespace stdalgos {
+namespace IncScanByKey {
+
+namespace KE = Kokkos::Experimental;
+
+namespace {
+
+template <class ValueType>
+struct UnifDist;
+
+template <>
+struct UnifDist<double> {
+  using dist_type = std::uniform_real_distribution<double>;
+  std::mt19937 m_gen;
+  dist_type m_dist;
+
+  UnifDist() : m_dist(0.05, 1.2) { m_gen.seed(1034343); }
+
+  double operator()() { return m_dist(m_gen); }
+};
+
+template <>
+struct UnifDist<int> {
+  using dist_type = std::uniform_int_distribution<int>;
+  std::mt19937 m_gen;
+  dist_type m_dist;
+
+  UnifDist() : m_dist(1, 3) { m_gen.seed(1034343); }
+
+  int operator()() { return m_dist(m_gen); }
+};
+
+template <>
+struct UnifDist<CustomValueType> {
+  using dist_type = std::uniform_real_distribution<double>;
+  std::mt19937 m_gen;
+  dist_type m_dist;
+
+  UnifDist() : m_dist(0.05, 1.2) { m_gen.seed(1034343); }
+
+  CustomValueType operator()() { return m_dist(m_gen); }
+};
+
+template <class ViewType>
+void fill_view(ViewType dest_view, const std::string& name) {
+  using value_type = typename ViewType::value_type;
+  using exe_space  = typename ViewType::execution_space;
+
+  const std::size_t ext = dest_view.extent(0);
+  using aux_view_t      = Kokkos::View<value_type*, exe_space>;
+  aux_view_t aux_view("aux_view", ext);
+  auto v_h = create_mirror_view(Kokkos::HostSpace(), aux_view);
+
+  UnifDist<value_type> randObj;
+
+  if (name == "empty") {
+    // no op
+  }
+
+  else if (name == "one-element") {
+    v_h(0) = static_cast<value_type>(1);
+  }
+
+  else if (name == "two-elements-a") {
+    v_h(0) = static_cast<value_type>(1);
+    v_h(1) = static_cast<value_type>(2);
+  }
+
+  else if (name == "two-elements-b") {
+    v_h(0) = static_cast<value_type>(2);
+    v_h(1) = static_cast<value_type>(-1);
+  }
+
+  else if (name == "small-a") {
+    for (std::size_t i = 0; i < ext; ++i) {
+      v_h(i) = static_cast<value_type>(i + 1);
+    }
+  }
+
+  else if (name == "small-b") {
+    for (std::size_t i = 0; i < ext; ++i) {
+      v_h(i) = randObj();
+    }
+    v_h(5) = static_cast<value_type>(-2);
+  }
+
+  else if (name == "medium-a" || name == "medium-b" || name == "large") {
+    for (std::size_t i = 0; i < ext; ++i) {
+      v_h(i) = randObj();
+    }
+  }
+
+  else {
+    FAIL() << "invalid choice";
+  }
+
+  Kokkos::deep_copy(aux_view, v_h);
+  CopyFunctor<aux_view_t, ViewType> F1(aux_view, dest_view);
+  Kokkos::parallel_for("copy", dest_view.extent(0), F1);
+}
+
+struct VerifyData {
+  template <class ValueType, class ViewType1, class ViewType2, class ViewType3,
+            class BinaryPred    = Test::ScanByKey::EqualityFunctor<bool>,
+            class AssociativeOp = Test::ScanByKey::SumFunctor<ValueType>>
+  void operator()(ViewType1 key_view,   // contains the keys
+                  ViewType2 data_view,  // contains the data
+                  ViewType3 test_view,  // the view to test
+                  BinaryPred binary_pred  = BinaryPred(),
+                  AssociativeOp binary_op = AssociativeOp()) {
+    // create_deep_copyable_compatible_clone helps with
+    // views that might not be deep copyable (e.g., strided layout)
+    auto key_view_dc = create_deep_copyable_compatible_clone(key_view);
+    auto key_view_h =
+        create_mirror_view_and_copy(Kokkos::HostSpace(), key_view_dc);
+
+    auto data_view_dc = create_deep_copyable_compatible_clone(data_view);
+    auto data_view_h =
+        create_mirror_view_and_copy(Kokkos::HostSpace(), data_view_dc);
+
+    using gold_view_value_type = typename ViewType3::value_type;
+    Kokkos::View<gold_view_value_type*, Kokkos::HostSpace> gold_h(
+        "goldh", key_view.extent(0));
+
+    auto last_gold_it = Test::ScanByKey::ref_scan_by_key(
+        KE::cbegin(key_view_h), KE::cend(key_view_h), KE::cbegin(data_view_h),
+        KE::begin(gold_h), binary_pred, binary_op);
+
+    std::size_t gold_ext = std::distance(KE::begin(gold_h), last_gold_it);
+
+    auto test_view_dc = create_deep_copyable_compatible_clone(test_view);
+    auto test_view_h =
+        create_mirror_view_and_copy(Kokkos::HostSpace(), test_view_dc);
+
+    const auto ext = test_view_h.extent(0);
+    if (ext > 0) {
+      ASSERT_EQ(ext, gold_ext);
+      for (std::size_t i = 0; i < ext; ++i) {
+        if (std::is_same_v<gold_view_value_type, int>) {
+          ASSERT_EQ(gold_h(i), test_view_h(i));
+        } else {
+          const auto error =
+              std::abs(static_cast<double>(gold_h(i) - test_view_h(i)));
+          ASSERT_LT(error, 1e-10) << i << " " << std::setprecision(15) << error
+                                  << " " << static_cast<double>(test_view_h(i))
+                                  << " " << static_cast<double>(gold_h(i));
+        }
+      }
+    }
+  }
+};
+
+template <class... Ts>
+struct key_type_helper;
+
+template <>
+struct key_type_helper<> {
+  using type = bool;
+};
+
+template <class T, class... Ts>
+struct key_type_helper<T, Ts...> {
+  using type = T::value_type;
+};
+
+template <class Tag, class ValueType, class InfoType, class... Args>
+void run_single_scenario(const InfoType& scenario_info,
+                         Args... args /* copy on purpose */) {
+  const auto name            = std::get<0>(scenario_info);
+  const std::size_t view_ext = std::get<1>(scenario_info);
+
+  using KeyType = key_type_helper<Args...>::type;
+
+  auto view_key =
+      create_view<KeyType>(Tag{}, view_ext, "in_scan_by_key_view_key");
+  Test::ScanByKey::fill_key_view(view_key);
+
+  auto view_dest =
+      create_view<ValueType>(Tag{}, view_ext, "in_scan_by_key_view1");
+  auto view_from =
+      create_view<ValueType>(Tag{}, view_ext, "in_scan_by_key_view2");
+  fill_view(view_from, name);
+  // view_dest is filled with zeros before calling the algorithm everytime to
+  // ensure the algorithm does something meaningful
+
+  {
+    fill_zero(view_dest);
+    auto r = KE::inclusive_scan_by_key(
+        exespace(), KE::cbegin(view_key), KE::cend(view_key),
+        KE::cbegin(view_from), KE::begin(view_dest), args...);
+    ASSERT_EQ(r, KE::end(view_dest));
+    VerifyData().operator()<ValueType>(view_key, view_from, view_dest, args...);
+  }
+
+  {
+    fill_zero(view_dest);
+    auto r = KE::inclusive_scan_by_key(
+        "label", exespace(), KE::cbegin(view_key), KE::cend(view_key),
+        KE::cbegin(view_from), KE::begin(view_dest), args...);
+    ASSERT_EQ(r, KE::end(view_dest));
+    VerifyData().operator()<ValueType>(view_key, view_from, view_dest, args...);
+  }
+
+  {
+    fill_zero(view_dest);
+    auto r = KE::inclusive_scan_by_key(exespace(), view_key, view_from,
+                                       view_dest, args...);
+    ASSERT_EQ(r, KE::end(view_dest));
+    VerifyData().operator()<ValueType>(view_key, view_from, view_dest, args...);
+  }
+
+  {
+    fill_zero(view_dest);
+    auto r = KE::inclusive_scan_by_key("label", exespace(), view_key, view_from,
+                                       view_dest, args...);
+    ASSERT_EQ(r, KE::end(view_dest));
+    VerifyData().operator()<ValueType>(view_key, view_from, view_dest, args...);
+  }
+
+  Kokkos::fence();
+}
+
+template <class Tag, class ValueType, class InfoType, class... Args>
+void run_single_scenario_inplace(const InfoType& scenario_info,
+                                 Args... args /* copy on purpose */) {
+  const auto name            = std::get<0>(scenario_info);
+  const std::size_t view_ext = std::get<1>(scenario_info);
+
+  // since here we call the in-place operation, we need to use two views:
+  // view1: filled according to what the scenario asks for and is not modified
+  // view2: filled according to what the scenario asks for and used for the
+  // in-place op Therefore, after the op is done, view_2 should contain the
+  // result of doing exclusive scan NOTE: view2 is filled below every time
+  // because the algorithm acts in place
+
+  using KeyType = key_type_helper<Args...>::type;
+
+  auto view_key =
+      create_view<KeyType>(Tag{}, view_ext, "in_scan_by_key_view_key");
+  Test::ScanByKey::fill_key_view(view_key);
+
+  auto view1 =
+      create_view<ValueType>(Tag{}, view_ext, "in_scan_by_key_inplace_view1");
+  fill_view(view1, name);
+
+  auto view2 =
+      create_view<ValueType>(Tag{}, view_ext, "in_scan_by_key_inplace_view2");
+
+  {
+    fill_view(view2, name);
+    auto r = KE::inclusive_scan_by_key(exespace(), KE::cbegin(view_key),
+                                       KE::cend(view_key), KE::cbegin(view2),
+                                       KE::begin(view2), args...);
+    ASSERT_EQ(r, KE::end(view2));
+    VerifyData().operator()<ValueType>(view_key, view1, view2, args...);
+  }
+
+  {
+    fill_view(view2, name);
+    auto r = KE::inclusive_scan_by_key(
+        "label", exespace(), KE::cbegin(view_key), KE::cend(view_key),
+        KE::cbegin(view2), KE::begin(view2), args...);
+    ASSERT_EQ(r, KE::end(view2));
+    VerifyData().operator()<ValueType>(view_key, view1, view2, args...);
+  }
+
+  {
+    fill_view(view2, name);
+    auto r =
+        KE::inclusive_scan_by_key(exespace(), view_key, view2, view2, args...);
+    ASSERT_EQ(r, KE::end(view2));
+    VerifyData().operator()<ValueType>(view_key, view1, view2, args...);
+  }
+
+  {
+    fill_view(view2, name);
+    auto r = KE::inclusive_scan_by_key("label", exespace(), view_key, view2,
+                                       view2, args...);
+    ASSERT_EQ(r, KE::end(view2));
+    VerifyData().operator()<ValueType>(view_key, view1, view2, args...);
+  }
+
+  Kokkos::fence();
+}
+
+template <class Tag, class ValueType>
+void run_in_scan_by_key_all_scenarios() {
+  const std::map<std::string, std::size_t> scenarios = {
+      {"empty", 0},          {"one-element", 1}, {"two-elements-a", 2},
+      {"two-elements-b", 2}, {"small-a", 9},     {"small-b", 13},
+      {"medium-a", 313},     {"medium-b", 1103}, {"large", 10513}};
+
+  using bool_eq_pred = Test::ScanByKey::EqualityFunctor<bool>;
+  bool_eq_pred booleq;
+
+  using int_eq_pred = Test::ScanByKey::EqualityFunctor<int>;
+  int_eq_pred inteq;
+
+  for (const auto& it : scenarios) {
+    run_single_scenario<Tag, ValueType>(it);
+    run_single_scenario_inplace<Tag, ValueType>(it);
+
+#if !defined KOKKOS_ENABLE_OPENMPTARGET  // FIXME OpenMPTarget deprecation
+    // test custom binary predicate for the keys
+    run_single_scenario<Tag, ValueType>(it, booleq);
+    run_single_scenario<Tag, ValueType>(it, inteq);
+
+    // the sum custom op is always run
+    using sum_binary_op = Test::ScanByKey::SumFunctor<ValueType>;
+    sum_binary_op sbop;
+    run_single_scenario<Tag, ValueType>(it, booleq, sbop);
+    run_single_scenario<Tag, ValueType>(it, inteq, sbop);
+
+    run_single_scenario_inplace<Tag, ValueType>(it, booleq, sbop);
+    run_single_scenario_inplace<Tag, ValueType>(it, inteq, sbop);
+
+    // custom multiply only for small views to avoid overflows
+    if (it.first == "small-a" || it.first == "small-b") {
+      using mult_binary_op = Test::ScanByKey::MultiplyFunctor<ValueType>;
+      mult_binary_op mbop;
+      run_single_scenario<Tag, ValueType>(it, booleq, mbop);
+      run_single_scenario<Tag, ValueType>(it, inteq, mbop);
+
+      run_single_scenario_inplace<Tag, ValueType>(it, booleq, mbop);
+      run_single_scenario_inplace<Tag, ValueType>(it, inteq, mbop);
+    }
+#endif
+  }
+}
+
+}  // namespace
+
+TEST(std_algorithms_numeric_ops_test, inclusive_scan_by_key) {
+  run_in_scan_by_key_all_scenarios<DynamicTag, double>();
+  run_in_scan_by_key_all_scenarios<StridedThreeTag, double>();
+  run_in_scan_by_key_all_scenarios<DynamicTag, int>();
+  run_in_scan_by_key_all_scenarios<StridedThreeTag, int>();
+  run_in_scan_by_key_all_scenarios<DynamicTag, CustomValueType>();
+  run_in_scan_by_key_all_scenarios<StridedThreeTag, CustomValueType>();
+}
+
+#if !defined KOKKOS_ENABLE_OPENMPTARGET  // FIXME OpenMPTarget deprecation
+TEST(std_algorithms_numeric_ops_test, in_scan_by_key_transform_binary_op) {
+  using view_type = Kokkos::View<int*, exespace>;
+  view_type dummy_view("dummy_view", 0);
+  using unary_op_type = KE::Impl::StdNumericScanIdentityReferenceUnaryFunctor;
+
+  using key_value_type = KE::Impl::KeyValuePair<bool, int>;
+
+  using key_value_view_type = Kokkos::View<key_value_type*, exespace>;
+
+  key_value_view_type dummy_key_value_view("dummy_kv_view", 0);
+
+  using kv_iterator_type = decltype(KE::begin(dummy_key_value_view));
+  using transform_binary_op_type =
+      KE::Impl::InScanByKeyBinaryOp<key_value_type,
+                                    ::Test::ScanByKey::SumFunctor<int>>;
+
+  auto transform_binary_op =
+      transform_binary_op_type(::Test::ScanByKey::SumFunctor<int>());
+
+  using value_wrapper_type =
+      KE::Impl::ValueWrapperForNoNeutralElement<key_value_type>;
+
+  auto test_lambda = [&](auto& functor) {
+    value_wrapper_type value1;
+    functor.init(value1);
+    ASSERT_EQ(value1.val.key, false);
+    ASSERT_EQ(value1.val.value, 0);
+    ASSERT_EQ(value1.is_initial, true);
+
+    value_wrapper_type value2;
+    value2.val        = {true, 1};
+    value2.is_initial = false;
+    functor.join(value1, value2);
+    ASSERT_EQ(value1.val.key, true);
+    ASSERT_EQ(value1.val.value, 1);
+    ASSERT_EQ(value1.is_initial, false);
+
+    functor.init(value1);
+    functor.join(value2, value1);
+    ASSERT_EQ(value2.val.key, true);
+    ASSERT_EQ(value2.val.value, 1);
+    ASSERT_EQ(value2.is_initial, false);
+
+    functor.init(value2);
+    functor.join(value2, value1);
+    ASSERT_EQ(value2.val.key, false);
+    ASSERT_EQ(value2.val.value, 0);
+    ASSERT_EQ(value2.is_initial, true);
+
+    value1.val.value  = 3;
+    value1.is_initial = false;
+    value2.val.value  = 2;
+    value2.is_initial = false;
+    functor.join(value2, value1);
+    ASSERT_EQ(value2.val.value, 5);
+    ASSERT_EQ(value2.is_initial, false);
+  };
+
+  {
+    using functor_type =
+        KE::Impl::ExeSpaceTransformInclusiveScanNoInitValueFunctor<
+            exespace, int, key_value_type, kv_iterator_type, kv_iterator_type,
+            transform_binary_op_type, unary_op_type>;
+
+    functor_type functor(KE::begin(dummy_key_value_view),
+                         KE::begin(dummy_key_value_view), transform_binary_op,
+                         unary_op_type());
+    test_lambda(functor);
+  }
+}
+#endif
+
+}  // namespace IncScanByKey
+}  // namespace stdalgos
+}  // namespace Test

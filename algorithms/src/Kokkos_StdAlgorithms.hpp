@@ -96,6 +96,7 @@
 #include "std_algorithms/Kokkos_TransformExclusiveScan.hpp"
 #include "std_algorithms/Kokkos_InclusiveScan.hpp"
 #include "std_algorithms/Kokkos_TransformInclusiveScan.hpp"
+#include "std_algorithms/Kokkos_InclusiveScanByKey.hpp"
 
 #ifdef KOKKOS_IMPL_PUBLIC_INCLUDE_NOTDEFINED_STD_ALGORITHMS
 #undef KOKKOS_IMPL_PUBLIC_INCLUDE

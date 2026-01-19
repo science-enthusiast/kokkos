@@ -131,6 +131,7 @@ foreach(
   StdAlgorithmsTransformUnaryOp
   StdAlgorithmsTransformExclusiveScan
   StdAlgorithmsTransformInclusiveScan
+  StdAlgorithmsInclusiveScanByKey
 )
   list(APPEND STDALGO_SOURCES_E Test${Name}.cpp)
 endforeach()
@@ -139,7 +140,7 @@ endforeach()
 # std team Q
 # ------------------------------------------
 set(STDALGO_TEAM_SOURCES_Q)
-foreach(Name StdAlgorithmsCommon StdAlgorithmsTeamInclusiveScan StdAlgorithmsTeamTransformInclusiveScan)
+foreach(Name StdAlgorithmsCommon StdAlgorithmsTeamInclusiveScan StdAlgorithmsTeamTransformInclusiveScan StdAlgorithmsTeamInclusiveScanByKey)
   list(APPEND STDALGO_TEAM_SOURCES_Q Test${Name}.cpp)
 endforeach()
 

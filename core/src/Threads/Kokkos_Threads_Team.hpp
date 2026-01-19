@@ -298,7 +298,7 @@ class ThreadsExecTeamMember {
           // 1) copy from lower to higher rank, initialize lowest rank to zero
           // 2) prefix sum from lowest to highest rank, skipping lowest rank
 
-          type accum = 0;
+          type accum{};
 
           if (global_accum) {
             for (int i = m_team_size; i--;) {
@@ -1101,7 +1101,7 @@ KOKKOS_INLINE_FUNCTION void parallel_scan(
   static_assert(std::is_same_v<closure_value_type, ValueType>,
                 "Non-matching value types of closure and return type");
 
-  ValueType scan_val = ValueType();
+  auto scan_val = ValueType{};
 
 #ifdef KOKKOS_ENABLE_PRAGMA_IVDEP
 #pragma ivdep
