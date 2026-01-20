@@ -348,27 +348,34 @@ struct math_function_name;
   };                                                                         \
   constexpr char math_function_name<MathUnaryFunction_##FUNC>::name[]
 
-#define DEFINE_UNARY_FUNCTION_EVAL_CUSTOM(FUNC, ULP_FACTOR, REF_FUNC)      \
-  struct MathUnaryFunction_##FUNC {                                        \
-    template <typename T>                                                  \
-    static KOKKOS_FUNCTION auto eval(T x) {                                \
-      static_assert(std::is_same_v<decltype(Kokkos::FUNC((T)0)),           \
-                                   math_unary_function_return_type_t<T>>); \
-      return Kokkos::FUNC(x);                                              \
-    }                                                                      \
-    template <typename T>                                                  \
-    static auto eval_std(T x) {                                            \
-      static_assert(std::is_same_v<decltype(REF_FUNC),                     \
-                                   math_unary_function_return_type_t<T>>); \
-      return REF_FUNC;                                                     \
-    }                                                                      \
-    static KOKKOS_FUNCTION int ulp_factor() { return ULP_FACTOR; }         \
-  };                                                                       \
-  using kk_##FUNC = MathUnaryFunction_##FUNC;                              \
-  template <>                                                              \
-  struct math_function_name<MathUnaryFunction_##FUNC> {                    \
-    static constexpr char name[] = #FUNC;                                  \
-  };                                                                       \
+#define DEFINE_UNARY_FUNCTION_EVAL_CUSTOM(FUNC, ULP_FACTOR, REF_FUNC)        \
+  struct MathUnaryFunction_##FUNC {                                          \
+    template <typename T>                                                    \
+    static KOKKOS_FUNCTION auto eval(T x) {                                  \
+      static_assert(std::is_same_v<decltype(Kokkos::FUNC((T)0)),             \
+                                   math_unary_function_return_type_t<T>>);   \
+      return Kokkos::FUNC(x);                                                \
+    }                                                                        \
+    template <typename T>                                                    \
+    static auto eval_std(T y) {                                              \
+      if constexpr (std::is_same_v<T, KE::half_t> ||                         \
+                    std::is_same_v<T, KE::bhalf_t>) {                        \
+        auto x = static_cast<float>(y);                                      \
+        return static_cast<T>(REF_FUNC);                                     \
+      } else {                                                               \
+        const T x = y;                                                       \
+        static_assert(std::is_same_v<decltype(REF_FUNC),                     \
+                                     math_unary_function_return_type_t<T>>); \
+        return REF_FUNC;                                                     \
+      }                                                                      \
+    }                                                                        \
+    static KOKKOS_FUNCTION int ulp_factor() { return ULP_FACTOR; }           \
+  };                                                                         \
+  using kk_##FUNC = MathUnaryFunction_##FUNC;                                \
+  template <>                                                                \
+  struct math_function_name<MathUnaryFunction_##FUNC> {                      \
+    static constexpr char name[] = #FUNC;                                    \
+  };                                                                         \
   constexpr char math_function_name<MathUnaryFunction_##FUNC>::name[]
 
 #define DEFINE_UNARY_FUNCTION_EVAL_INT(FUNC)                           \
@@ -432,6 +439,8 @@ DEFINE_UNARY_FUNCTION_EVAL(atanh, 2);
 // non-standard math functions
 DEFINE_UNARY_FUNCTION_EVAL_CUSTOM(rsqrt, 2,
                                   decltype(std::sqrt(x))(1) / std::sqrt(x));
+DEFINE_UNARY_FUNCTION_EVAL_CUSTOM(rcp, 2,
+                                  math_unary_function_return_type_t<T>(1) / x);
 #endif
 
 #ifndef KOKKOS_MATHEMATICAL_FUNCTIONS_SKIP_2
@@ -1334,10 +1343,26 @@ TEST(TEST_CATEGORY, mathematical_functions_non_standard) {
   TEST_MATH_FUNCTION(rsqrt)({1u, 2u, 3u, 5u, 7u});
   TEST_MATH_FUNCTION(rsqrt)({1ul, 2ul, 3ul, 5ul, 7ul});
   TEST_MATH_FUNCTION(rsqrt)({1ull, 2ull, 3ull, 5ull, 7ull});
+  TEST_HALF_MATH_FUNCTION(rsqrt, KE::half_t)({10.f, 20.f, 30.f, 40.f});
+  TEST_HALF_MATH_FUNCTION(rsqrt, KE::bhalf_t)({10.f, 20.f, 30.f, 40.f});
   TEST_MATH_FUNCTION(rsqrt)({10.f, 20.f, 30.f, 40.f});
   TEST_MATH_FUNCTION(rsqrt)({11.1, 22.2, 33.3, 44.4});
 #ifdef MATHEMATICAL_FUNCTIONS_HAVE_LONG_DOUBLE_OVERLOADS
   TEST_MATH_FUNCTION(rsqrt)({10.l, 20.l, 30.l, 40.l});
+#endif
+
+  TEST_MATH_FUNCTION(rcp)({-13, -9, 1, 7, 11});
+  TEST_MATH_FUNCTION(rcp)({-13l, -9l, 1l, 7l, 11l});
+  TEST_MATH_FUNCTION(rcp)({-13ll, -9ll, 1ll, 7ll, 11ll});
+  TEST_MATH_FUNCTION(rcp)({2u, 3u, 9u, 13u, 17u});
+  TEST_MATH_FUNCTION(rcp)({2ul, 3ul, 9ul, 13ul, 17ul});
+  TEST_MATH_FUNCTION(rcp)({2ull, 3ull, 9ull, 13ull, 17ull});
+  TEST_HALF_MATH_FUNCTION(rcp, KE::half_t)({-13.f, -9.f, 1.f, 7.f, 11.f});
+  TEST_HALF_MATH_FUNCTION(rcp, KE::bhalf_t)({-13.f, -9.f, 1.f, 7.f, 11.f});
+  TEST_MATH_FUNCTION(rcp)({-13.1f, -9.2f, 1.3f, 7.4f, 11.5f});
+  TEST_MATH_FUNCTION(rcp)({-13.1, -9.2, 1.3, 7.4, 11.5});
+#ifdef MATHEMATICAL_FUNCTIONS_HAVE_LONG_DOUBLE_OVERLOADS
+  TEST_MATH_FUNCTION(rcp)({-13.1l, -9.2l, 1.3l, 7.4l, 11.5l});
 #endif
 }
 #endif

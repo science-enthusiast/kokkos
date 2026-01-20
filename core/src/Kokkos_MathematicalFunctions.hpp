@@ -592,6 +592,32 @@ KOKKOS_INLINE_FUNCTION std::enable_if_t<std::is_integral_v<T>, double> rsqrt(
   return Kokkos::rsqrt(static_cast<double>(x));
 }
 
+// reciprocal functions 1/x
+KOKKOS_INLINE_FUNCTION float rcp(float val) {
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+  KOKKOS_IF_ON_DEVICE(return __frcp_rn(val);)
+  KOKKOS_IF_ON_HOST(return 1.0f / val;)
+#elif defined(KOKKOS_ENABLE_SYCL)
+  return sycl::native::recip(val);
+#else
+  return 1.0f / val;
+#endif
+}
+KOKKOS_INLINE_FUNCTION double rcp(double val) {
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+  KOKKOS_IF_ON_DEVICE(return __drcp_rn(val);)
+  KOKKOS_IF_ON_HOST(return 1.0 / val;)
+#else
+  return 1.0 / val;
+#endif
+}
+inline long double rcp(long double val) { return 1.0l / val; }
+template <class T>
+KOKKOS_INLINE_FUNCTION std::enable_if_t<std::is_integral_v<T>, double> rcp(
+    T x) {
+  return Kokkos::rcp(static_cast<double>(x));
+}
+
 }  // namespace Kokkos
 
 #ifdef KOKKOS_IMPL_PUBLIC_INCLUDE_NOTDEFINED_MATHFUNCTIONS

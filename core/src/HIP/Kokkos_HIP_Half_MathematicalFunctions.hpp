@@ -123,10 +123,12 @@ KOKKOS_INLINE_FUNCTION long long impl_llrint(Kokkos::Experimental::half_t x) {
 // nextafter
 // copysign
 // isfinite
-
 KOKKOS_HIP_HALF_AND_BHALF_UNARY_PREDICATE_IMPL(isinf, __hisinf)
 KOKKOS_HIP_HALF_AND_BHALF_UNARY_PREDICATE_IMPL(isnan, __hisnan)
 // signbit
+// Non-standard functions
+KOKKOS_HIP_HALF_AND_BHALF_UNARY_FUNCTION_IMPL(rsqrt, hrsqrt)
+KOKKOS_HIP_HALF_AND_BHALF_UNARY_FUNCTION_IMPL(rcp, hrcp)
 
 #undef KOKKOS_HIP_HALF_AND_BHALF_UNARY_FUNCTION_IMPL
 #undef KOKKOS_HIP_HALF_AND_BHALF_BINARY_FUNCTION_IMPL

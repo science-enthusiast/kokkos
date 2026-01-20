@@ -474,6 +474,10 @@ KOKKOS_INLINE_FUNCTION bool signbit(Kokkos::Experimental::bhalf_t x) {
 // islessgreater
 // isunordered
 
+// Non-standard functions
+KOKKOS_IMPL_MATH_HALF_FUNC_WRAPPER(KOKKOS_IMPL_MATH_UNARY_FUNCTION_HALF_TYPE, rsqrt)
+KOKKOS_IMPL_MATH_HALF_FUNC_WRAPPER(KOKKOS_IMPL_MATH_UNARY_FUNCTION_HALF_TYPE, rcp)
+
 // Implementation test function: check if fallback for half and bhalf type are used
 namespace Impl {
 template <bool fallback = true>
