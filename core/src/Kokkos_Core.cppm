@@ -492,9 +492,15 @@ export {
   using ::Kokkos::ilogbf;
   using ::Kokkos::ilogbl;
   using ::Kokkos::isfinite;
+  using ::Kokkos::isgreater;
+  using ::Kokkos::isgreaterequal;
   using ::Kokkos::isinf;
+  using ::Kokkos::isless;
+  using ::Kokkos::islessequal;
+  using ::Kokkos::islessgreater;
   using ::Kokkos::isnan;
   using ::Kokkos::isnormal;
+  using ::Kokkos::isunordered;
   using ::Kokkos::lgamma;
   using ::Kokkos::lgammaf;
   using ::Kokkos::lgammal;
