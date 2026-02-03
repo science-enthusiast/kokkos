@@ -317,6 +317,16 @@ struct IntegerComparison {
   }
 };
 
+template <class Floating>
+struct ConvertibleTo {
+  operator Floating() const;
+};
+
+#define KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(FUNC, FP_TYPE, RET_TYPE)   \
+  static_assert(                                                             \
+      std::is_same_v<decltype(FUNC(std::declval<ConvertibleTo<FP_TYPE>>())), \
+                     RET_TYPE>)
+
 template <class>
 struct math_function_name;
 
@@ -326,6 +336,10 @@ struct math_function_name;
     static KOKKOS_FUNCTION auto eval(T x) {                                  \
       static_assert(std::is_same_v<decltype(Kokkos::FUNC((T)0)),             \
                                    math_unary_function_return_type_t<T>>);   \
+      if constexpr (std::is_floating_point_v<T>) {                           \
+        KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(                           \
+            Kokkos::FUNC, T, math_unary_function_return_type_t<T>);          \
+      }                                                                      \
       return Kokkos::FUNC(x);                                                \
     }                                                                        \
     template <typename T>                                                    \
@@ -336,6 +350,10 @@ struct math_function_name;
       } else {                                                               \
         static_assert(std::is_same_v<decltype(std::FUNC((T)0)),              \
                                      math_unary_function_return_type_t<T>>); \
+        if constexpr (std::is_floating_point_v<T>) {                         \
+          KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(                         \
+              std::FUNC, T, math_unary_function_return_type_t<T>);           \
+        }                                                                    \
         return std::FUNC(x);                                                 \
       }                                                                      \
     }                                                                        \
@@ -354,6 +372,10 @@ struct math_function_name;
     static KOKKOS_FUNCTION auto eval(T x) {                                  \
       static_assert(std::is_same_v<decltype(Kokkos::FUNC((T)0)),             \
                                    math_unary_function_return_type_t<T>>);   \
+      if constexpr (std::is_floating_point_v<T>) {                           \
+        KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(                           \
+            Kokkos::FUNC, T, math_unary_function_return_type_t<T>);          \
+      }                                                                      \
       return Kokkos::FUNC(x);                                                \
     }                                                                        \
     template <typename T>                                                    \
@@ -383,6 +405,10 @@ struct math_function_name;
     template <typename T>                                              \
     static KOKKOS_FUNCTION auto eval(T x) {                            \
       static_assert(std::is_integral_v<decltype(Kokkos::FUNC((T)0))>); \
+      if constexpr (std::is_floating_point_v<T>) {                     \
+        static_assert(std::is_integral_v<decltype(Kokkos::FUNC(        \
+                          std::declval<ConvertibleTo<T>>()))>);        \
+      }                                                                \
       return Kokkos::FUNC(x);                                          \
     }                                                                  \
     template <typename T>                                              \
@@ -392,6 +418,10 @@ struct math_function_name;
         return std::FUNC(static_cast<float>(x));                       \
       } else {                                                         \
         static_assert(std::is_integral_v<decltype(std::FUNC((T)0))>);  \
+        if constexpr (std::is_floating_point_v<T>) {                   \
+          static_assert(std::is_integral_v<decltype(std::FUNC(         \
+                            std::declval<ConvertibleTo<T>>()))>);      \
+        }                                                              \
         return std::FUNC(x);                                           \
       }                                                                \
     }                                                                  \
@@ -2128,10 +2158,17 @@ struct TestIsFinite {
     static_assert(std::is_same_v<decltype(isfinite(1)), bool>);
     static_assert(std::is_same_v<decltype(isfinite(2.f)), bool>);
     static_assert(std::is_same_v<decltype(isfinite(3.)), bool>);
-    KOKKOS_TEST_WORKAROUND_DEPRECATED_STD_ITERATOR_WARNINGS_POP()
 #ifdef MATHEMATICAL_FUNCTIONS_HAVE_LONG_DOUBLE_OVERLOADS
     static_assert(std::is_same_v<decltype(isfinite(4.l)), bool>);
 #endif
+
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::isfinite, float, bool);
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::isfinite, double, bool);
+#ifdef MATHEMATICAL_FUNCTIONS_HAVE_LONG_DOUBLE_OVERLOADS
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::isfinite, long double,
+                                              bool);
+#endif
+    KOKKOS_TEST_WORKAROUND_DEPRECATED_STD_ITERATOR_WARNINGS_POP()
   }
 };
 
@@ -2204,10 +2241,16 @@ struct TestIsInf {
     static_assert(std::is_same_v<decltype(isinf(1)), bool>);
     static_assert(std::is_same_v<decltype(isinf(2.f)), bool>);
     static_assert(std::is_same_v<decltype(isinf(3.)), bool>);
-    KOKKOS_TEST_WORKAROUND_DEPRECATED_STD_ITERATOR_WARNINGS_POP()
 #ifdef MATHEMATICAL_FUNCTIONS_HAVE_LONG_DOUBLE_OVERLOADS
     static_assert(std::is_same_v<decltype(isinf(4.l)), bool>);
 #endif
+
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::isinf, float, bool);
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::isinf, double, bool);
+#ifdef MATHEMATICAL_FUNCTIONS_HAVE_LONG_DOUBLE_OVERLOADS
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::isinf, long double, bool);
+#endif
+    KOKKOS_TEST_WORKAROUND_DEPRECATED_STD_ITERATOR_WARNINGS_POP()
   }
 };
 
@@ -2380,10 +2423,16 @@ struct TestIsNaN {
     static_assert(std::is_same_v<decltype(isnan(1)), bool>);
     static_assert(std::is_same_v<decltype(isnan(2.f)), bool>);
     static_assert(std::is_same_v<decltype(isnan(3.)), bool>);
-    KOKKOS_TEST_WORKAROUND_DEPRECATED_STD_ITERATOR_WARNINGS_POP()
 #ifdef MATHEMATICAL_FUNCTIONS_HAVE_LONG_DOUBLE_OVERLOADS
     static_assert(std::is_same_v<decltype(isnan(4.l)), bool>);
 #endif
+
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::isnan, float, bool);
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::isnan, double, bool);
+#ifdef MATHEMATICAL_FUNCTIONS_HAVE_LONG_DOUBLE_OVERLOADS
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::isnan, long double, bool);
+#endif
+    KOKKOS_TEST_WORKAROUND_DEPRECATED_STD_ITERATOR_WARNINGS_POP()
   }
 };
 
@@ -2493,10 +2542,17 @@ struct TestIsNormal {
     static_assert(std::is_same_v<decltype(isnormal(1)), bool>);
     static_assert(std::is_same_v<decltype(isnormal(2.f)), bool>);
     static_assert(std::is_same_v<decltype(isnormal(3.)), bool>);
-    KOKKOS_TEST_WORKAROUND_DEPRECATED_STD_ITERATOR_WARNINGS_POP()
 #ifdef MATHEMATICAL_FUNCTIONS_HAVE_LONG_DOUBLE_OVERLOADS
     static_assert(std::is_same_v<decltype(isnormal(4.l)), bool>);
 #endif
+
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::isnormal, float, bool);
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::isnormal, double, bool);
+#ifdef MATHEMATICAL_FUNCTIONS_HAVE_LONG_DOUBLE_OVERLOADS
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::isnormal, long double,
+                                              bool);
+#endif
+    KOKKOS_TEST_WORKAROUND_DEPRECATED_STD_ITERATOR_WARNINGS_POP()
   }
 };
 
@@ -2625,10 +2681,17 @@ struct TestSignbit {
     static_assert(std::is_same_v<decltype(signbit(1)), bool>);
     static_assert(std::is_same_v<decltype(signbit(2.f)), bool>);
     static_assert(std::is_same_v<decltype(signbit(3.)), bool>);
-    KOKKOS_TEST_WORKAROUND_DEPRECATED_STD_ITERATOR_WARNINGS_POP()
 #ifdef MATHEMATICAL_FUNCTIONS_HAVE_LONG_DOUBLE_OVERLOADS
     static_assert(std::is_same_v<decltype(signbit(4.l)), bool>);
 #endif
+
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::signbit, float, bool);
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::signbit, double, bool);
+#ifdef MATHEMATICAL_FUNCTIONS_HAVE_LONG_DOUBLE_OVERLOADS
+    KOKKOS_TEST_STATIC_ASSERT_UNARY_PREDICATE(Kokkos::signbit, long double,
+                                              bool);
+#endif
+    KOKKOS_TEST_WORKAROUND_DEPRECATED_STD_ITERATOR_WARNINGS_POP()
   }
 };
 
