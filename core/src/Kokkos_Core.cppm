@@ -554,6 +554,8 @@ export {
   using ::Kokkos::powf;
   using ::Kokkos::powl;
   using ::Kokkos::rcp;
+  using ::Kokkos::rcpf;
+  using ::Kokkos::rcpl;
   using ::Kokkos::remainder;
   using ::Kokkos::remainderf;
   using ::Kokkos::remainderl;

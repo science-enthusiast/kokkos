@@ -825,6 +825,8 @@ KOKKOS_INLINE_FUNCTION double rcp(double val) {
 #endif
 }
 inline long double rcp(long double val) { return 1.0l / val; }
+KOKKOS_INLINE_FUNCTION float rcpf(float val) { return Kokkos::rcp(val); }
+inline long double rcpl(long double val) { return Kokkos::rcp(val); }
 template <class T>
 KOKKOS_INLINE_FUNCTION std::enable_if_t<std::is_integral_v<T>, double> rcp(
     T x) {
