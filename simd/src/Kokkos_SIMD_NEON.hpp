@@ -405,14 +405,6 @@ class basic_simd<double, simd_abi::neon_fixed_size<2>> {
   static constexpr std::integral_constant<Impl::simd_size_t, 2> size{};
 
   KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd() noexcept = default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd(basic_simd const&) noexcept =
-      default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd(basic_simd&&) noexcept =
-      default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd& operator=(
-      basic_simd const&) noexcept = default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd& operator=(
-      basic_simd&&) noexcept = default;
   template <class U>
     requires std::convertible_to<U, value_type>
   // NOLINTNEXTLINE(bugprone-forwarding-reference-overload)
@@ -763,14 +755,6 @@ class basic_simd<float, simd_abi::neon_fixed_size<2>> {
   static constexpr std::integral_constant<Impl::simd_size_t, 2> size{};
 
   KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd() noexcept = default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd(basic_simd const&) noexcept =
-      default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd(basic_simd&&) noexcept =
-      default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd& operator=(
-      basic_simd const&) noexcept = default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd& operator=(
-      basic_simd&&) noexcept = default;
   template <class U>
     requires std::convertible_to<U, value_type>
   // NOLINTNEXTLINE(bugprone-forwarding-reference-overload)
@@ -1109,14 +1093,6 @@ class basic_simd<float, simd_abi::neon_fixed_size<4>> {
   static constexpr std::integral_constant<Impl::simd_size_t, 4> size{};
 
   KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd() noexcept = default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd(basic_simd const&) noexcept =
-      default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd(basic_simd&&) noexcept =
-      default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd& operator=(
-      basic_simd const&) noexcept = default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd& operator=(
-      basic_simd&&) noexcept = default;
   template <class U>
     requires std::convertible_to<U, value_type>
   // NOLINTNEXTLINE(bugprone-forwarding-reference-overload)
@@ -1463,14 +1439,6 @@ class basic_simd<std::int32_t, simd_abi::neon_fixed_size<2>> {
   static constexpr std::integral_constant<Impl::simd_size_t, 2> size{};
 
   KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd() noexcept = default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd(basic_simd const&) noexcept =
-      default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd(basic_simd&&) noexcept =
-      default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd& operator=(
-      basic_simd const&) noexcept = default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd& operator=(
-      basic_simd&&) noexcept = default;
   template <class U>
     requires std::convertible_to<U, value_type>
   // NOLINTNEXTLINE(bugprone-forwarding-reference-overload)
@@ -1793,14 +1761,6 @@ class basic_simd<std::int32_t, simd_abi::neon_fixed_size<4>> {
   static constexpr std::integral_constant<Impl::simd_size_t, 4> size{};
 
   KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd() noexcept = default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd(basic_simd const&) noexcept =
-      default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd(basic_simd&&) noexcept =
-      default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd& operator=(
-      basic_simd const&) noexcept = default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd& operator=(
-      basic_simd&&) noexcept = default;
   template <class U>
     requires std::convertible_to<U, value_type>
   // NOLINTNEXTLINE(bugprone-forwarding-reference-overload)
@@ -2129,14 +2089,6 @@ class basic_simd<std::int64_t, simd_abi::neon_fixed_size<2>> {
   static constexpr std::integral_constant<Impl::simd_size_t, 2> size{};
 
   KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd() noexcept = default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd(basic_simd const&) noexcept =
-      default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd(basic_simd&&) noexcept =
-      default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd& operator=(
-      basic_simd const&) noexcept = default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd& operator=(
-      basic_simd&&) noexcept = default;
   template <class U>
     requires std::convertible_to<U, value_type>
   // NOLINTNEXTLINE(bugprone-forwarding-reference-overload)
@@ -2458,14 +2410,6 @@ class basic_simd<std::uint64_t, simd_abi::neon_fixed_size<2>> {
   static constexpr std::integral_constant<Impl::simd_size_t, 2> size{};
 
   KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd() noexcept = default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd(basic_simd const&) noexcept =
-      default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd(basic_simd&&) noexcept =
-      default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd& operator=(
-      basic_simd const&) noexcept = default;
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION basic_simd& operator=(
-      basic_simd&&) noexcept = default;
   template <class U>
     requires std::convertible_to<U, value_type>
   // NOLINTNEXTLINE(bugprone-forwarding-reference-overload)
