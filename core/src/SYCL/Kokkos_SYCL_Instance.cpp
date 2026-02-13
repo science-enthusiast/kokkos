@@ -164,7 +164,7 @@ uint32_t SYCLInternal::impl_get_instance_id() const { return m_instance_id; }
 
 SYCLInternal::~SYCLInternal() {
   SYCLInternal::fence(m_queue,
-                      "Kokkos::SYCLInternal::finalize: fence on finalization",
+                      "Kokkos::SYCLInternal::finalize: fence on destruction",
                       m_instance_id);
 
   auto device_mem_space = SYCLDeviceUSMSpace(m_queue);
