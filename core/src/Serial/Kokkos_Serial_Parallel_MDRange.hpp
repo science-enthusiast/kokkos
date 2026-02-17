@@ -4,8 +4,11 @@
 #ifndef KOKKOS_SERIAL_PARALLEL_MDRANGE_HPP
 #define KOKKOS_SERIAL_PARALLEL_MDRANGE_HPP
 
+#include <algorithm>
+
 #include <Kokkos_Parallel.hpp>
 #include <KokkosExp_MDRangePolicy.hpp>
+#include <impl/KokkosExp_Host_IterateNestLoopWoTile.hpp>
 
 namespace Kokkos {
 namespace Impl {
@@ -17,15 +20,28 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   using MDRangePolicy = Kokkos::MDRangePolicy<Traits...>;
   using Policy        = typename MDRangePolicy::impl_range_policy;
 
-  using iterate_type = typename Kokkos::Impl::HostIterateTile<
+  using iter_loopwithtile_type = typename Kokkos::Impl::HostIterateTile<
       MDRangePolicy, FunctorType, typename MDRangePolicy::work_tag, void>;
+  using iter_nestloopwotile_type =
+      typename Kokkos::Impl::HostIterateNestLoopWoTile<
+          MDRangePolicy, FunctorType, typename MDRangePolicy::work_tag, void>;
 
-  const iterate_type m_iter;
+  const MDRangePolicy m_rp;
+  const FunctorType m_func;
 
   void exec() const {
-    const typename Policy::member_type e = m_iter.m_rp.m_num_tiles;
-    for (typename Policy::member_type i = 0; i < e; ++i) {
-      m_iter(i);
+    // Choose between nested for loop based direct iteration over the
+    // elements and a single loop over the tiles based iteration
+    if (std::all_of(m_rp.m_tile.begin(), m_rp.m_tile.end(),
+                    [](auto x) { return x == 1; })) {
+      const iter_nestloopwotile_type iter(m_rp, m_func);
+      iter.execute();
+    } else {
+      const typename Policy::member_type e = m_rp.m_num_tiles;
+      const iter_loopwithtile_type iter(m_rp, m_func);
+      for (typename Policy::member_type i = 0; i < e; ++i) {
+        iter(i);
+      }
     }
   }
 
@@ -37,8 +53,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
 #ifndef KOKKOS_ENABLE_ATOMICS_BYPASS
     // Make sure kernels are running sequentially even when using multiple
     // threads
-    auto* internal_instance =
-        m_iter.m_rp.space().impl_internal_space_instance();
+    auto* internal_instance = m_rp.space().impl_internal_space_instance();
     std::lock_guard<std::mutex> lock(internal_instance->m_instance_mutex);
 #endif
     this->exec();
@@ -54,7 +69,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   }
   inline ParallelFor(const FunctorType& arg_functor,
                      const MDRangePolicy& arg_policy)
-      : m_iter(arg_policy, arg_functor) {}
+      : m_rp(arg_policy), m_func(arg_functor) {}
 };
 
 template <class CombinedFunctorReducerType, class... Traits>
@@ -151,3 +166,4 @@ class ParallelReduce<CombinedFunctorReducerType,
 }  // namespace Kokkos
 
 #endif
+
