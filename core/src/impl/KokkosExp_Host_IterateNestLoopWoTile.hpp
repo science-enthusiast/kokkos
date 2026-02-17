@@ -9,6 +9,15 @@
 #include <Kokkos_Layout.hpp>
 #include <Kokkos_Macros.hpp>
 
+#if defined(__GNUC__)
+#define KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP _Pragma("GCC ivdep")
+#elif defined(__clang__)
+#define KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP \
+  _Pragma("clang loop vectorize(assume_safety)")
+#else
+#define KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP _Pragma("ivdep")
+#endif
+
 namespace Kokkos {
 namespace Impl {
 
@@ -20,7 +29,8 @@ namespace Impl {
 
 // Non-Tagged: Outer Iterate::Right
 #define KOKKOS_IMPL_NLWOTILE_R1(type, rp, func, rank, ...)   \
-  for (auto i0 = static_cast<type>(rp.m_lower[rank - 1]);    \
+    KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                       \
+    for (auto i0 = static_cast<type>(rp.m_lower[rank - 1]);  \
        i0 < static_cast<type>(rp.m_upper[rank - 1]); ++i0) { \
     KOKKOS_IMPL_NLWOTILE_APPLY(func, __VA_ARGS__, i0)        \
   }
@@ -63,6 +73,7 @@ namespace Impl {
 
 // Non-Tagged: Outer Iterate::Left
 #define KOKKOS_IMPL_NLWOTILE_L1(type, rp, func, ...)  \
+  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                  \
   for (auto i0 = static_cast<type>(rp.m_lower[0]);    \
        i0 < static_cast<type>(rp.m_upper[0]); ++i0) { \
     KOKKOS_IMPL_NLWOTILE_APPLY(func, i0, __VA_ARGS__) \
@@ -107,6 +118,7 @@ namespace Impl {
 // Non-Tagged: Outer Iteration: Left or Right
 
 #define KOKKOS_IMPL_NLWOTILE_LOOP_1(type, is_left_outer, rp, func) \
+  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                               \
   for (auto i0 = static_cast<type>(rp.m_lower[0]);                 \
        i0 < static_cast<type>(rp.m_upper[0]); ++i0) {              \
     KOKKOS_IMPL_NLWOTILE_APPLY(func, i0)                           \
@@ -210,6 +222,7 @@ namespace Impl {
 
 // Tagged: Outer Iterate::Right
 #define KOKKOS_IMPL_TAGGED_NLWOTILE_R1(tag, type, rp, func, rank, ...) \
+  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                   \
   for (auto i0 = static_cast<type>(rp.m_lower[rank - 1]);              \
        i0 < static_cast<type>(rp.m_upper[rank - 1]); ++i0) {           \
     KOKKOS_IMPL_TAGGED_NLWOTILE_APPLY(tag, func, __VA_ARGS__, i0)      \
@@ -253,6 +266,7 @@ namespace Impl {
 
 // Tagged: Outer Iterate::Left
 #define KOKKOS_IMPL_TAGGED_NLWOTILE_L1(tag, type, rp, func, ...)  \
+  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                              \
   for (auto i0 = static_cast<type>(rp.m_lower[0]);                \
        i0 < static_cast<type>(rp.m_upper[0]); ++i0) {             \
     KOKKOS_IMPL_TAGGED_NLWOTILE_APPLY(tag, func, i0, __VA_ARGS__) \
@@ -297,6 +311,7 @@ namespace Impl {
 // Tagged: Outer Iterate: Left or Right
 
 #define KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_1(tag, type, is_left_outer, rp, func) \
+  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                           \
   for (auto i0 = static_cast<type>(rp.m_lower[0]);                             \
        i0 < static_cast<type>(rp.m_upper[0]); ++i0) {                          \
     KOKKOS_IMPL_TAGGED_NLWOTILE_APPLY(tag, func, i0)                           \
