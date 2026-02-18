@@ -4,8 +4,11 @@
 #ifndef KOKKOS_SERIAL_PARALLEL_MDRANGE_HPP
 #define KOKKOS_SERIAL_PARALLEL_MDRANGE_HPP
 
+#include <algorithm>
+
 #include <Kokkos_Parallel.hpp>
 #include <KokkosExp_MDRangePolicy.hpp>
+#include <impl/KokkosExp_Host_IterateNestLoopWoTile.hpp>
 
 namespace Kokkos {
 namespace Impl {
@@ -15,17 +18,67 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
                   Kokkos::Serial> {
  private:
   using MDRangePolicy = Kokkos::MDRangePolicy<Traits...>;
+  using index_type    = typename MDRangePolicy::index_type;
   using Policy        = typename MDRangePolicy::impl_range_policy;
 
-  using iterate_type = typename Kokkos::Impl::HostIterateTile<
-      MDRangePolicy, FunctorType, typename MDRangePolicy::work_tag, void>;
+  const MDRangePolicy &m_rp;
+  const FunctorType &m_func;
 
-  const iterate_type m_iter;
+  template <bool IsLeftOuter, class TagType>
+  std::enable_if_t<std::is_void_v<TagType>> exec() const {
+    if constexpr (MDRangePolicy::rank == 1) {
+      KOKKOS_IMPL_NLWOTILE_LOOP_1(index_type,
+                                  IsLeftOuter, m_rp, m_func);
+    } else if constexpr (MDRangePolicy::rank == 2) {
+      KOKKOS_IMPL_NLWOTILE_LOOP_2(index_type,
+                                  IsLeftOuter, m_rp, m_func);
+    } else if constexpr (MDRangePolicy::rank == 3) {
+      KOKKOS_IMPL_NLWOTILE_LOOP_3(index_type,
+                                  IsLeftOuter, m_rp, m_func);
+    } else if constexpr (MDRangePolicy::rank == 4) {
+      KOKKOS_IMPL_NLWOTILE_LOOP_4(index_type,
+                                  IsLeftOuter, m_rp, m_func);
+    } else if constexpr (MDRangePolicy::rank == 5) {
+      KOKKOS_IMPL_NLWOTILE_LOOP_5(index_type,
+                                  IsLeftOuter, m_rp, m_func);
+    } else if constexpr (MDRangePolicy::rank == 6) {
+      KOKKOS_IMPL_NLWOTILE_LOOP_6(index_type,
+                                  IsLeftOuter, m_rp, m_func);
+    } else if constexpr (MDRangePolicy::rank == 7) {
+      KOKKOS_IMPL_NLWOTILE_LOOP_7(index_type,
+                                  IsLeftOuter, m_rp, m_func);
+    } else {
+      KOKKOS_IMPL_NLWOTILE_LOOP_8(index_type,
+                                  IsLeftOuter, m_rp, m_func);
+    }
+  }
 
-  void exec() const {
-    const typename Policy::member_type e = m_iter.m_rp.m_num_tiles;
-    for (typename Policy::member_type i = 0; i < e; ++i) {
-      m_iter(i);
+  template <bool IsLeftOuter, class TagType>
+  std::enable_if_t<!std::is_void_v<TagType>> exec() const {
+    if constexpr (MDRangePolicy::rank == 1) {
+      KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_1(TagType{}, index_type,
+                                         IsLeftOuter, m_rp, m_func);
+    } else if constexpr (MDRangePolicy::rank == 2) {
+      KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_2(TagType{}, index_type,
+                                         IsLeftOuter, m_rp, m_func);
+    } else if constexpr (MDRangePolicy::rank == 3) {
+      KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_3(TagType{}, index_type,
+                                         IsLeftOuter, m_rp, m_func);
+    } else if constexpr (MDRangePolicy::rank == 4) {
+      KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_4(TagType{}, index_type,
+                                         IsLeftOuter, m_rp, m_func);
+    } else if constexpr (MDRangePolicy::rank == 5) {
+      KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_5(TagType{}, index_type,
+                                         IsLeftOuter, m_rp, m_func);
+    } else if constexpr (MDRangePolicy::rank == 6) {
+      KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_6(TagType{}, index_type,
+                                         IsLeftOuter, m_rp, m_func);
+    } else if constexpr (MDRangePolicy::rank == 7) {
+      KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_7(TagType{}, index_type,
+                                         IsLeftOuter, m_rp, m_func);
+    } else {
+      KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_8(TagType{}, index_type,
+                                         IsLeftOuter, m_rp, m_func);
     }
   }
 
@@ -37,11 +90,10 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
 #ifndef KOKKOS_ENABLE_ATOMICS_BYPASS
     // Make sure kernels are running sequentially even when using multiple
     // threads
-    auto* internal_instance =
-        m_iter.m_rp.space().impl_internal_space_instance();
+    auto* internal_instance = m_rp.space().impl_internal_space_instance();
     std::lock_guard<std::mutex> lock(internal_instance->m_instance_mutex);
 #endif
-    this->exec();
+    this->template exec<MDRangePolicy::outer_direction == Iterate::Left, typename MDRangePolicy::work_tag>();
   }
   template <typename Policy, typename Functor>
   static int max_tile_size_product(const Policy&, const Functor&) {
@@ -54,7 +106,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   }
   inline ParallelFor(const FunctorType& arg_functor,
                      const MDRangePolicy& arg_policy)
-      : m_iter(arg_policy, arg_functor) {}
+      : m_rp(arg_policy), m_func(arg_functor) {}
 };
 
 template <class CombinedFunctorReducerType, class... Traits>
