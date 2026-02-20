@@ -1046,10 +1046,8 @@ TEST(TEST_CATEGORY, triple_nested_parallelism) {
   {
 #ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
     TestTripleNestedReduce<double, TEST_EXECSPACE>(8192, 2048, 16, 33);
-#else
-    TestTripleNestedReduce<double, TEST_EXECSPACE>(8192, 2048, 16, 31);
-#endif
     TestTripleNestedReduce<double, TEST_EXECSPACE>(8192, 2048, 16, 19);
+#endif
   }
   TestTripleNestedReduce<double, TEST_EXECSPACE>(8192, 2048, 16, 16);
   TestTripleNestedReduce<double, TEST_EXECSPACE>(8192, 2048, 7, 16);
