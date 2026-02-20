@@ -669,6 +669,12 @@ class TeamPolicy
           << ") exceeds the maximum allowed (" << vector_length_max << ")";
       Kokkos::abort(err.str().c_str());
     }
+    if (!Kokkos::has_single_bit(static_cast<unsigned>(vector_length))) {
+      std::stringstream err;
+      err << "Kokkos::TeamPolicy error: vector_length (" << vector_length
+          << ") must be a power of 2";
+      Kokkos::abort(err.str().c_str());
+    }
 #endif
     return vector_length;
   }

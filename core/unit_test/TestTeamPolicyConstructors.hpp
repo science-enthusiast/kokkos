@@ -253,6 +253,14 @@ TEST(TEST_CATEGORY_DEATH, team_policy_invalid_vector_length) {
           std::to_string(max_allowed + 2) +
           "\\) exceeds the maximum allowed \\(" + std::to_string(max_allowed) +
           "\\)");
+
+  EXPECT_DEATH(
+      Kokkos::TeamPolicy<TEST_EXECSPACE>(1, 1, 3),
+      "Kokkos::TeamPolicy error: vector_length \\(3\\) must be a power of 2");
+
+  EXPECT_DEATH(
+      Kokkos::TeamPolicy<TEST_EXECSPACE>(1, Kokkos::AUTO, 5),
+      "Kokkos::TeamPolicy error: vector_length \\(5\\) must be a power of 2");
 #endif
 }
 
