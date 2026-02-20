@@ -1773,6 +1773,30 @@ trunc(Experimental::basic_simd<
   return a;
 }
 
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::int32_t,
+                         Experimental::simd_abi::neon_fixed_size<2>>
+max(Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::neon_fixed_size<2>> const& a,
+    Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::neon_fixed_size<2>> const& b) {
+  return Experimental::basic_simd<std::int32_t,
+                                  Experimental::simd_abi::neon_fixed_size<2>>(
+      vmax_s32(static_cast<int32x2_t>(a), static_cast<int32x2_t>(b)));
+}
+
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::int32_t,
+                         Experimental::simd_abi::neon_fixed_size<2>>
+min(Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::neon_fixed_size<2>> const& a,
+    Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::neon_fixed_size<2>> const& b) {
+  return Experimental::basic_simd<std::int32_t,
+                                  Experimental::simd_abi::neon_fixed_size<2>>(
+      vmin_s32(static_cast<int32x2_t>(a), static_cast<int32x2_t>(b)));
+}
+
 namespace Experimental {
 
 template <typename SimdType, typename... Flags>
@@ -2134,6 +2158,30 @@ KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION Experimental::basic_simd<
 trunc(Experimental::basic_simd<
       std::int32_t, Experimental::simd_abi::neon_fixed_size<4>> const& a) {
   return a;
+}
+
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::int32_t,
+                         Experimental::simd_abi::neon_fixed_size<4>>
+max(Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::neon_fixed_size<4>> const& a,
+    Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::neon_fixed_size<4>> const& b) {
+  return Experimental::basic_simd<std::int32_t,
+                                  Experimental::simd_abi::neon_fixed_size<4>>(
+      vmaxq_s32(static_cast<int32x4_t>(a), static_cast<int32x4_t>(b)));
+}
+
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::int32_t,
+                         Experimental::simd_abi::neon_fixed_size<4>>
+min(Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::neon_fixed_size<4>> const& a,
+    Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::neon_fixed_size<4>> const& b) {
+  return Experimental::basic_simd<std::int32_t,
+                                  Experimental::simd_abi::neon_fixed_size<4>>(
+      vminq_s32(static_cast<int32x4_t>(a), static_cast<int32x4_t>(b)));
 }
 
 namespace Experimental {
@@ -2504,6 +2552,32 @@ trunc(Experimental::basic_simd<
   return a;
 }
 
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::int64_t,
+                         Experimental::simd_abi::neon_fixed_size<2>>
+max(Experimental::basic_simd<
+        std::int64_t, Experimental::simd_abi::neon_fixed_size<2>> const& a,
+    Experimental::basic_simd<
+        std::int64_t, Experimental::simd_abi::neon_fixed_size<2>> const& b) {
+  return Experimental::basic_simd<std::int64_t,
+                                  Experimental::simd_abi::neon_fixed_size<2>>(
+      vbslq_s64(static_cast<uint64x2_t>(a > b), static_cast<int64x2_t>(a),
+                static_cast<int64x2_t>(b)));
+}
+
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::int64_t,
+                         Experimental::simd_abi::neon_fixed_size<2>>
+min(Experimental::basic_simd<
+        std::int64_t, Experimental::simd_abi::neon_fixed_size<2>> const& a,
+    Experimental::basic_simd<
+        std::int64_t, Experimental::simd_abi::neon_fixed_size<2>> const& b) {
+  return Experimental::basic_simd<std::int64_t,
+                                  Experimental::simd_abi::neon_fixed_size<2>>(
+      vbslq_s64(static_cast<uint64x2_t>(a < b), static_cast<int64x2_t>(a),
+                static_cast<int64x2_t>(b)));
+}
+
 namespace Experimental {
 
 template <typename SimdType, typename... Flags>
@@ -2857,6 +2931,32 @@ KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION Experimental::basic_simd<
 trunc(Experimental::basic_simd<
       std::uint64_t, Experimental::simd_abi::neon_fixed_size<2>> const& a) {
   return a;
+}
+
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::uint64_t,
+                         Experimental::simd_abi::neon_fixed_size<2>>
+max(Experimental::basic_simd<
+        std::uint64_t, Experimental::simd_abi::neon_fixed_size<2>> const& a,
+    Experimental::basic_simd<
+        std::uint64_t, Experimental::simd_abi::neon_fixed_size<2>> const& b) {
+  return Experimental::basic_simd<std::uint64_t,
+                                  Experimental::simd_abi::neon_fixed_size<2>>(
+      vbslq_u64(static_cast<uint64x2_t>(a > b), static_cast<uint64x2_t>(a),
+                static_cast<uint64x2_t>(b)));
+}
+
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::uint64_t,
+                         Experimental::simd_abi::neon_fixed_size<2>>
+min(Experimental::basic_simd<
+        std::uint64_t, Experimental::simd_abi::neon_fixed_size<2>> const& a,
+    Experimental::basic_simd<
+        std::uint64_t, Experimental::simd_abi::neon_fixed_size<2>> const& b) {
+  return Experimental::basic_simd<std::uint64_t,
+                                  Experimental::simd_abi::neon_fixed_size<2>>(
+      vbslq_u64(static_cast<uint64x2_t>(a < b), static_cast<uint64x2_t>(a),
+                static_cast<uint64x2_t>(b)));
 }
 
 namespace Experimental {

@@ -2144,6 +2144,30 @@ trunc(Experimental::basic_simd<
       _mm256_cvtepi32_pd(static_cast<__m128i>(a)));
 }
 
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::int32_t,
+                         Experimental::simd_abi::avx2_fixed_size<4>>
+max(Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::avx2_fixed_size<4>> const& a,
+    Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::avx2_fixed_size<4>> const& b) {
+  return Experimental::basic_simd<std::int32_t,
+                                  Experimental::simd_abi::avx2_fixed_size<4>>(
+      _mm_max_epi32(static_cast<__m128i>(a), static_cast<__m128i>(b)));
+}
+
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::int32_t,
+                         Experimental::simd_abi::avx2_fixed_size<4>>
+min(Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::avx2_fixed_size<4>> const& a,
+    Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::avx2_fixed_size<4>> const& b) {
+  return Experimental::basic_simd<std::int32_t,
+                                  Experimental::simd_abi::avx2_fixed_size<4>>(
+      _mm_min_epi32(static_cast<__m128i>(a), static_cast<__m128i>(b)));
+}
+
 namespace Experimental {
 
 template <typename SimdType, typename... Flags>
@@ -2480,6 +2504,30 @@ trunc(Experimental::basic_simd<
   return Experimental::basic_simd<float,
                                   Experimental::simd_abi::avx2_fixed_size<8>>(
       _mm256_cvtepi32_ps(static_cast<__m256i>(a)));
+}
+
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::int32_t,
+                         Experimental::simd_abi::avx2_fixed_size<8>>
+max(Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::avx2_fixed_size<8>> const& a,
+    Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::avx2_fixed_size<8>> const& b) {
+  return Experimental::basic_simd<std::int32_t,
+                                  Experimental::simd_abi::avx2_fixed_size<8>>(
+      _mm256_max_epi32(static_cast<__m256i>(a), static_cast<__m256i>(b)));
+}
+
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::int32_t,
+                         Experimental::simd_abi::avx2_fixed_size<8>>
+min(Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::avx2_fixed_size<8>> const& a,
+    Experimental::basic_simd<
+        std::int32_t, Experimental::simd_abi::avx2_fixed_size<8>> const& b) {
+  return Experimental::basic_simd<std::int32_t,
+                                  Experimental::simd_abi::avx2_fixed_size<8>>(
+      _mm256_min_epi32(static_cast<__m256i>(a), static_cast<__m256i>(b)));
 }
 
 namespace Experimental {
@@ -2839,6 +2887,32 @@ trunc(Experimental::basic_simd<
       _mm256_setr_pd(a[0], a[1], a[2], a[3]));
 }
 
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::int64_t,
+                         Experimental::simd_abi::avx2_fixed_size<4>>
+max(Experimental::basic_simd<
+        std::int64_t, Experimental::simd_abi::avx2_fixed_size<4>> const& a,
+    Experimental::basic_simd<
+        std::int64_t, Experimental::simd_abi::avx2_fixed_size<4>> const& b) {
+  return Experimental::basic_simd<std::int64_t,
+                                  Experimental::simd_abi::avx2_fixed_size<4>>(
+      _mm256_blendv_epi8(static_cast<__m256i>(a), static_cast<__m256i>(b),
+                         static_cast<__m256i>(b > a)));
+}
+
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::int64_t,
+                         Experimental::simd_abi::avx2_fixed_size<4>>
+min(Experimental::basic_simd<
+        std::int64_t, Experimental::simd_abi::avx2_fixed_size<4>> const& a,
+    Experimental::basic_simd<
+        std::int64_t, Experimental::simd_abi::avx2_fixed_size<4>> const& b) {
+  return Experimental::basic_simd<std::int64_t,
+                                  Experimental::simd_abi::avx2_fixed_size<4>>(
+      _mm256_blendv_epi8(static_cast<__m256i>(a), static_cast<__m256i>(b),
+                         static_cast<__m256i>(b < a)));
+}
+
 namespace Experimental {
 
 template <typename SimdType, typename... Flags>
@@ -3192,6 +3266,32 @@ trunc(Experimental::basic_simd<
   return Experimental::basic_simd<double,
                                   Experimental::simd_abi::avx2_fixed_size<4>>(
       _mm256_setr_pd(a[0], a[1], a[2], a[3]));
+}
+
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::uint64_t,
+                         Experimental::simd_abi::avx2_fixed_size<4>>
+max(Experimental::basic_simd<
+        std::uint64_t, Experimental::simd_abi::avx2_fixed_size<4>> const& a,
+    Experimental::basic_simd<
+        std::uint64_t, Experimental::simd_abi::avx2_fixed_size<4>> const& b) {
+  return Experimental::basic_simd<std::uint64_t,
+                                  Experimental::simd_abi::avx2_fixed_size<4>>(
+      _mm256_blendv_epi8(static_cast<__m256i>(a), static_cast<__m256i>(b),
+                         static_cast<__m256i>(b > a)));
+}
+
+KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+Experimental::basic_simd<std::uint64_t,
+                         Experimental::simd_abi::avx2_fixed_size<4>>
+min(Experimental::basic_simd<
+        std::uint64_t, Experimental::simd_abi::avx2_fixed_size<4>> const& a,
+    Experimental::basic_simd<
+        std::uint64_t, Experimental::simd_abi::avx2_fixed_size<4>> const& b) {
+  return Experimental::basic_simd<std::uint64_t,
+                                  Experimental::simd_abi::avx2_fixed_size<4>>(
+      _mm256_blendv_epi8(static_cast<__m256i>(a), static_cast<__m256i>(b),
+                         static_cast<__m256i>(b < a)));
 }
 
 namespace Experimental {
