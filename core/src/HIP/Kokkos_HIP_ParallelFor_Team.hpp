@@ -58,9 +58,7 @@ class ParallelFor<FunctorType, Kokkos::TeamPolicy<Properties...>, HIP> {
   }
 
  public:
-  ParallelFor()                              = delete;
-  ParallelFor(ParallelFor const&)            = default;
-  ParallelFor& operator=(ParallelFor const&) = delete;
+  ParallelFor() = delete;
 
   __device__ inline void operator()() const {
     // Iterate this block through the league

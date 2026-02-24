@@ -346,8 +346,6 @@ class RangePolicy : public Impl::PolicyTraits<Properties...> {
    private:
     member_type m_begin;
     member_type m_end;
-    WorkRange();
-    WorkRange& operator=(const WorkRange&);
   };
 };
 

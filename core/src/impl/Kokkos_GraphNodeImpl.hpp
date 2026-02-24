@@ -40,9 +40,6 @@ struct GraphNodeImpl<ExecutionSpace, Kokkos::Experimental::TypeErasedTag,
   using device_handle_t       = Kokkos::Impl::DeviceHandle<ExecutionSpace>;
   using device_handle_storage_base_t = InstanceStorage<device_handle_t>;
 
- public:
-  virtual ~GraphNodeImpl() = default;
-
  protected:
   //----------------------------------------------------------------------------
   // <editor-fold desc="protected ctors and destructors"> {{{2
@@ -74,6 +71,7 @@ struct GraphNodeImpl<ExecutionSpace, Kokkos::Experimental::TypeErasedTag,
   GraphNodeImpl(GraphNodeImpl&&)                 = delete;
   GraphNodeImpl& operator=(GraphNodeImpl const&) = delete;
   GraphNodeImpl& operator=(GraphNodeImpl&&)      = delete;
+  virtual ~GraphNodeImpl()                       = default;
 
   // </editor-fold> end no other constructors }}}2
   //----------------------------------------------------------------------------

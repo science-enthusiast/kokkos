@@ -221,8 +221,12 @@ class HPX {
       : HPX(std::move(sender)) {}
 #endif
 
-  HPX(const HPX &other)       = default;
-  HPX &operator=(const HPX &) = default;
+  KOKKOS_DEFAULTED_FUNCTION HPX(const HPX &) = default;
+  KOKKOS_FUNCTION HPX(HPX &&other) : HPX(static_cast<const HPX &>(other)) {}
+  KOKKOS_DEFAULTED_FUNCTION HPX &operator=(const HPX &) = default;
+  KOKKOS_FUNCTION HPX &operator=(HPX &&other) {
+    return *this = static_cast<const HPX &>(other);
+  }
 
   void print_configuration(std::ostream &os, bool /*verbose*/ = false) const;
   instance_data &impl_get_instance_data() const noexcept {
