@@ -6,7 +6,7 @@ contribute, and we appreciate all of them.
 ## Getting Started
 
 To get started, please refer to our [Contributing to
-Kokkos]((https://kokkos.org/kokkos-core-wiki/contributing.html)) guide. It
+Kokkos](https://kokkos.org/kokkos-core-wiki/contributing.html) guide. It
 provides detailed instructions on:
 * How to get involved with the community.
 * The process for raising issues.
