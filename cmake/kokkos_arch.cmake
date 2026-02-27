@@ -891,6 +891,13 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR "x${CMAKE_CXX_SIMULATE_ID}" STREQUAL
   compiler_specific_defs(Clang _CRT_SECURE_NO_WARNINGS)
 endif()
 
+# MSVC needs another flag to allow using __VA_OPT__
+if(KOKKOS_CXX_COMPILER_ID STREQUAL NVIDIA)
+  compiler_specific_options(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID MSVC -Xcompiler=/Zc:preprocessor)
+else()
+  compiler_specific_options(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID MSVC /Zc:preprocessor)
+endif()
+
 #Right now we cannot get the compiler ID when cross-compiling, so just check
 #that HIP is enabled
 if(KOKKOS_ENABLE_HIP)
