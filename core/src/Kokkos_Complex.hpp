@@ -801,6 +801,18 @@ KOKKOS_INLINE_FUNCTION constexpr complex<Impl::promote_t<ArithmeticType>> conj(
   return complex<type>(x, -type());
 }
 
+//! Norm of a complex number.
+template <class RealType>
+KOKKOS_INLINE_FUNCTION constexpr RealType norm(const complex<RealType>& x) {
+  return x.real() * x.real() + x.imag() * x.imag();
+}
+
+template <class ArithmeticType>
+KOKKOS_INLINE_FUNCTION constexpr Impl::promote_t<ArithmeticType> norm(
+    ArithmeticType x) {
+  return static_cast<Impl::promote_t<ArithmeticType>>(x) * x;
+}
+
 //! Exponential of a complex number.
 template <class RealType>
 KOKKOS_INLINE_FUNCTION complex<RealType> exp(const complex<RealType>& x) {
