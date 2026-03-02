@@ -692,7 +692,8 @@ operator*(const complex<RealType1>& y, const RealType2& x) noexcept {
 
 //! Imaginary part of a complex number.
 template <class RealType>
-KOKKOS_INLINE_FUNCTION RealType imag(const complex<RealType>& x) noexcept {
+KOKKOS_INLINE_FUNCTION constexpr RealType imag(
+    const complex<RealType>& x) noexcept {
   return x.imag();
 }
 
@@ -704,7 +705,8 @@ KOKKOS_INLINE_FUNCTION constexpr Impl::promote_t<ArithmeticType> imag(
 
 //! Real part of a complex number.
 template <class RealType>
-KOKKOS_INLINE_FUNCTION RealType real(const complex<RealType>& x) noexcept {
+KOKKOS_INLINE_FUNCTION constexpr RealType real(
+    const complex<RealType>& x) noexcept {
   return x.real();
 }
 
@@ -789,9 +791,9 @@ KOKKOS_INLINE_FUNCTION Kokkos::complex<RealType> sqrt(
 
 //! Conjugate of a complex number.
 template <class RealType>
-KOKKOS_INLINE_FUNCTION complex<RealType> conj(
+KOKKOS_INLINE_FUNCTION constexpr complex<RealType> conj(
     const complex<RealType>& x) noexcept {
-  return complex<RealType>(real(x), -imag(x));
+  return {real(x), -imag(x)};
 }
 
 template <class ArithmeticType>
