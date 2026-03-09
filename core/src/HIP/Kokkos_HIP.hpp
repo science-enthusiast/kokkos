@@ -60,16 +60,6 @@ class HIP {
   //! \name Functions that all Kokkos devices must implement.
   //@{
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED KOKKOS_INLINE_FUNCTION static int in_parallel() {
-#if defined(__HIP_DEVICE_COMPILE__)
-    return true;
-#else
-    return false;
-#endif
-  }
-#endif
-
   /** \brief Wait until all dispatched functors complete.
    *
    * The parallel_for or parallel_reduce dispatch of a functor may return
@@ -96,14 +86,6 @@ class HIP {
   static hipDeviceProp_t const& hip_device_prop();
 
   static void impl_initialize(InitializationSettings const&);
-
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED static size_type detect_device_count() {
-    int count;
-    KOKKOS_IMPL_HIP_SAFE_CALL(hipGetDeviceCount(&count));
-    return count;
-  }
-#endif
 
   int concurrency() const;
 

@@ -181,15 +181,6 @@ class RangePolicy : public Impl::PolicyTraits<Properties...> {
   }
 
  public:
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use set_chunk_size instead")
-  inline void set(ChunkSize chunksize) {
-    m_granularity      = chunksize.value;
-    m_granularity_mask = m_granularity - 1;
-  }
-#endif
-
- public:
   /** \brief return chunk_size */
   inline member_type chunk_size() const { return m_granularity; }
 

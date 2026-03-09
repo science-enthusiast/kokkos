@@ -118,17 +118,6 @@ class Serial {
       : Serial(NewInstance{}) {}
 #endif
 
-  /// \brief True if and only if this method is being called in a
-  ///   thread-parallel function.
-  ///
-  /// For the Serial device, this method <i>always</i> returns false,
-  /// because parallel_for or parallel_reduce with the Serial device
-  /// always execute sequentially.
-
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED inline static int in_parallel() { return false; }
-#endif
-
   /// \brief Wait until all dispatched functors complete.
   ///
   /// The parallel_for or parallel_reduce dispatch of a functor may

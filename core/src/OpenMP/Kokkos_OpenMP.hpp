@@ -74,11 +74,6 @@ class OpenMP {
   /// \brief Print configuration information to the given output stream.
   void print_configuration(std::ostream& os, bool verbose = false) const;
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  /// \brief is the instance running a parallel algorithm
-  KOKKOS_DEPRECATED static bool in_parallel(OpenMP const& = OpenMP()) noexcept;
-#endif
-
   /// \brief Wait until all dispatched functors complete on the given instance
   ///
   ///  This is a no-op on OpenMP
