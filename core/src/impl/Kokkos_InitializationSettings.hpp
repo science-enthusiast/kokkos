@@ -38,8 +38,6 @@ class InitializationSettings {
   KOKKOS_IMPL_DECLARE(std::string, tools_libs);
   KOKKOS_IMPL_DECLARE(std::string, tools_args);
 
-#undef KOKKOS_IMPL_INIT_ARGS_DATA_MEMBER_TYPE
-#undef KOKKOS_IMPL_INIT_ARGS_DATA_MEMBER
 #undef KOKKOS_IMPL_DECLARE
 };
 
