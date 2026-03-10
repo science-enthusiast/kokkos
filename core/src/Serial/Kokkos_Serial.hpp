@@ -110,14 +110,6 @@ class Serial {
 
   explicit Serial(NewInstance);
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  template <typename T = void>
-  KOKKOS_DEPRECATED_WITH_COMMENT(
-      "Serial execution space should be constructed explicitly.")
-  Serial(NewInstance)
-      : Serial(NewInstance{}) {}
-#endif
-
   /// \brief Wait until all dispatched functors complete.
   ///
   /// The parallel_for or parallel_reduce dispatch of a functor may

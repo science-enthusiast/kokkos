@@ -207,20 +207,6 @@ class HPX {
              Kokkos::Impl::HostSharedPtr<instance_data>(new instance_data(
                  m_next_instance_id++, std::move(sender))))) {}
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  template <typename T = void>
-  KOKKOS_DEPRECATED_WITH_COMMENT(
-      "HPX execution space should be constructed explicitly.")
-  HPX(instance_mode mode)
-      : HPX(mode) {}
-
-  template <typename T = void>
-  KOKKOS_DEPRECATED_WITH_COMMENT(
-      "HPX execution space should be constructed explicitly.")
-  HPX(hpx::execution::experimental::unique_any_sender<> &&sender)
-      : HPX(std::move(sender)) {}
-#endif
-
   KOKKOS_DEFAULTED_FUNCTION HPX(const HPX &) = default;
   KOKKOS_FUNCTION HPX(HPX &&other) : HPX(static_cast<const HPX &>(other)) {}
   KOKKOS_DEFAULTED_FUNCTION HPX &operator=(const HPX &) = default;
