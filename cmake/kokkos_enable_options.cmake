@@ -24,7 +24,6 @@ kokkos_deprecated_list(OPTIONS ENABLE)
 
 kokkos_enable_option(CUDA_RELOCATABLE_DEVICE_CODE OFF "Whether to enable relocatable device code (RDC) for CUDA")
 kokkos_enable_option(CUDA_UVM OFF "Whether to use unified memory (UM) for CUDA by default")
-kokkos_enable_option(CUDA_LDG_INTRINSIC OFF "Whether to use CUDA LDG intrinsics")
 
 # As of 09/2024, cudaMallocAsync causes issues with ICP and older version of UCX
 # as MPI communication layer.
@@ -221,7 +220,6 @@ check_device_specific_options(
   CUDA_UVM
   CUDA_RELOCATABLE_DEVICE_CODE
   CUDA_CONSTEXPR
-  CUDA_LDG_INTRINSIC
   IMPL_CUDA_MALLOC_ASYNC
   IMPL_CUDA_UNIFIED_MEMORY
 )
@@ -271,14 +269,6 @@ if((KOKKOS_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE OR KOKKOS_ENABLE_HIP_RELOCATABLE_
     OR KOKKOS_ENABLE_SYCL_RELOCATABLE_DEVICE_CODE) AND BUILD_SHARED_LIBS
 )
   message(FATAL_ERROR "Relocatable device code requires static libraries.")
-endif()
-
-if(Kokkos_ENABLE_CUDA_LDG_INTRINSIC)
-  if(KOKKOS_ENABLE_DEPRECATED_CODE_4)
-    message(DEPRECATION "Setting Kokkos_ENABLE_CUDA_LDG_INTRINSIC is deprecated. LDG intrinsics are always enabled.")
-  else()
-    message(FATAL_ERROR "Kokkos_ENABLE_CUDA_LDG_INTRINSIC has been removed. LDG intrinsics are always enabled.")
-  endif()
 endif()
 
 if(DEFINED Kokkos_ENABLE_IMPL_DESUL_ATOMICS)
