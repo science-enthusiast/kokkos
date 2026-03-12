@@ -55,8 +55,6 @@ class HIP {
 
   HIP(hipStream_t stream, Impl::ManageStream manage_stream);
 
-  KOKKOS_DEPRECATED HIP(hipStream_t stream, bool manage_stream);
-
   //@}
   //------------------------------------
   //! \name Functions that all Kokkos devices must implement.
@@ -107,11 +105,8 @@ class HIP {
   }
 #endif
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  static int concurrency();
-#else
   int concurrency() const;
-#endif
+
   static const char* name();
 
   inline Impl::HIPInternal* impl_internal_space_instance() const {
