@@ -524,10 +524,6 @@ static_assert(
 
 //----------------------------------------------------------------------------
 
-#if defined(KOKKOS_ENABLE_CUDA) && defined(KOKKOS_ENABLE_DEPRECATED_CODE_4)
-#define KOKKOS_ENABLE_CUDA_LDG_INTRINSIC
-#endif
-
 #define KOKKOS_INVALID_INDEX (~std::size_t(0))
 
 #define KOKKOS_IMPL_CTOR_DEFAULT_ARG KOKKOS_INVALID_INDEX
