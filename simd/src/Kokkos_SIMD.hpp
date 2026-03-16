@@ -203,15 +203,6 @@ using native = ForSpace<T, Kokkos::DefaultExecutionSpace>;
 
 }  // namespace simd_abi
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-template <class T>
-using native_simd KOKKOS_DEPRECATED_WITH_COMMENT("Use simd<T> instead") =
-    basic_simd<T, simd_abi::native<T>>;
-template <class T>
-using native_simd_mask KOKKOS_DEPRECATED_WITH_COMMENT(
-    "Use simd_mask<T> instead") = basic_simd_mask<T, simd_abi::native<T>>;
-#endif
-
 template <class T, Impl::simd_size_t N = 0>
 using simd = basic_simd<T, simd_abi::Impl::native_abi<T, N>>;
 

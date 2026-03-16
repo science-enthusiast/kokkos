@@ -212,12 +212,7 @@ class DualView : public ViewTraits<DataType, Properties...> {
       std::is_same_v<typename t_dev::device_type, typename t_host::device_type>;
   //@}
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
- public:
-#else
  private:
-#endif
-
   // Moved this specifically after modified_flags to resolve an alignment issue
   // on MSVC/NVCC
   //! \name The two View instances.
