@@ -50,12 +50,6 @@ class Threads {
   //! \name Static functions that all Kokkos devices must implement.
   //@{
 
-  /// \brief True if and only if this method is being called in a
-  ///   thread-parallel function.
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED static int in_parallel();
-#endif
-
   /// \brief Print configuration information to the given output stream.
   void print_configuration(std::ostream& os, bool verbose = false) const;
 

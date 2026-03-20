@@ -542,9 +542,6 @@ if(Kokkos_ENABLE_HPX)
     hpx/TestHPX_IndependentInstancesRefCounting.cpp
     hpx/TestHPX_IndependentInstancesSynchronization.cpp
   )
-  if(Kokkos_ENABLE_DEPRECATED_CODE_4)
-    kokkos_add_executable_and_test(CoreUnitTest_HPX_InParallel SOURCES UnitTestMainInit.cpp hpx/TestHPX_InParallel.cpp)
-  endif()
 endif()
 
 if(Kokkos_ENABLE_OPENACC)
