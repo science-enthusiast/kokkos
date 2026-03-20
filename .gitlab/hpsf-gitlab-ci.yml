@@ -16,6 +16,8 @@
         export BUILD_TYPE="RelWithDebInfo";
         export GITHUB_PR_ID=$(echo ${CI_COMMIT_BRANCH} | cut -d \_ -f 1 | cut -c 3-);
       fi
+  after_script:
+    - sed -n "s/[0-9]*:[ ]\[[ ]*OK \] \([^ ]*\) (\([0-9]*\) ms)/\2 \1/p" test_results.txt | sort -nr | head
 
 NVIDIA-RTX5080:
   extends: .common-setup
@@ -42,6 +44,7 @@ NVIDIA-RTX5080:
         -S scripts/CTestRun.cmake
         -D CTEST_SITE="gitlab.spack.io"
         -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
   artifacts:
     when: always
     paths:
@@ -83,6 +86,7 @@ NVIDIA-GH200:
         -S scripts/CTestRun.cmake
         -D CTEST_SITE="gitlab.spack.io"
         -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
   artifacts:
     when: always
     paths:
@@ -115,6 +119,7 @@ NVIDIA-P100:
         -S scripts/CTestRun.cmake
         -D CTEST_SITE="gitlab.spack.io"
         -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
   artifacts:
     when: always
     paths:
@@ -155,6 +160,7 @@ INTEL-DATA-CENTER-MAX-1100:
         -S scripts/CTestRun.cmake
         -D CTEST_SITE="gitlab.spack.io"
         -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
   artifacts:
     when: always
     paths:
@@ -193,6 +199,7 @@ INTEL-DATA-CENTER-MAX-1100-OUT-OF-ORDER:
         -S scripts/CTestRun.cmake
         -D CTEST_SITE="gitlab.spack.io"
         -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
   artifacts:
     when: always
     paths:
@@ -232,6 +239,7 @@ AMD-MI300A:
       -S scripts/CTestRun.cmake
       -D CTEST_SITE="gitlab.spack.io"
       -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
   artifacts:
     when: always
     paths:
@@ -265,6 +273,9 @@ NVIDIA-GRACE-GRACE:
         -S scripts/CTestRun.cmake
         -D CTEST_SITE="gitlab.spack.io"
         -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
+  after_script:
+    - sed -n "s/[0-9]*:[ ]\[[ ]*OK \] \([^ ]*\) (\([0-9]*\) ms)/\2 \1/p" test_results.txt | sort -nr | head
   artifacts:
     when: always
     paths:
@@ -298,6 +309,7 @@ NVIDIA-DGX-SPARK:
         -S scripts/CTestRun.cmake
         -D CTEST_SITE="gitlab.spack.io"
         -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
   artifacts:
     when: always
     paths:
