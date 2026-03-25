@@ -99,10 +99,10 @@ class Serial {
   //@}
 
   KOKKOS_DEFAULTED_FUNCTION Serial(const Serial&) = default;
-  KOKKOS_FUNCTION Serial(Serial&& other)
+  KOKKOS_FUNCTION Serial(Serial&& other) noexcept
       : Serial(static_cast<const Serial&>(other)) {}
   KOKKOS_DEFAULTED_FUNCTION Serial& operator=(const Serial&) = default;
-  KOKKOS_FUNCTION Serial& operator=(Serial&& other) {
+  KOKKOS_FUNCTION Serial& operator=(Serial&& other) noexcept {
     return *this = static_cast<const Serial&>(other);
   }
   ~Serial();

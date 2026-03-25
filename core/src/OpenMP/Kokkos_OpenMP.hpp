@@ -52,10 +52,10 @@ class OpenMP {
   using scratch_memory_space = ScratchMemorySpace<OpenMP>;
 
   KOKKOS_DEFAULTED_FUNCTION OpenMP(const OpenMP&) = default;
-  KOKKOS_FUNCTION OpenMP(OpenMP&& other)
+  KOKKOS_FUNCTION OpenMP(OpenMP&& other) noexcept
       : OpenMP(static_cast<const OpenMP&>(other)) {}
   KOKKOS_DEFAULTED_FUNCTION OpenMP& operator=(const OpenMP&) = default;
-  KOKKOS_FUNCTION OpenMP& operator=(OpenMP&& other) {
+  KOKKOS_FUNCTION OpenMP& operator=(OpenMP&& other) noexcept {
     return *this = static_cast<const OpenMP&>(other);
   }
   ~OpenMP();
