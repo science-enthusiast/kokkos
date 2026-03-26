@@ -377,24 +377,26 @@
 // Determine the default execution space for parallel dispatch.
 // There is zero or one default execution space specified.
 
-#if 1 < ((defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_CUDA) ? 1 : 0) +    \
-         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_HIP) ? 1 : 0) +     \
-         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SYCL) ? 1 : 0) +    \
-         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENACC) ? 1 : 0) + \
-         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENMP) ? 1 : 0) +  \
-         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_THREADS) ? 1 : 0) + \
-         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_HPX) ? 1 : 0) +     \
+#if 1 < ((defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_CUDA) ? 1 : 0) +        \
+         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_HIP) ? 1 : 0) +         \
+         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SYCL) ? 1 : 0) +        \
+         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENACC) ? 1 : 0) +     \
+         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_NEXTSILICON) ? 1 : 0) + \
+         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENMP) ? 1 : 0) +      \
+         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_THREADS) ? 1 : 0) +     \
+         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_HPX) ? 1 : 0) +         \
          (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SERIAL) ? 1 : 0))
 #error "More than one KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_* specified."
 #endif
 
 // If default is not specified then chose from enabled execution spaces.
-// Priority: CUDA, HIP, SYCL, OPENACC, OPENMP, THREADS, HPX,
+// Priority: CUDA, HIP, SYCL, OPENACC, NEXTSILICON, OPENMP, THREADS, HPX,
 // SERIAL
 #if defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_CUDA)
 #elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_HIP)
 #elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SYCL)
 #elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENACC)
+#elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_NEXTSILICON)
 #elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENMP)
 #elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_THREADS)
 #elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_HPX)
@@ -407,6 +409,8 @@
 #define KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SYCL
 #elif defined(KOKKOS_ENABLE_OPENACC)
 #define KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENACC
+#elif defined(KOKKOS_ENABLE_NEXTSILICON)
+#define KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_NEXTSILICON
 #elif defined(KOKKOS_ENABLE_OPENMP)
 #define KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENMP
 #elif defined(KOKKOS_ENABLE_THREADS)
@@ -454,6 +458,12 @@
     KOKKOS_IMPL_STRIP_PARENS(CODE)                \
   }
 #endif
+#endif
+
+#ifdef KOKKOS_ENABLE_NEXTSILICON
+// FIXME_NEXTSILICON: Placeholder until proper ON_DEVICE/ON_HOST
+#define KOKKOS_IF_ON_DEVICE(CODE)
+#define KOKKOS_IF_ON_HOST(CODE) KOKKOS_IMPL_STRIP_PARENS(CODE)
 #endif
 
 #if !defined(KOKKOS_IF_ON_HOST) && !defined(KOKKOS_IF_ON_DEVICE)
