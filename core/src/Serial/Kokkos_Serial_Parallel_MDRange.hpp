@@ -30,8 +30,25 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
       KOKKOS_IMPL_NLWOTILE_LOOP_1(index_type,
                                   IsLeftOuter, m_rp, m_func);
     } else if constexpr (MDRangePolicy::rank == 2) {
-      KOKKOS_IMPL_NLWOTILE_LOOP_2(index_type,
-                                  IsLeftOuter, m_rp, m_func);
+      if (IsLeftOuter) {
+        for (auto i1 = static_cast<index_type>(m_rp.m_lower[1]);
+             i1 < static_cast<index_type>(m_rp.m_upper[1]); ++i1) {
+          for (auto i0 = static_cast<index_type>(0);
+               i0 < static_cast<index_type>(6143); ++i0) {
+            m_func(i1, i0);
+          }
+        }
+      } else {
+        for (auto i1 = static_cast<index_type>(m_rp.m_lower[0]);
+             i1 < static_cast<index_type>(m_rp.m_upper[0]); ++i1) {
+          for (auto i0 = static_cast<index_type>(0);
+               i0 < static_cast<index_type>(6143); ++i0) {
+            m_func(i1, i0);
+          }
+        }
+      }
+      // KOKKOS_IMPL_NLWOTILE_LOOP_2(index_type,
+      //                            IsLeftOuter, m_rp, m_func);
     } else if constexpr (MDRangePolicy::rank == 3) {
       KOKKOS_IMPL_NLWOTILE_LOOP_3(index_type,
                                   IsLeftOuter, m_rp, m_func);
@@ -59,8 +76,8 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
       KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_1(TagType{}, index_type,
                                          IsLeftOuter, m_rp, m_func);
     } else if constexpr (MDRangePolicy::rank == 2) {
-      KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_2(TagType{}, index_type,
-                                         IsLeftOuter, m_rp, m_func);
+//      KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_2(TagType{}, index_type,
+//                                         IsLeftOuter, m_rp, m_func);
     } else if constexpr (MDRangePolicy::rank == 3) {
       KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_3(TagType{}, index_type,
                                          IsLeftOuter, m_rp, m_func);
