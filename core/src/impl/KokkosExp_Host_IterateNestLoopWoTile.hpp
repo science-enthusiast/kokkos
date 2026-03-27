@@ -30,24 +30,11 @@ constexpr uint16_t kStripLen = 32;
 #define KOKKOS_IMPL_NLWOTILE_APPLY(func, ...) func(__VA_ARGS__);
 
 // Non-Tagged: Outer Iterate::Right
-#define KOKKOS_IMPL_NLWOTILE_R1(type, rp, func, rank, ...)                    \
-  auto loop_lower     = static_cast<type>(rp.m_lower[rank - 1]);              \
-  auto loop_len       = static_cast<type>(rp.m_upper[rank - 1]) - loop_lower; \
-  auto adj_loop_len   = loop_len - (loop_len % static_cast<type>(kStripLen)); \
-  auto adj_loop_upper = static_cast<type>(loop_lower + adj_loop_len);         \
-  for (auto i_strip = loop_lower; i_strip < adj_loop_len;                     \
-       i_strip += kStripLen) {                                                \
-    KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                        \
-    for (auto i_0 = static_cast<type>(0); i_0 < static_cast<type>(kStripLen); \
-         ++i_0) {                                                             \
-      auto i0 = i_0 + i_strip;                                                \
-      KOKKOS_IMPL_NLWOTILE_APPLY(func, __VA_ARGS__, i0)                       \
-    }                                                                         \
-  }                                                                           \
-  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                          \
-  for (auto i_strip = adj_loop_upper;                                         \
-       i_strip < static_cast<type>(rp.m_upper[rank - 1]); ++i_strip) {        \
-    KOKKOS_IMPL_NLWOTILE_APPLY(func, __VA_ARGS__, i_strip)                    \
+#define KOKKOS_IMPL_NLWOTILE_R1(type, rp, func, rank, ...)         \
+  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                               \
+  for (auto i0 = static_cast<type>(rp.m_lower[rank - 1]);          \
+       i0 < static_cast<type>(rp.m_upper[rank - 1]); ++i0) {       \
+    KOKKOS_IMPL_NLWOTILE_APPLY(func, __VA_ARGS__, i0)              \
   }
 
 #define KOKKOS_IMPL_NLWOTILE_R2(type, rp, func, rank, ...)         \
@@ -87,24 +74,11 @@ constexpr uint16_t kStripLen = 32;
   }
 
 // Non-Tagged: Outer Iterate::Left
-#define KOKKOS_IMPL_NLWOTILE_L1(type, rp, func, ...)                          \
-  auto loop_lower     = static_cast<type>(rp.m_lower[0]);                     \
-  auto loop_len       = static_cast<type>(rp.m_upper[0]) - loop_lower;        \
-  auto adj_loop_len   = loop_len - (loop_len % static_cast<type>(kStripLen)); \
-  auto adj_loop_upper = static_cast<type>(loop_lower + adj_loop_len);         \
-  for (auto i_strip = loop_lower; i_strip < adj_loop_len;                     \
-       i_strip += kStripLen) {                                                \
-    KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                        \
-    for (auto i_0 = static_cast<type>(0); i_0 < static_cast<type>(kStripLen); \
-         ++i_0) {                                                             \
-      auto i0 = i_0 + i_strip;                                                \
-      KOKKOS_IMPL_NLWOTILE_APPLY(func, i0, __VA_ARGS__)                       \
-    }                                                                         \
-  }                                                                           \
-  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                          \
-  for (auto i_strip = adj_loop_upper;                                         \
-       i_strip < static_cast<type>(rp.m_upper[0]); ++i_strip) {               \
-    KOKKOS_IMPL_NLWOTILE_APPLY(func, i_strip, __VA_ARGS__)                    \
+#define KOKKOS_IMPL_NLWOTILE_L1(type, rp, func, ...)         \
+  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                         \
+  for (auto i0 = static_cast<type>(rp.m_lower[0]);           \
+       i0 < static_cast<type>(rp.m_upper[0]); ++i0) {        \
+    KOKKOS_IMPL_NLWOTILE_APPLY(func, i0, __VA_ARGS__)        \
   }
 
 #define KOKKOS_IMPL_NLWOTILE_L2(type, rp, func, ...)         \
@@ -145,24 +119,11 @@ constexpr uint16_t kStripLen = 32;
 
 // Non-Tagged: Outer Iteration: Left or Right
 
-#define KOKKOS_IMPL_NLWOTILE_LOOP_1(type, is_left_outer, rp, func)            \
-  auto loop_lower     = static_cast<type>(rp.m_lower[0]);                     \
-  auto loop_len       = static_cast<type>(rp.m_upper[0]) - loop_lower;        \
-  auto adj_loop_len   = loop_len - (loop_len % static_cast<type>(kStripLen)); \
-  auto adj_loop_upper = static_cast<type>(loop_lower + adj_loop_len);         \
-  for (auto i_strip = loop_lower; i_strip < adj_loop_upper;                   \
-       i_strip += kStripLen) {                                                \
-    KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                        \
-    for (auto i_0 = static_cast<type>(0); i_0 < static_cast<type>(kStripLen); \
-         ++i_0) {                                                             \
-      auto i0 = i_0 + i_strip;                                                \
-      KOKKOS_IMPL_NLWOTILE_APPLY(func, i0)                                    \
-    }                                                                         \
-  }                                                                           \
-  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                          \
-  for (auto i_strip = adj_loop_upper;                                         \
-       i_strip < static_cast<type>(rp.m_upper[0]); ++i_strip) {               \
-    KOKKOS_IMPL_NLWOTILE_APPLY(func, i_strip)                                 \
+#define KOKKOS_IMPL_NLWOTILE_LOOP_1(type, is_left_outer, rp, func) \
+  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                               \
+  for (auto i0 = static_cast<type>(rp.m_lower[0]);                 \
+       i0 < static_cast<type>(rp.m_upper[0]); ++i0) {              \
+    KOKKOS_IMPL_NLWOTILE_APPLY(func, i0)                           \
   }
 
 #define KOKKOS_IMPL_NLWOTILE_LOOP_2(type, is_left_outer, rp, func) \
@@ -262,24 +223,11 @@ constexpr uint16_t kStripLen = 32;
   func(tag, __VA_ARGS__);
 
 // Tagged: Outer Iterate::Right
-#define KOKKOS_IMPL_TAGGED_NLWOTILE_R1(tag, type, rp, func, rank, ...)        \
-  auto loop_lower     = static_cast<type>(rp.m_lower[rank - 1]);              \
-  auto loop_len       = static_cast<type>(rp.m_upper[rank - 1]) - loop_lower; \
-  auto adj_loop_len   = loop_len - (loop_len % static_cast<type>(kStripLen)); \
-  auto adj_loop_upper = static_cast<type>(loop_lower + adj_loop_len);         \
-  for (auto i_strip = loop_lower; i_strip < adj_loop_upper;                   \
-       i_strip += kStripLen) {                                                \
-    KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                        \
-    for (auto i_0 = static_cast<type>(0); i_0 < static_cast<type>(kStripLen); \
-         ++i_0) {                                                             \
-      auto i0 = i_0 + i_strip;                                                \
-      KOKKOS_IMPL_TAGGED_NLWOTILE_APPLY(tag, func, __VA_ARGS__, i0)           \
-    }                                                                         \
-  }                                                                           \
-  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                          \
-  for (auto i_strip = adj_loop_upper;                                         \
-       i_strip < static_cast<type>(rp.m_upper[rank - 1]); ++i_strip) {        \
-    KOKKOS_IMPL_TAGGED_NLWOTILE_APPLY(tag, func, __VA_ARGS__, i_strip)        \
+#define KOKKOS_IMPL_TAGGED_NLWOTILE_R1(tag, type, rp, func, rank, ...)         \
+  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                           \
+  for (auto i0 = static_cast<type>(rp.m_lower[rank - 1]);                      \
+       i0 < static_cast<type>(rp.m_upper[rank - 1]); ++i0) {                   \
+    KOKKOS_IMPL_TAGGED_NLWOTILE_APPLY(tag, func, __VA_ARGS__, i0)              \
   }
 
 #define KOKKOS_IMPL_TAGGED_NLWOTILE_R2(tag, type, rp, func, rank, ...)         \
@@ -319,24 +267,11 @@ constexpr uint16_t kStripLen = 32;
   }
 
 // Tagged: Outer Iterate::Left
-#define KOKKOS_IMPL_TAGGED_NLWOTILE_L1(tag, type, rp, func, ...)              \
-  auto loop_lower     = static_cast<type>(rp.m_lower[0]);                     \
-  auto loop_len       = static_cast<type>(rp.m_upper[0]) - loop_lower;        \
-  auto adj_loop_len   = loop_len - (loop_len % static_cast<type>(kStripLen)); \
-  auto adj_loop_upper = static_cast<type>(loop_lower + adj_loop_len);         \
-  for (auto i_strip = loop_lower; i_strip < adj_loop_upper;                   \
-       i_strip += kStripLen) {                                                \
-    KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                        \
-    for (auto i_0 = static_cast<type>(0); i_0 < static_cast<type>(kStripLen); \
-         ++i_0) {                                                             \
-      auto i0 = i_0 + i_strip;                                                \
-      KOKKOS_IMPL_TAGGED_NLWOTILE_APPLY(tag, func, i0, __VA_ARGS__)           \
-    }                                                                         \
-  }                                                                           \
-  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                          \
-  for (auto i_strip = adj_loop_upper;                                         \
-       i_strip < static_cast<type>(rp.m_upper[0]); ++i_strip) {               \
-    KOKKOS_IMPL_TAGGED_NLWOTILE_APPLY(tag, func, i_strip, __VA_ARGS__)        \
+#define KOKKOS_IMPL_TAGGED_NLWOTILE_L1(tag, type, rp, func, ...)         \
+  KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                     \
+  for (auto i0 = static_cast<type>(rp.m_lower[0]);                       \
+       i0 < static_cast<type>(rp.m_upper[0]); ++i0) {                    \
+    KOKKOS_IMPL_TAGGED_NLWOTILE_APPLY(tag, func, i0, __VA_ARGS__)        \
   }
 
 #define KOKKOS_IMPL_TAGGED_NLWOTILE_L2(tag, type, rp, func, ...)         \
@@ -378,23 +313,10 @@ constexpr uint16_t kStripLen = 32;
 // Tagged: Outer Iterate: Left or Right
 
 #define KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_1(tag, type, is_left_outer, rp, func) \
-  auto loop_lower     = static_cast<type>(rp.m_lower[0]);                      \
-  auto loop_len       = static_cast<type>(rp.m_upper[0]) - loop_lower;         \
-  auto adj_loop_len   = loop_len - (loop_len % static_cast<type>(kStripLen));  \
-  auto adj_loop_upper = static_cast<type>(loop_lower + adj_loop_len);          \
-  for (auto i_strip = loop_lower; i_strip < adj_loop_upper;                    \
-       i_strip += kStripLen) {                                                 \
-    KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                         \
-    for (auto i_0 = static_cast<type>(0); i_0 < static_cast<type>(kStripLen);  \
-         ++i_0) {                                                              \
-      auto i0 = i_0 + i_strip;                                                 \
-      KOKKOS_IMPL_TAGGED_NLWOTILE_APPLY(tag, func, i0)                         \
-    }                                                                          \
-  }                                                                            \
   KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP                                           \
-  for (auto i_strip = adj_loop_upper;                                          \
-       i_strip < static_cast<type>(rp.m_upper[0]); ++i_strip) {                \
-    KOKKOS_IMPL_TAGGED_NLWOTILE_APPLY(tag, func, i_strip)                      \
+  for (auto i0 = static_cast<type>(rp.m_lower[0]);                             \
+       i0 < static_cast<type>(rp.m_upper[0]); ++i0) {                          \
+    KOKKOS_IMPL_TAGGED_NLWOTILE_APPLY(tag, func, i0)                           \
   }
 
 #define KOKKOS_IMPL_TAGGED_NLWOTILE_LOOP_2(tag, type, is_left_outer, rp, func) \
