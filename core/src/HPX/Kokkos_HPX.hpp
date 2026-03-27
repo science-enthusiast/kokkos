@@ -237,16 +237,6 @@ class HPX {
     impl_get_instance_data().fence(name);
   }
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED static bool is_asynchronous(HPX const & = HPX()) noexcept {
-#if defined(KOKKOS_ENABLE_IMPL_HPX_ASYNC_DISPATCH)
-    return true;
-#else
-    return false;
-#endif
-  }
-#endif
-
   int concurrency() const;
   static void impl_initialize(InitializationSettings const &);
   static void impl_finalize();
