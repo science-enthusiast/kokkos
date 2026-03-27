@@ -7,12 +7,19 @@
 #include <NextSilicon/Kokkos_NextSilicon_Instance.hpp>
 #include <impl/Kokkos_Profiling.hpp>
 #include <impl/Kokkos_ExecSpaceManager.hpp>
+#include <impl/Kokkos_CheckUsage.hpp>
 
 #include <nextapi/parallelism.hpp>
 #include <ostream>
 
 Kokkos::Experimental::NextSilicon::NextSilicon()
-    : m_space_instance(Impl::NextSiliconInternal::default_instance) {}
+    : m_space_instance(
+          (Kokkos::Impl::check_execution_space_constructor_precondition(name()),
+           Impl::NextSiliconInternal::default_instance)) {}
+
+Kokkos::Experimental::NextSilicon::~NextSilicon() {
+  Kokkos::Impl::check_execution_space_destructor_precondition(name());
+}
 
 void Kokkos::Experimental::NextSilicon::impl_initialize(
     InitializationSettings const& /*settings*/) {

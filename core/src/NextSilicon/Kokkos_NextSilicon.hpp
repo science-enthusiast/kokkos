@@ -48,6 +48,7 @@ class NextSilicon {
     return *this = static_cast<const NextSilicon&>(other);
   }
   NextSilicon();
+  ~NextSilicon();
 
   static void impl_initialize(InitializationSettings const& settings);
   static void impl_finalize();
