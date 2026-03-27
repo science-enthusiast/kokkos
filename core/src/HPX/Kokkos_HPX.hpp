@@ -208,9 +208,10 @@ class HPX {
                  m_next_instance_id++, std::move(sender))))) {}
 
   KOKKOS_DEFAULTED_FUNCTION HPX(const HPX &) = default;
-  KOKKOS_FUNCTION HPX(HPX &&other) : HPX(static_cast<const HPX &>(other)) {}
+  KOKKOS_FUNCTION HPX(HPX &&other) noexcept
+      : HPX(static_cast<const HPX &>(other)) {}
   KOKKOS_DEFAULTED_FUNCTION HPX &operator=(const HPX &) = default;
-  KOKKOS_FUNCTION HPX &operator=(HPX &&other) {
+  KOKKOS_FUNCTION HPX &operator=(HPX &&other) noexcept {
     return *this = static_cast<const HPX &>(other);
   }
 

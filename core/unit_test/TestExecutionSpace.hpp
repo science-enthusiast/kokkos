@@ -75,6 +75,16 @@ constexpr bool test_execspace_explicit_construction() {
 
 static_assert(test_execspace_explicit_construction());
 
+consteval bool test_execspace_nothrow_copy_and_move() {
+  static_assert(std::is_nothrow_copy_constructible_v<TEST_EXECSPACE>);
+  static_assert(std::is_nothrow_copy_assignable_v<TEST_EXECSPACE>);
+  static_assert(std::is_nothrow_move_constructible_v<TEST_EXECSPACE>);
+  static_assert(std::is_nothrow_move_assignable_v<TEST_EXECSPACE>);
+  return true;
+}
+
+static_assert(test_execspace_nothrow_copy_and_move());
+
 // We don't actually promise a tool-observable event and acknowledge that some
 // backend mights not need a fence to ensure that all enqueued work has finished
 // before an execution space instance is destroyed. Therefore we might want to
