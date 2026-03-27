@@ -8,16 +8,17 @@
 #include <NextSilicon/Kokkos_NextSiliconSpace.hpp>
 #include <impl/Kokkos_ZeroMemset_fwd.hpp>
 
+#include <nextapi/memory.hpp>
+
 namespace Kokkos {
 namespace Impl {
 
-void ZeroMemsetNextSilicon(void* buffer, size_t buffer_size);
-
 template <>
 struct ZeroMemset<Kokkos::Experimental::NextSilicon> {
-  ZeroMemset(const Kokkos::Experimental::NextSilicon& exec_space, void* dst,
+  ZeroMemset(const Kokkos::Experimental::NextSilicon& /*exec_space*/, void* dst,
              size_t cnt) {
-    ZeroMemsetNextSilicon(dst, cnt);
+    uint8_t pattern = 0;
+    nextapi_memory_fill(dst, &pattern, sizeof(pattern), cnt);
   }
 };
 
