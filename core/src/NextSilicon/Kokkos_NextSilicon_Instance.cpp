@@ -13,20 +13,15 @@
 
 namespace Kokkos::Experimental::Impl {
 
-NextSiliconInternal *NextSiliconInternal::singleton() {
-  static NextSiliconInternal self;
-  return &self;
-}
+Kokkos::Impl::HostSharedPtr<Kokkos::Experimental::Impl::NextSiliconInternal>
+    Kokkos::Experimental::Impl::NextSiliconInternal::default_instance;
 
-void NextSiliconInternal::initialize() {
-  m_is_initialized = true;
-}
+NextSiliconInternal::NextSiliconInternal() {}
 
-void NextSiliconInternal::finalize() {
-  m_is_initialized = false;
+NextSiliconInternal::~NextSiliconInternal() {
+  fence(
+      "Kokkos::Experimental::Impl::NextSiliconInternal: fence on destruction");
 }
-
-bool NextSiliconInternal::is_initialized() const { return m_is_initialized; }
 
 void NextSiliconInternal::print_configuration(std::ostream &os) const {
   os << "macro  KOKKOS_ENABLE_NEXTSILICON      : defined\n";

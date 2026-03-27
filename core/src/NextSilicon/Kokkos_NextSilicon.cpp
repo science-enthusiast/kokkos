@@ -12,19 +12,16 @@
 #include <ostream>
 
 Kokkos::Experimental::NextSilicon::NextSilicon()
-    : m_space_instance(Impl::NextSiliconInternal::singleton()) {}
+    : m_space_instance(Impl::NextSiliconInternal::default_instance) {}
 
 void Kokkos::Experimental::NextSilicon::impl_initialize(
     InitializationSettings const& /*settings*/) {
-  Impl::NextSiliconInternal::singleton()->initialize();
+  Impl::NextSiliconInternal::default_instance =
+      Kokkos::Impl::HostSharedPtr(new Impl::NextSiliconInternal);
 }
 
 void Kokkos::Experimental::NextSilicon::impl_finalize() {
-  Impl::NextSiliconInternal::singleton()->finalize();
-}
-
-bool Kokkos::Experimental::NextSilicon::impl_is_initialized() {
-  return Impl::NextSiliconInternal::singleton()->is_initialized();
+  Impl::NextSiliconInternal::default_instance = nullptr;
 }
 
 void Kokkos::Experimental::NextSilicon::print_configuration(
@@ -37,7 +34,7 @@ void Kokkos::Experimental::NextSilicon::print_configuration(
 }
 
 void Kokkos::Experimental::NextSilicon::fence(std::string const& name) const {
-  Impl::NextSiliconInternal::singleton()->fence(name);
+  m_space_instance->fence(name);
 }
 
 void Kokkos::Experimental::NextSilicon::impl_static_fence(

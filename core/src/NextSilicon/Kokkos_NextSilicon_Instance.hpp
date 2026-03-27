@@ -13,18 +13,14 @@
 namespace Kokkos::Experimental::Impl {
 
 class NextSiliconInternal {
-  bool m_is_initialized = false;
-
-  NextSiliconInternal()                                      = default;
   NextSiliconInternal(const NextSiliconInternal&)            = delete;
   NextSiliconInternal& operator=(const NextSiliconInternal&) = delete;
 
  public:
-  static NextSiliconInternal* singleton();
+  static Kokkos::Impl::HostSharedPtr<NextSiliconInternal> default_instance;
 
-  void initialize();
-  void finalize();
-  bool is_initialized() const;
+  NextSiliconInternal();
+  ~NextSiliconInternal();
 
   void print_configuration(std::ostream& os) const;
 

@@ -20,7 +20,7 @@ class NextSiliconInternal;
 namespace Kokkos::Experimental {
 
 class NextSilicon {
-  Impl::NextSiliconInternal* m_space_instance;
+  Kokkos::Impl::HostSharedPtr<Impl::NextSiliconInternal> m_space_instance;
 
   friend bool operator==(NextSilicon const& lhs, NextSilicon const& rhs) {
     return lhs.impl_internal_space_instance() ==
@@ -51,7 +51,6 @@ class NextSilicon {
 
   static void impl_initialize(InitializationSettings const& settings);
   static void impl_finalize();
-  static bool impl_is_initialized();
 
   void print_configuration(std::ostream& os, bool verbose = false) const;
 
@@ -65,7 +64,7 @@ class NextSilicon {
   }
   uint32_t impl_instance_id() const noexcept;
   Impl::NextSiliconInternal* impl_internal_space_instance() const {
-    return m_space_instance;
+    return m_space_instance.get();
   }
 };
 
