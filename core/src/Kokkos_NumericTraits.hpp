@@ -8,6 +8,8 @@
 #define KOKKOS_IMPL_PUBLIC_INCLUDE_NOTDEFINED_NUMERIC_TRAITS
 #endif
 
+#include <Kokkos_Macros.hpp>
+
 #include <type_traits>
 #include <limits>
 
