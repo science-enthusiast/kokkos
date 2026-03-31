@@ -128,9 +128,11 @@ inline void parallel_for(const std::string& str, const ExecPolicy& policy,
       Kokkos::Tools::Impl::begin_parallel_for(policy, functor, str, kpID);
   const auto& inner_policy = response.policy;
 
-  auto closure =
-      Kokkos::Impl::construct_with_shared_allocation_tracking_disabled<
-          Impl::ParallelFor<FunctorType, ExecPolicy>>(functor, inner_policy);
+//  auto closure =
+//      Kokkos::Impl::construct_with_shared_allocation_tracking_disabled<
+//          Impl::ParallelFor<FunctorType, ExecPolicy>>(functor, inner_policy);
+
+  auto closure = Impl::ParallelFor<FunctorType, ExecPolicy>(functor, inner_policy);
 
   closure.execute();
 

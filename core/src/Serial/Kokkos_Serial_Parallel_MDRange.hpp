@@ -33,16 +33,16 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
       if (IsLeftOuter) {
         for (auto i1 = static_cast<index_type>(m_rp.m_lower[1]);
              i1 < static_cast<index_type>(m_rp.m_upper[1]); ++i1) {
-          for (auto i0 = static_cast<index_type>(0);
-               i0 < static_cast<index_type>(6143); ++i0) {
+          for (auto i0 = static_cast<index_type>(m_rp.m_lower[0]);
+               i0 < static_cast<index_type>(m_rp.m_upper[0]); ++i0) {
             m_func(i1, i0);
           }
         }
       } else {
         for (auto i1 = static_cast<index_type>(m_rp.m_lower[0]);
              i1 < static_cast<index_type>(m_rp.m_upper[0]); ++i1) {
-          for (auto i0 = static_cast<index_type>(0);
-               i0 < static_cast<index_type>(6143); ++i0) {
+          for (auto i0 = static_cast<index_type>(m_rp.m_lower[1]);
+               i0 < static_cast<index_type>(m_rp.m_upper[1]); ++i0) {
             m_func(i1, i0);
           }
         }
