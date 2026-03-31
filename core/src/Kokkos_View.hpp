@@ -694,7 +694,8 @@ class View : public Impl::BasicViewFromTraits<DataType, Properties...>::type {
 // Define the workaround here since this condition will be re-used.
 // We undef KOKKOS_IMPL_VIEW_HOOKS_NVCC_WORKAROUND later.
 #if defined(KOKKOS_COMPILER_NVCC) || defined(KOKKOS_COMPILER_NVHPC) || \
-    (defined(KOKKOS_COMPILER_CLANG) && defined(KOKKOS_ENABLE_CUDA))
+    (defined(KOKKOS_COMPILER_CLANG) && KOKKOS_COMPILER_CLANG < 1600 && \
+     defined(KOKKOS_ENABLE_CUDA))
 #define KOKKOS_IMPL_VIEW_HOOKS_NVCC_WORKAROUND 1
 #endif
 #ifdef KOKKOS_IMPL_VIEW_HOOKS_NVCC_WORKAROUND
