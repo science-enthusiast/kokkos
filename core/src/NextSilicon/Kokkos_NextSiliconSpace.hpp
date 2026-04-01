@@ -25,8 +25,6 @@ class NextSiliconSharedSpace {
   using execution_space = NextSilicon;
   using device_type     = Kokkos::Device<execution_space, memory_space>;
   using size_type       = size_t;
-  using scratch_memory_space =
-      Kokkos::ScratchMemorySpace<Kokkos::Experimental::NextSilicon>;
 
   NextSiliconSharedSpace() = default;
 
@@ -110,42 +108,6 @@ struct MemorySpaceAccess<Kokkos::HostSpace,
     accessible = true
   };  // Unlike <NextSiliconSharedSpace, HostSpace>, this is true so that
       // HostMirror uses NextSiliconSharedSpace as the memory space
-  enum : bool { deepcopy = true };
-};
-
-template <>
-struct MemorySpaceAccess<
-    Kokkos::Experimental::NextSiliconSharedSpace,
-    Kokkos::Experimental::NextSiliconSharedSpace::scratch_memory_space> {
-  enum : bool { assignable = true };
-  enum : bool { accessible = true };
-  enum : bool { deepcopy = true };
-};
-
-template <>
-struct MemorySpaceAccess<
-    Kokkos::HostSpace,
-    Kokkos::Experimental::NextSiliconSharedSpace::scratch_memory_space> {
-  enum : bool { assignable = true };
-  enum : bool { accessible = true };
-  enum : bool { deepcopy = true };
-};
-
-template <>
-struct MemorySpaceAccess<
-    Kokkos::Experimental::NextSiliconSharedSpace::scratch_memory_space,
-    Kokkos::Experimental::NextSiliconSharedSpace> {
-  enum : bool { assignable = true };
-  enum : bool { accessible = true };
-  enum : bool { deepcopy = true };
-};
-
-template <>
-struct MemorySpaceAccess<
-    Kokkos::Experimental::NextSiliconSharedSpace::scratch_memory_space,
-    Kokkos::HostSpace> {
-  enum : bool { assignable = true };
-  enum : bool { accessible = true };
   enum : bool { deepcopy = true };
 };
 

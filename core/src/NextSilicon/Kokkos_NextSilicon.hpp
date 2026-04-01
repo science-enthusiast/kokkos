@@ -13,11 +13,12 @@
 #include <Kokkos_ScratchSpace.hpp>
 #include <impl/Kokkos_HostSharedPtr.hpp>
 
-namespace Kokkos::Experimental::Impl {
+namespace Kokkos {
+namespace Experimental::Impl {
 class NextSiliconInternal;
-}  // namespace Kokkos::Experimental::Impl
+}  // namespace Experimental::Impl
 
-namespace Kokkos::Experimental {
+namespace Experimental {
 
 class NextSilicon {
   Kokkos::Impl::HostSharedPtr<Impl::NextSiliconInternal> m_space_instance;
@@ -69,7 +70,18 @@ class NextSilicon {
   }
 };
 
-}  // namespace Kokkos::Experimental
+}  // namespace Experimental
+
+namespace Impl {
+template <>
+struct MemorySpaceAccess<Experimental::NextSiliconSharedSpace,
+                         Experimental::NextSilicon::scratch_memory_space> {
+  enum : bool { assignable = false };
+  enum : bool { accessible = true };
+  enum : bool { deepcopy = true };
+};
+}  // namespace Impl
+}  // namespace Kokkos
 
 template <>
 struct Kokkos::Tools::Experimental::DeviceTypeTraits<
