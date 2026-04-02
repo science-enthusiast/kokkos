@@ -559,14 +559,6 @@ struct ViewTraits {
                       decltype(customize_view_arguments(
                           Impl::ViewArguments<value_type, array_layout,
                                               device_type, memory_traits>()))>;
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED static constexpr bool is_hostspace =
-      std::is_same_v<MemorySpace, HostSpace>;
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use !MemoryTraits::is_unmanaged instead.")
-  static constexpr bool is_managed = !MemoryTraits::is_unmanaged;
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use MemoryTraits::is_random_access instead.")
-  static constexpr bool is_random_access = MemoryTraits::is_random_access;
-#endif
   //------------------------------------
 };
 
