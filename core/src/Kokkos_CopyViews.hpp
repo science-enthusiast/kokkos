@@ -1074,6 +1074,24 @@ void deep_copy_rank0(ExecSpace exec_space, DstView dst, SrcView src) {
       Kokkos::RangePolicy<ExecSpace>(exec_space, 0, 1),
       KOKKOS_LAMBDA(int) { dst() = src(); });
 }
+
+// pass the addresses of the view objects
+inline void check_deep_copy_view_arguments_are_distinct(void const* dst,
+                                                        void const* src) {
+  if (dst != src) return;
+
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
+  if (Kokkos::show_warnings()) {
+    log_warning(
+        "Kokkos WARNING: deep_copy() source and destination View arguments "
+        "are identical\n");
+  }
+#else
+  abort(
+      "Kokkos ERROR: deep_copy() source and destination View arguments "
+      "are identical\n");
+#endif
+}
 }  // namespace Impl
 
 template <class DT, class... DP, class ST, class... SP>
@@ -1084,6 +1102,9 @@ inline void deep_copy(
          std::is_void_v<typename ViewTraits<ST, SP...>::specialize> &&
          (unsigned(ViewTraits<DT, DP...>::rank) == unsigned(0) &&
           unsigned(ViewTraits<ST, SP...>::rank) == unsigned(0)))>* = nullptr) {
+  Impl::check_deep_copy_view_arguments_are_distinct(std::addressof(dst),
+                                                    std::addressof(src));
+
   using dst_type = View<DT, DP...>;
   using src_type = View<ST, SP...>;
 
@@ -1159,6 +1180,9 @@ inline void deep_copy(
          std::is_void_v<typename ViewTraits<ST, SP...>::specialize> &&
          (unsigned(ViewTraits<DT, DP...>::rank) != 0 ||
           unsigned(ViewTraits<ST, SP...>::rank) != 0))>* = nullptr) {
+  Impl::check_deep_copy_view_arguments_are_distinct(std::addressof(dst),
+                                                    std::addressof(src));
+
   using dst_type         = View<DT, DP...>;
   using src_type         = View<ST, SP...>;
   using dst_memory_space = typename dst_type::memory_space;
@@ -2325,6 +2349,9 @@ inline void deep_copy(
          std::is_void_v<typename ViewTraits<ST, SP...>::specialize> &&
          (unsigned(ViewTraits<DT, DP...>::rank) == unsigned(0) &&
           unsigned(ViewTraits<ST, SP...>::rank) == unsigned(0)))>* = nullptr) {
+  Impl::check_deep_copy_view_arguments_are_distinct(std::addressof(dst),
+                                                    std::addressof(src));
+
   using src_traits = ViewTraits<ST, SP...>;
   using dst_traits = ViewTraits<DT, DP...>;
 
@@ -2383,6 +2410,9 @@ inline void deep_copy(
          std::is_void_v<typename ViewTraits<ST, SP...>::specialize> &&
          (unsigned(ViewTraits<DT, DP...>::rank) != 0 ||
           unsigned(ViewTraits<ST, SP...>::rank) != 0))>* = nullptr) {
+  Impl::check_deep_copy_view_arguments_are_distinct(std::addressof(dst),
+                                                    std::addressof(src));
+
   using dst_type = View<DT, DP...>;
   using src_type = View<ST, SP...>;
 
