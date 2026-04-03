@@ -24,6 +24,9 @@ else()
   set(KOKKOS_OPENACC_FEATURE_LEVEL 17)
 endif()
 
+set(KOKKOS_NEXTSILICON_FEATURE_LEVEL 3)
+set(KOKKOS_NEXTSILICON_NAME Experimental::NextSilicon)
+
 set(KOKKOS_OPENACC_NAME Experimental::OpenACC)
 
 #
