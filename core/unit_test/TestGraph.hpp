@@ -1510,13 +1510,18 @@ TEST_F(TEST_CATEGORY_FIXTURE(graph), team_launch_bounds_in_graph) {
   using team_policy  = typename functor_type::team_policy;
 
   const int num_teams = 4;
-  const int team_size = std::min(32, ex.concurrency());
+
   Kokkos::View<int*, mem_space> result("result", num_teams);
+  functor_type functor{result};
+
+  auto team_size_max = Kokkos::TeamPolicy<TEST_EXECSPACE>(num_teams, 1)
+                           .team_size_max(functor, Kokkos::ParallelForTag());
+  const int team_size = std::min(32, team_size_max);
 
   auto graph = Kokkos::Experimental::create_graph(
       Kokkos::Experimental::get_device_handle(ex), [&](auto root) {
         root.then_parallel_for("TeamLBGraph", team_policy(num_teams, team_size),
-                               functor_type{result});
+                               functor);
       });
   graph.submit(ex);
   ex.fence();
