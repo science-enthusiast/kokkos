@@ -1080,13 +1080,7 @@ inline void check_deep_copy_view_arguments_are_distinct(void const* dst,
                                                         void const* src) {
   if (dst != src) return;
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
-  if (Kokkos::show_warnings()) {
-    log_warning(
-        "Kokkos WARNING: deep_copy() source and destination View arguments "
-        "are identical\n");
-  }
-#else
+#ifndef KOKKOS_ENABLE_DEPRECATED_CODE_5
   abort(
       "Kokkos ERROR: deep_copy() source and destination View arguments "
       "are identical\n");
