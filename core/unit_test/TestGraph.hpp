@@ -1099,6 +1099,13 @@ void test_graph_capture() {
 }
 
 TEST(TEST_CATEGORY, graph_capture) {
+#if defined(KOKKOS_ENABLE_HIP) && \
+    (HIP_VERSION_MAJOR < 7 ||     \
+     (HIP_VERSION_MAJOR == 7 && HIP_VERSION_MINOR < 2))
+  if constexpr (std::is_same_v<TEST_EXECSPACE, Kokkos::HIP>)
+    GTEST_SKIP() << "The test has only been fixed in ROCm 7.2 to run reliably.";
+#endif
+
   if constexpr (GraphNodeTypes<TEST_EXECSPACE>::support_capture) {
     test_graph_capture<TEST_EXECSPACE>();
   } else {
