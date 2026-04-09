@@ -1388,10 +1388,9 @@ concept ExecutionTypeConcept = ExecutionSpace<ExecType> || TeamHandle<ExecType>;
 // Deduction guide
 
 // Instances for the execution space specialization
-RangePolicy() -> RangePolicy<DefaultExecutionSpace>;
-RangePolicy(int64_t, int64_t) -> RangePolicy<DefaultExecutionSpace>;
-RangePolicy(int64_t, int64_t, ChunkSize const&)
-    -> RangePolicy<DefaultExecutionSpace>;
+RangePolicy() -> RangePolicy<>;
+RangePolicy(int64_t, int64_t) -> RangePolicy<>;
+RangePolicy(int64_t, int64_t, ChunkSize const&) -> RangePolicy<>;
 RangePolicy(const DefaultExecutionSpace&, int64_t, int64_t, ChunkSize const&)
     -> RangePolicy<DefaultExecutionSpace>;
 template <Impl::ExecutionTypeConcept Exec>
