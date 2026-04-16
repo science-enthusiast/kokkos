@@ -326,9 +326,7 @@ void test_deep_copy_single_element_view() {
       "view_customization_deep_copy_a", policy,
       KOKKOS_LAMBDA(int, int& error) {
         for (size_t k = 0; k < size; ++k) {
-          if (Kokkos::abs(a()[k] - 0.1 * k) >
-              Kokkos::epsilon_v<float>)
-            ++error;
+          if (Kokkos::abs(a()[k] - 0.1 * k) > Kokkos::epsilon_v<float>) ++error;
           a()[k] = k;
         }
       },
@@ -363,8 +361,7 @@ void test_deep_copy_single_element_view() {
       "view_customization_check_pre_deep_copy_b", policy,
       KOKKOS_LAMBDA(int, int& error) {
         for (size_t k = 0; k < size; ++k) {
-          if (Kokkos::abs(b()[k] - k) > Kokkos::epsilon_v<float>)
-            ++error;
+          if (Kokkos::abs(b()[k] - k) > Kokkos::epsilon_v<float>) ++error;
         }
       },
       num_errors);
