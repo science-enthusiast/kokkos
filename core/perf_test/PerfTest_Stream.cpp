@@ -97,7 +97,7 @@ int validate_array(V& a_dev, typename V::const_value_type expected) {
   // all values here are pretty easy for float types to represent
   // so let's make the tolerances very tight.
   return std::abs(avgError / expected) >
-         Kokkos::Experimental::epsilon_v<scalar_type>;
+         Kokkos::epsilon_v<scalar_type>;
 }
 
 template <unsigned MemTraits>

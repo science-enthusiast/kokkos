@@ -123,7 +123,7 @@ TEST_F(TEST_CATEGORY_FIXTURE(GraphInterOp), instantiation_flags) {
 #else
   graph->instantiate();
   unsigned long long flags =
-      Kokkos::Experimental::finite_max_v<unsigned long long>;
+      Kokkos::finite_max_v<unsigned long long>;
   KOKKOS_IMPL_CUDA_SAFE_CALL(
       cudaGraphExecGetFlags(graph->native_graph_exec(), &flags));
 
