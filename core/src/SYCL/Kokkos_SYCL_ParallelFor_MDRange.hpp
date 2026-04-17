@@ -84,7 +84,8 @@ class Kokkos::Impl::ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
 
         Kokkos::Impl::DeviceIterate<Policy::rank, array_index_type, index_type,
                                     FunctorType, Policy::inner_direction,
-                                    typename Policy::work_tag>(
+                                    typename Policy::work_tag,
+                                    typename Policy::static_batch_size>(
             lower_bound, upper_bound, extent, functor_wrapper.get_functor(),
             {n_global_x, n_global_y, n_global_z},
             {n_local_x, n_local_y, n_local_z}, {global_x, global_y, global_z},

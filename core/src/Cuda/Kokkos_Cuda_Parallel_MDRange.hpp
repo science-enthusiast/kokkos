@@ -61,6 +61,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>, Kokkos::Cuda> {
   using LaunchBounds     = typename Policy::launch_bounds;
   using MaxGridSize      = Kokkos::Array<index_type, 3>;
   using array_type       = typename Policy::point_type;
+  using StaticBatchSize  = typename Policy::static_batch_size;
 
   const FunctorType m_functor;
   const Policy m_policy;
@@ -81,8 +82,8 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>, Kokkos::Cuda> {
   inline __device__ void operator()() const {
     Kokkos::Impl::DeviceIterate<Policy::rank, array_index_type, index_type,
                                 FunctorType, Policy::inner_direction,
-                                typename Policy::work_tag>(m_lower, m_upper,
-                                                           m_extent, m_functor)
+                                typename Policy::work_tag, StaticBatchSize>(
+        m_lower, m_upper, m_extent, m_functor)
         .exec_range();
   }
 
@@ -122,12 +123,35 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>, Kokkos::Cuda> {
                     grid.z <= static_cast<unsigned int>(m_max_grid_size[2]));
     };
 
-    const auto [grid, block] =
+    const auto scale_gridx_size = [&](dim3& grid, const dim3& block) {
+      constexpr auto batch_size = StaticBatchSize::batch_size;
+
+      typename Policy::index_type grid_dim, block_dim, nwork;
+
+      grid_dim  = grid.x;
+      block_dim = block.x;
+
+      nwork = grid_dim * block_dim;
+      nwork = nwork / batch_size + (nwork % batch_size == 0 ? 0 : 1);
+      const int maxGridSizeX =
+          m_policy.space().cuda_device_prop().maxGridSize[0];
+      grid_dim = std::min(
+          typename Policy::index_type((nwork + block_dim - 1) / block_dim),
+          typename Policy::index_type(maxGridSizeX));
+
+      grid.x = grid_dim;
+    };
+
+    auto [grid, block] =
         Kokkos::Impl::compute_device_launch_params(m_policy, m_max_grid_size);
 
     // ensure we don't exceed the capability of the device
     check_grid_sizes(grid);
     check_block_sizes(block);
+
+    // adjust size of grid.x according to static batch size
+    scale_gridx_size(grid, block);
+
     // launch the kernel
     CudaParallelLaunch<ParallelFor, LaunchBounds>(
         *this, grid, block, 0, m_policy.space().impl_internal_space_instance());

@@ -181,11 +181,8 @@ auto compute_device_launch_params(
 // 3. Bounds check against m_upper to filter out-of-bounds iterations.
 //
 template <int Rank, typename array_index_type, typename index_type,
-          typename Functor, Kokkos::Iterate Layout, typename Tag>
-struct DeviceIterate;
-
-template <int Rank, typename array_index_type, typename index_type,
-          typename Functor, Kokkos::Iterate Layout, typename Tag>
+          typename Functor, Kokkos::Iterate IterateOrder, typename Tag,
+          typename StaticBatchSize>
 struct DeviceIterate {
   using array_type = Kokkos::Array<array_index_type, Rank>;
 
@@ -243,98 +240,96 @@ struct DeviceIterate {
 
   // Packed: returns flat hardware thread ID (unpacking happens in iterate())
   // Unpacked: returns global index (lower + blockIdx * blockDim + threadIdx)
-  template <unsigned R>
+  template <unsigned Dim>
   KOKKOS_IMPL_DEVICE_FUNCTION KOKKOS_IMPL_FORCEINLINE constexpr index_type
   my_begin() const noexcept {
-    static_assert(R < 6);
-    if constexpr (is_packed_index<R>()) {
-      if constexpr (R == 0 || R == 1) {
+    static_assert(Dim < 6);
+    if constexpr (is_packed_index<Dim>()) {
+      if constexpr (Dim == 0 || Dim == 1) {
         return blockIdx.x * blockDim.x + threadIdx.x;
-      } else if constexpr (R == 2 || R == 3) {
+      } else if constexpr (Dim == 2 || Dim == 3) {
         return blockIdx.y * blockDim.y + threadIdx.y;
-      } else if constexpr (R == 4 || R == 5) {
+      } else if constexpr (Dim == 4 || Dim == 5) {
         return blockIdx.z * blockDim.z + threadIdx.z;
       }
     } else {
       // No packed index
       if constexpr (Rank < 4) {
-        if constexpr (R == 0) {
-          return m_lower[R] + blockIdx.x * blockDim.x + threadIdx.x;
-        } else if constexpr (R == 1) {
-          return m_lower[R] + blockIdx.y * blockDim.y + threadIdx.y;
-        } else if constexpr (R == 2) {
-          return m_lower[R] + blockIdx.z * blockDim.z + threadIdx.z;
+        if constexpr (Dim == 0) {
+          return m_lower[Dim] + blockIdx.x * blockDim.x + threadIdx.x;
+        } else if constexpr (Dim == 1) {
+          return m_lower[Dim] + blockIdx.y * blockDim.y + threadIdx.y;
+        } else if constexpr (Dim == 2) {
+          return m_lower[Dim] + blockIdx.z * blockDim.z + threadIdx.z;
         }
       } else {
         // Mix of packed and unpacked for Rank 4 and 5
-        if constexpr (R == 2) {
-          return m_lower[R] + blockIdx.y * blockDim.y + threadIdx.y;
-        } else if constexpr (R == 3 || R == 4) {
-          return m_lower[R] + blockIdx.z * blockDim.z + threadIdx.z;
+        if constexpr (Dim == 2) {
+          return m_lower[Dim] + blockIdx.y * blockDim.y + threadIdx.y;
+        } else if constexpr (Dim == 3 || Dim == 4) {
+          return m_lower[Dim] + blockIdx.z * blockDim.z + threadIdx.z;
         }
       }
     }
-    return m_lower[R];
   }
 
   // Packed: end at the product of two consecutive extents
   // Unpacked: directly use m_upper
-  template <unsigned R>
+  template <unsigned Dim>
   KOKKOS_IMPL_DEVICE_FUNCTION KOKKOS_IMPL_FORCEINLINE constexpr index_type
   my_end() const noexcept {
-    static_assert(R < 6);
-    if constexpr (is_packed_index<R>()) {
-      if constexpr (R % 2 == 0) {
-        return m_extent[R] * m_extent[R + 1];
+    static_assert(Dim < 6);
+    if constexpr (is_packed_index<Dim>()) {
+      if constexpr (Dim % 2 == 0) {
+        return m_extent[Dim] * m_extent[Dim + 1];
       } else {
-        return m_extent[R] * m_extent[R - 1];
+        return m_extent[Dim] * m_extent[Dim - 1];
       }
     } else {
-      return m_upper[R];
+      return m_upper[Dim];
     }
   }
 
   // Stride by the total number of threads in the GPU dimension
-  template <unsigned R>
+  template <unsigned Dim>
   KOKKOS_IMPL_DEVICE_FUNCTION KOKKOS_IMPL_FORCEINLINE constexpr index_type
   my_stride() const noexcept {
-    static_assert(R < 6);
-    if constexpr (is_packed_index<R>()) {
-      if constexpr (R == 0 || R == 1) {
+    static_assert(Dim < 6);
+    if constexpr (is_packed_index<Dim>()) {
+      if constexpr (Dim == 0 || Dim == 1) {
         return static_cast<index_type>(blockDim.x) *
                static_cast<index_type>(gridDim.x);
-      } else if constexpr (R == 2 || R == 3) {
+      } else if constexpr (Dim == 2 || Dim == 3) {
         return static_cast<index_type>(blockDim.y) *
                static_cast<index_type>(gridDim.y);
-      } else if constexpr (R == 4 || R == 5) {
+      } else if constexpr (Dim == 4 || Dim == 5) {
         return static_cast<index_type>(blockDim.z) *
                static_cast<index_type>(gridDim.z);
       }
     } else {
       // No packed index for all ranks
       if constexpr (Rank < 4) {
-        if constexpr (R == 0) {
+        if constexpr (Dim == 0) {
           return static_cast<index_type>(blockDim.x) *
                  static_cast<index_type>(gridDim.x);
-        } else if constexpr (R == 1) {
+        } else if constexpr (Dim == 1) {
           return static_cast<index_type>(blockDim.y) *
                  static_cast<index_type>(gridDim.y);
-        } else if constexpr (R == 2) {
+        } else if constexpr (Dim == 2) {
           return static_cast<index_type>(blockDim.z) *
                  static_cast<index_type>(gridDim.z);
         }
       } else {
         // Mix of packed and unpacked for Rank 4 and 5
-        if constexpr (R == 2) {
+        if constexpr (Dim == 2) {
           return static_cast<index_type>(blockDim.y) *
                  static_cast<index_type>(gridDim.y);
-        } else if constexpr (R == 3 || R == 4) {
+        } else if constexpr (Dim == 3 || Dim == 4) {
           return static_cast<index_type>(blockDim.z) *
                  static_cast<index_type>(gridDim.z);
         }
       }
     }
-    return index_type{1};
   }
 
   // ----------------------------------------------------------------------- //
@@ -343,13 +338,13 @@ struct DeviceIterate {
   // Accumulates indices in parameter pack Idxs...
   // The fastest changing index is always i0 (innermost loop).
   //
-  // Functor call order depends on the Layout:
-  //  Layout::Left:
+  // Functor call order depends on the iteration order:
+  //  Iterate::Left:
   //    functor(i0, i1, i2, ..., iR)
-  //  Layout::Right:
+  //  Iterate::Right:
   //    functor(iR, ..., i2, i1, i0)
   //
-  // For Layout::Right, bounds were previously swapped during ParallelFor
+  // For Iterate::Right, bounds were previously swapped during ParallelFor
   // construction, so i0 correctly iterates over the range of iR while
   // remaining the "fastest-changing" index.
   //
@@ -361,39 +356,72 @@ struct DeviceIterate {
     const index_type end       = my_end<rankIdx>();
     const index_type stride    = my_stride<rankIdx>();
 
-    for (index_type idx = start; idx < end; idx += stride) {
-      if constexpr (is_packed_index<rankIdx>()) {
-        static_assert(R >= 2);
-        // Unpack two consecutive indices
-        constexpr unsigned idx1 = (rankIdx % 2 == 0) ? rankIdx : (rankIdx - 1);
-        constexpr unsigned idx2 = (rankIdx % 2 == 0) ? (rankIdx + 1) : rankIdx;
+    [[maybe_unused]] constexpr auto batch_size = StaticBatchSize::batch_size;
 
-        const index_type id_1 = idx % m_extent[idx1] + m_lower[idx1];
-        const index_type id_2 = idx / m_extent[idx1] + m_lower[idx2];
-
-        if (id_1 < m_upper[idx1] && id_2 < m_upper[idx2]) {
-          if constexpr (Layout == Iterate::Left) {
-            iterate(std::integral_constant<unsigned, R - 2>(), id_1, id_2,
-                    idxs...);
-          } else {
-            iterate(std::integral_constant<unsigned, R - 2>(), idxs..., id_2,
-                    id_1);
-          }
-        }
-      } else {
-        if constexpr (Layout == Iterate::Left) {
-          iterate(std::integral_constant<unsigned, R - 1>(), idx, idxs...);
-        } else {
-          iterate(std::integral_constant<unsigned, R - 1>(), idxs..., idx);
+// Static batch size currently implemented for CUDA backend only
+#ifdef KOKKOS_ENABLE_CUDA
+    if constexpr ((batch_size > 1) &&
+                  ((is_packed_index<rankIdx>() && (rankIdx == 1)) ||
+                   ((!is_packed_index<rankIdx>()) && (rankIdx == 0)))) {
+      for (index_type istride = start; istride < end;
+           istride =
+               istride < static_cast<index_type>(end - stride * batch_size)
+                   ? istride + stride * batch_size
+                   : end) {
+        for (index_type i = 0;
+             i < static_cast<index_type>(stride * batch_size) &&
+             i < end - istride;
+             i = (i < static_cast<index_type>(end - istride - stride))
+                     ? i + stride
+                     : end - istride) {
+          index_type idx = istride + i;
+          iterate_rank_idx<R, rankIdx>(idx, idxs...);
         }
       }
+    } else {
+#endif
+      for (index_type idx = start; idx < end; idx += stride) {
+        iterate_rank_idx<R, rankIdx>(idx, idxs...);
+      }
+#ifdef KOKKOS_ENABLE_CUDA
     }
+#endif
   }
 
   template <typename... Idxs>
   KOKKOS_IMPL_DEVICE_FUNCTION inline void iterate(
       std::integral_constant<unsigned, 0u>, Idxs... idxs) const {
     Impl::_tag_invoke<Tag>(m_functor, idxs...);
+  }
+
+  template <unsigned R, unsigned rankIdx, typename... Idxs>
+  KOKKOS_IMPL_DEVICE_FUNCTION inline void iterate_rank_idx(const index_type idx,
+                                                           Idxs... idxs) const {
+    if constexpr (is_packed_index<rankIdx>()) {
+      static_assert(R >= 2);
+      // Unpack two consecutive indices
+      constexpr unsigned idx1 = (rankIdx % 2 == 0) ? rankIdx : (rankIdx - 1);
+      constexpr unsigned idx2 = (rankIdx % 2 == 0) ? (rankIdx + 1) : rankIdx;
+
+      const index_type id_1 = idx % m_extent[idx1] + m_lower[idx1];
+      const index_type id_2 = idx / m_extent[idx1] + m_lower[idx2];
+
+      if (id_1 < m_upper[idx1] && id_2 < m_upper[idx2]) {
+        if constexpr (IterateOrder == Iterate::Left) {
+          iterate(std::integral_constant<unsigned, R - 2>(), id_1, id_2,
+                  idxs...);
+        } else {
+          iterate(std::integral_constant<unsigned, R - 2>(), idxs..., id_2,
+                  id_1);
+        }
+      }
+    } else {
+      if constexpr (IterateOrder == Iterate::Left) {
+        iterate(std::integral_constant<unsigned, R - 1>(), idx, idxs...);
+      } else {
+        iterate(std::integral_constant<unsigned, R - 1>(), idxs..., idx);
+      }
+    }
   }
 };
 

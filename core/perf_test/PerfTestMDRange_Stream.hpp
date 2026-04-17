@@ -63,7 +63,8 @@ struct ViewTypeRank<6, ScalarType, Layout, MemorySpace> {
 
 // Select between MDRangePolicy and RangePolicy
 template <int Rank, typename ExecutionSpace,
-          typename IndexType = Kokkos::IndexType<uint32_t>, typename Tag = void>
+          typename IndexType = Kokkos::IndexType<uint32_t>, typename Tag = void,
+          unsigned int unroll_factor = 1>
 struct policy_selector {
   using preferred_layout = typename ExecutionSpace::array_layout;
   static const Kokkos::Iterate outer_iter =
@@ -72,15 +73,19 @@ struct policy_selector {
   static const Kokkos::Iterate inner_iter =
       Kokkos::Impl::layout_iterate_type_selector<
           preferred_layout>::inner_iteration_pattern;
-  using type = Kokkos::MDRangePolicy<ExecutionSpace,
-                                     Kokkos::Rank<Rank, outer_iter, inner_iter>,
-                                     IndexType, Tag>;
+
+  using type = Kokkos::MDRangePolicy<
+      ExecutionSpace, Kokkos::Rank<Rank, outer_iter, inner_iter>, IndexType,
+      Tag, Kokkos::Experimental::StaticBatchSize<unroll_factor>>;
 };
 
 // Specialization for 1D RangePolicy
-template <typename ExecutionSpace, typename IndexType, typename Tag>
-struct policy_selector<1, ExecutionSpace, IndexType, Tag> {
-  using type = Kokkos::RangePolicy<ExecutionSpace, IndexType, Tag>;
+template <typename ExecutionSpace, typename IndexType, typename Tag,
+          unsigned int unroll_factor>
+struct policy_selector<1, ExecutionSpace, IndexType, Tag, unroll_factor> {
+  using type =
+      Kokkos::RangePolicy<ExecutionSpace, IndexType, Tag,
+                          Kokkos::Experimental::StaticBatchSize<unroll_factor>>;
 };
 
 // Choose between 1d and Nd bound types

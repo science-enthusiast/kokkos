@@ -3902,6 +3902,60 @@ struct TestMDRange_ReduceScalar {
   }
 };
 
+template <typename ExecSpace, typename StaticBatchSize>
+struct Test2DStaticBatchSize {
+  using view_type = Kokkos::View<int **, ExecSpace>;
+
+  view_type m_flags;
+  view_type result_view;
+
+  struct AtomicAddTag {};
+  struct VerifyAtomicAddTag {};
+
+  size_t N0, N1;
+
+  Test2DStaticBatchSize(const size_t N0_, const size_t N1_)
+      : m_flags(Kokkos::view_alloc(Kokkos::WithoutInitializing, "flags"), N0_,
+                N1_),
+        result_view(Kokkos::view_alloc(Kokkos::WithoutInitializing, "results"),
+                    N0_, N1_),
+        N0(N0_),
+        N1(N1_) {}
+
+  void test_batch_size() {
+    Kokkos::deep_copy(m_flags, 0);
+
+    Kokkos::parallel_for(
+        Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<2>, AtomicAddTag,
+                              StaticBatchSize>({0, 0}, {N0, N1}),
+        *this);
+
+    bool success = true;
+    Kokkos::parallel_reduce(
+        Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<2>, VerifyAtomicAddTag>(
+            {0, 0}, {N0, N1}),
+        *this, Kokkos::LAnd<bool>(success));
+
+    ASSERT_TRUE(success);
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const AtomicAddTag, const int i, const int j) const {
+    Kokkos::atomic_add(&m_flags(i, j), i + 1);
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const VerifyAtomicAddTag, const int i, const int j,
+                  bool &success) const {
+    if (m_flags(i, j) != i + 1) {
+      Kokkos::printf(
+          "Test2DStaticBatchSize {::test_batch_size_error at %d, %d != %d\n", i,
+          j, m_flags(i, j));
+    }
+    success = success && (m_flags(i, j) == i + 1);
+  }
+};
+
 }  // namespace
 
 }  // namespace Test
