@@ -237,32 +237,34 @@ struct DeviceIterate {
            ((Dim == 4 || Dim == 5) && Rank > 5);
   }
 
+  // \brief Map the hardware thread ID into index
   // Packed: returns flat hardware thread ID (unpacking happens in iterate())
   // Unpacked: returns global index (lower + blockIdx * blockDim + threadIdx)
+  // \tparam RIdx rank index
+  // \return Flat hardware thread ID (packed) or global index (unpacked)
   template <unsigned RIdx>
   KOKKOS_IMPL_DEVICE_FUNCTION KOKKOS_IMPL_FORCEINLINE constexpr index_type
   my_begin() const noexcept {
     static_assert(RIdx < 6);
-    if constexpr (is_packed_index<RIdx>()) {
-      if constexpr (RIdx == 0 || RIdx == 1) {
-        return blockIdx.x * blockDim.x + threadIdx.x;
-      } else if constexpr (RIdx == 2 || RIdx == 3) {
-        return blockIdx.y * blockDim.y + threadIdx.y;
-      } else if constexpr (RIdx == 4 || RIdx == 5) {
-        return blockIdx.z * blockDim.z + threadIdx.z;
-      }
-    } else {
+    if constexpr (Rank < 4) {
       // No packed index
-      if constexpr (Rank < 4) {
-        if constexpr (RIdx == 0) {
-          return m_lower[RIdx] + blockIdx.x * blockDim.x + threadIdx.x;
-        } else if constexpr (RIdx == 1) {
-          return m_lower[RIdx] + blockIdx.y * blockDim.y + threadIdx.y;
-        } else if constexpr (RIdx == 2) {
-          return m_lower[RIdx] + blockIdx.z * blockDim.z + threadIdx.z;
+      if constexpr (RIdx == 0) {
+        return m_lower[RIdx] + blockIdx.x * blockDim.x + threadIdx.x;
+      } else if constexpr (RIdx == 1) {
+        return m_lower[RIdx] + blockIdx.y * blockDim.y + threadIdx.y;
+      } else if constexpr (RIdx == 2) {
+        return m_lower[RIdx] + blockIdx.z * blockDim.z + threadIdx.z;
+      }
+    } else {  // Ranks 4, 5, 6
+      if constexpr (is_packed_index<RIdx>()) {
+        if constexpr (RIdx == 0 || RIdx == 1) {
+          return blockIdx.x * blockDim.x + threadIdx.x;
+        } else if constexpr (RIdx == 2 || RIdx == 3) {
+          return blockIdx.y * blockDim.y + threadIdx.y;
+        } else if constexpr (RIdx == 4 || RIdx == 5) {
+          return blockIdx.z * blockDim.z + threadIdx.z;
         }
-      } else {
-        // Mix of packed and unpacked for Rank 4 and 5
+      } else {  // Unpacked indices of Ranks 4 and 5
         if constexpr (RIdx == 2) {
           return m_lower[RIdx] + blockIdx.y * blockDim.y + threadIdx.y;
         } else if constexpr (RIdx == 3 || RIdx == 4) {
@@ -272,8 +274,12 @@ struct DeviceIterate {
     }
   }
 
-  // Packed: end at the product of two consecutive extents
+  // \brief Upper bound of the range
+  // Packed: the product of the extents of the two packed indices (offset added
+  // in iterate())
   // Unpacked: directly use m_upper
+  // \tparam RIdx rank index
+  // \return product of the extents (packed) or upper bound (unpacked)
   template <unsigned RIdx>
   KOKKOS_IMPL_DEVICE_FUNCTION KOKKOS_IMPL_FORCEINLINE constexpr index_type
   my_end() const noexcept {
@@ -289,37 +295,41 @@ struct DeviceIterate {
     }
   }
 
-  // Stride by the total number of threads in the GPU dimension
+  // \brief Compute the stride as the total number of threads in the GPU grid
+  // dimension Returns the total number of threads of the corresponding grid
+  // dimension for both Unpacked and Packed rank indices
+  // \tparam RIdx rank index
+  // \return The stride used for this rank index
   template <unsigned RIdx>
   KOKKOS_IMPL_DEVICE_FUNCTION KOKKOS_IMPL_FORCEINLINE constexpr index_type
   my_stride() const noexcept {
+    // revisit the need for static_cast<index_type>
     static_assert(RIdx < 6);
-    if constexpr (is_packed_index<RIdx>()) {
-      if constexpr (RIdx == 0 || RIdx == 1) {
+    if constexpr (Rank < 4) {
+      // No packed index
+      if constexpr (RIdx == 0) {
         return static_cast<index_type>(blockDim.x) *
                static_cast<index_type>(gridDim.x);
-      } else if constexpr (RIdx == 2 || RIdx == 3) {
+      } else if constexpr (RIdx == 1) {
         return static_cast<index_type>(blockDim.y) *
                static_cast<index_type>(gridDim.y);
-      } else if constexpr (RIdx == 4 || RIdx == 5) {
+      } else if constexpr (RIdx == 2) {
         return static_cast<index_type>(blockDim.z) *
                static_cast<index_type>(gridDim.z);
       }
-    } else {
-      // No packed index for all ranks
-      if constexpr (Rank < 4) {
-        if constexpr (RIdx == 0) {
+    } else {  // Ranks 4, 5, 6
+      if constexpr (is_packed_index<RIdx>()) {
+        if constexpr (RIdx == 0 || RIdx == 1) {
           return static_cast<index_type>(blockDim.x) *
                  static_cast<index_type>(gridDim.x);
-        } else if constexpr (RIdx == 1) {
+        } else if constexpr (RIdx == 2 || RIdx == 3) {
           return static_cast<index_type>(blockDim.y) *
                  static_cast<index_type>(gridDim.y);
-        } else if constexpr (RIdx == 2) {
+        } else if constexpr (RIdx == 4 || RIdx == 5) {
           return static_cast<index_type>(blockDim.z) *
                  static_cast<index_type>(gridDim.z);
         }
-      } else {
-        // Mix of packed and unpacked for Rank 4 and 5
+      } else {  // Unpacked indices of Ranks 4 and 5
         if constexpr (RIdx == 2) {
           return static_cast<index_type>(blockDim.y) *
                  static_cast<index_type>(gridDim.y);
