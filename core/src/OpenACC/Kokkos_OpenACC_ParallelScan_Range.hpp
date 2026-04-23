@@ -97,6 +97,9 @@ class ParallelScanOpenACCBase {
     std::unique_ptr<ValueType[]> element_values_owner(
         new ValueType[num_elements]);
     ValueType* element_values = element_values_owner.get();
+    std::unique_ptr<ValueType[]> red_elem_vals_owner(
+        new ValueType[num_red_elems]);
+    ValueType* red_elem_vals = red_elem_vals_owner.get();
     typename Analysis::Reducer final_reducer(m_functor);
 
 #pragma acc enter data copyin(functor, final_reducer) \
@@ -106,19 +109,17 @@ class ParallelScanOpenACCBase {
 KOKKOS_IMPL_ACC_PRAGMA(parallel loop gang vector_length(chunk_size) KOKKOS_IMPL_ACC_RED_ELEM_VALS_CLAUSE present(functor, chunk_values, final_reducer) async(async_arg))
     /* clang-format on */
     for (IndexType team_id = 0; team_id < n_chunks; ++team_id) {
-      // initialize each chunk for exclusive scan but compute only reduction
 #pragma acc loop vector
       for (IndexType thread_id = 0; thread_id < chunk_size; ++thread_id) {
         const IndexType local_offset = team_id * chunk_size + begin;
         const IndexType idx          = local_offset + thread_id;
         ValueType update;
         final_reducer.init(&update);
-        if ((idx > begin) && (idx < end)) functor(idx - 1, update, false);
+        if (idx < end) functor(idx, update, false);
         KOKKOS_IMPL_ACC_ACCESS_RED_ELEMS(thread_id) = update;
       }
       // chunk-local reduction
       IndexType t_size = chunk_size;
-#pragma acc loop seq
       for (IndexType step_size = (chunk_size >> 1); step_size > 0;
            step_size >>= 1) {
 #pragma acc loop vector
@@ -139,7 +140,7 @@ KOKKOS_IMPL_ACC_PRAGMA(parallel loop gang vector_length(chunk_size) KOKKOS_IMPL_
         t_size = step_size;
       }
       // save the reduction result of each chunk
-      chunk_values(team_id) = KOKKOS_IMPL_ACC_ACCESS_ELEMENTS(0);
+      chunk_values(team_id) = KOKKOS_IMPL_ACC_ACCESS_RED_ELEMS(0);
     }
 
     // serial scan of the reduction results of all the chunks
@@ -160,25 +161,18 @@ KOKKOS_IMPL_ACC_PRAGMA(parallel loop gang vector_length(chunk_size) KOKKOS_IMPL_
 KOKKOS_IMPL_ACC_PRAGMA(parallel loop gang vector_length(chunk_size) KOKKOS_IMPL_ACC_ELEMENT_VALUES_CLAUSE present(functor, offset_values, final_reducer) copyin(m_result_total) async(async_arg))
     /* clang-format on */
     for (IndexType team_id = 0; team_id < n_chunks; ++team_id) {
-      // Initialization for chunk-local exclusive scan by taking offsets into
-      // consideration
+      IndexType current_step = 0;
+      IndexType next_step    = 1;
+      IndexType temp;
 #pragma acc loop vector
       for (IndexType thread_id = 0; thread_id < chunk_size; ++thread_id) {
         const IndexType local_offset = team_id * chunk_size + begin;
         const IndexType idx          = local_offset + thread_id;
         ValueType update;
         final_reducer.init(&update);
-        if (thread_id == 0) {
-          final_reducer.join(&update, &offset_values(team_id));
-        } else {
-          if ((idx > begin) && (idx < end)) functor(idx - 1, update, false);
-        }
+        if (idx < end) functor(idx, update, false);
         KOKKOS_IMPL_ACC_ACCESS_ELEMENTS(thread_id) = update;
       }
-      // Hillis Steele based chunk-local exclusive scan
-      IndexType current_step = 0;
-      IndexType next_step    = 1;
-      IndexType temp;
       for (IndexType step_size = 1; step_size < chunk_size; step_size *= 2) {
 #pragma acc loop vector
         for (IndexType thread_id = 0; thread_id < chunk_size; ++thread_id) {
@@ -201,14 +195,20 @@ KOKKOS_IMPL_ACC_PRAGMA(parallel loop gang vector_length(chunk_size) KOKKOS_IMPL_
         current_step = next_step;
         next_step    = temp;
       }
-      // write final exclusive scan values
 #pragma acc loop vector
       for (IndexType thread_id = 0; thread_id < chunk_size; ++thread_id) {
         const IndexType local_offset = team_id * chunk_size + begin;
         const IndexType idx          = local_offset + thread_id;
-        ValueType update             = KOKKOS_IMPL_ACC_ACCESS_ELEMENTS(
-            current_step * chunk_size + thread_id);
-
+        ValueType update;
+        final_reducer.init(&update);
+        final_reducer.join(&update, &offset_values(team_id));
+        // Reconstruct the exclusive prefix from the chunk-local inclusive scan
+        // to avoid rereading the previous chunk tail.
+        if (thread_id > 0) {
+          final_reducer.join(&update,
+                             &KOKKOS_IMPL_ACC_ACCESS_ELEMENTS(
+                                 current_step * chunk_size + thread_id - 1));
+        }
         if (idx < end) functor(idx, update, true);
         if (idx == end - 1) {
           if (m_result_ptr_device_accessible) {
@@ -227,7 +227,7 @@ KOKKOS_IMPL_ACC_PRAGMA(parallel loop gang vector_length(chunk_size) KOKKOS_IMPL_
     }
 
 #pragma acc exit data delete (functor, chunk_values, offset_values, \
-                                  final_reducer)async(async_arg)
+                              final_reducer)async(async_arg)
     acc_wait(async_arg);
   }
 
