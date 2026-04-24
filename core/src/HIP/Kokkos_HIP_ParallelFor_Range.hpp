@@ -77,7 +77,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::HIP> {
   }
 
   inline void execute() const {
-    const typename Policy::index_type nwork = m_policy.end() - m_policy.begin();
+    typename Policy::index_type nwork = m_policy.end() - m_policy.begin();
     constexpr typename Policy::index_type batch_size =
         StaticBatchSize::batch_size;
 
