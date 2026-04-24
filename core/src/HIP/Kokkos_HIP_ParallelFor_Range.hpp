@@ -82,7 +82,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::HIP> {
         StaticBatchSize::batch_size;
 
     if constexpr (batch_size != 1) {
-      nwork = nwork / batch_size + (nwork % batch_size == 0 ? 0 : 1);
+      nwork = (nwork + batch_size - 1) / batch_size;
     }
 
     using DriverType = ParallelFor<FunctorType, Policy, Kokkos::HIP>;
