@@ -143,7 +143,7 @@ KOKKOS_IMPL_ACC_PRAGMA(parallel loop gang vector_length(chunk_size) KOKKOS_IMPL_
       chunk_values(team_id) = KOKKOS_IMPL_ACC_ACCESS_RED_ELEMS(0);
     }
 
-    // serial scan of the reduction results of all the chunks
+    // serial exclusive scan of the reduction results of all the chunks
     ValueType tempValue;
 #pragma acc parallel loop seq num_gangs(1) num_workers(1) vector_length(1) \
     present(chunk_values, offset_values, final_reducer) async(async_arg)
@@ -316,5 +316,7 @@ class Kokkos::Impl::ParallelScanWithTotal<
 
 #undef KOKKOS_IMPL_ACC_ACCESS_ELEMENTS
 #undef KOKKOS_IMPL_ACC_ELEMENT_VALUES_CLAUSE
+#undef KOKKOS_IMPL_ACC_ACCESS_RED_ELEMS
+#undef KOKKOS_IMPL_ACC_RED_ELEM_VALS_CLAUSE
 
 #endif
