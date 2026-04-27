@@ -48,23 +48,16 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::HIP> {
     const auto work_stride    = Member(blockDim.y) * gridDim.x;
     const Member work_end     = m_policy.end();
 
-    if constexpr (batch_size == 1) {
-      for (Member iwork = m_policy.begin() + threadIdx.y +
-                          static_cast<Member>(blockDim.y) * blockIdx.x;
-           iwork < work_end;
-           iwork = iwork < static_cast<Member>(work_end - work_stride)
-                       ? iwork + work_stride
-                       : work_end) {
+    for (Member iwork = m_policy.begin() + threadIdx.y +
+                        static_cast<Member>(blockDim.y) * blockIdx.x;
+         iwork < work_end;
+         iwork =
+             iwork < static_cast<Member>(work_end - work_stride * batch_size)
+                 ? iwork + work_stride * batch_size
+                 : work_end) {
+      if constexpr (batch_size == 1) {
         this->template exec_range<WorkTag>(iwork);
-      }
-    } else {
-      for (Member iwork = m_policy.begin() + threadIdx.y +
-                          static_cast<Member>(blockDim.y) * blockIdx.x;
-           iwork < work_end;
-           iwork =
-               iwork < static_cast<Member>(work_end - work_stride * batch_size)
-                   ? iwork + work_stride * batch_size
-                   : work_end) {
+      } else {
         for (Member i = 0; i < static_cast<Member>(work_stride * batch_size) &&
                            i < work_end - iwork;
              i = (i < static_cast<Member>(work_end - work_stride - iwork))
