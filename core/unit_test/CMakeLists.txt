@@ -421,8 +421,8 @@ foreach(PairDeviceSpace HIP-HostPinned;HIP-Managed;Cuda-HostPinned;Cuda-UVM;SYCL
       file(WRITE ${dir}/dummy.cpp "#include <Test${DEVICE}${SPACE}_Category.hpp>\n" "#include <Test${Name}.hpp>\n")
       configure_file(${dir}/dummy.cpp ${file})
       list(APPEND ${DEVICE}_SOURCES3 ${file})
+      list(APPEND ${DEVICE}_SOURCES ${file})
     endforeach()
-    list(APPEND ${DEVICE}_SOURCES ${${DEVICE}_SOURCES3})
   endif()
 endforeach()
 
