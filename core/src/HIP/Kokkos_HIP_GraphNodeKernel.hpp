@@ -12,6 +12,7 @@
 #include <Kokkos_Parallel_Reduce.hpp>
 
 #include <HIP/Kokkos_HIP_GraphNode_Impl.hpp>
+#include <HIP/Kokkos_HIP_Instance.hpp>
 
 namespace Kokkos {
 namespace Impl {
@@ -107,12 +108,22 @@ class GraphNodeKernelImpl<Kokkos::HIP, PolicyType, Functor, PatternTag, Args...>
 
   hipGraph_t const* get_hip_graph_ptr() const { return m_graph_ptr; }
 
-  base_t* allocate_driver_memory_buffer(const HIPSpace& mem) const {
+  base_t* allocate_driver_memory_buffer(
+      [[maybe_unused]] const HIPInternal& hip_instance) const {
     KOKKOS_EXPECTS(m_driver_storage == nullptr);
+
+    const auto& exec = this->get_policy().space();
+
+    KOKKOS_EXPECTS(hip_instance.m_hipDev == exec.hip_device());
+    KOKKOS_EXPECTS(hip_instance.m_stream == exec.hip_stream());
+
     std::string alloc_label =
         label + " - GraphNodeKernel global memory functor storage";
+    auto mem =
+        Kokkos::HIPSpace::impl_create(exec.hip_device(), exec.hip_stream());
     m_driver_storage = std::unique_ptr<base_t, DriverStorageDeleter>(
-        static_cast<base_t*>(mem.allocate(alloc_label.c_str(), sizeof(base_t))),
+        static_cast<base_t*>(
+            mem.allocate(exec, alloc_label.c_str(), sizeof(base_t))),
         DriverStorageDeleter{.label = alloc_label, .mem = mem});
     KOKKOS_ENSURES(m_driver_storage != nullptr);
     return m_driver_storage.get();
@@ -145,14 +156,13 @@ struct get_graph_node_kernel_type<KernelType, Kokkos::ParallelReduceTag>
           Kokkos::ParallelReduceTag>> {};
 
 template <typename KernelType>
-auto* allocate_driver_storage_for_kernel(const HIPSpace& mem,
+auto* allocate_driver_storage_for_kernel(const HIPInternal& hip_instance,
                                          KernelType const& kernel) {
   using graph_node_kernel_t =
       typename get_graph_node_kernel_type<KernelType>::type;
   auto const& kernel_as_graph_kernel =
       static_cast<graph_node_kernel_t const&>(kernel);
-
-  return kernel_as_graph_kernel.allocate_driver_memory_buffer(mem);
+  return kernel_as_graph_kernel.allocate_driver_memory_buffer(hip_instance);
 }
 
 template <typename KernelType>

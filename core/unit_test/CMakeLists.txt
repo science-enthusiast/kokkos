@@ -770,6 +770,9 @@ if(Kokkos_ENABLE_HIP)
   kokkos_add_executable_and_test(
     CoreUnitTest_HIPInterOpStreamsMultiGPU SOURCES UnitTestMainInit.cpp hip/TestHIP_InterOp_StreamsMultiGPU.cpp
   )
+  kokkos_add_executable_and_test(
+    CoreUnitTest_HIPInterOpGraphMultiGPU SOURCES UnitTestMainInit.cpp hip/TestHIP_InterOp_GraphMultiGPU.cpp
+  )
 endif()
 
 if(Kokkos_ENABLE_SYCL)

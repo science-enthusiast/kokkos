@@ -16,6 +16,7 @@
 #include <Kokkos_Parallel_Reduce.hpp>
 
 #include <Cuda/Kokkos_Cuda.hpp>
+#include <Cuda/Kokkos_Cuda_Instance.hpp>
 
 namespace Kokkos {
 namespace Impl {
@@ -134,12 +135,22 @@ class GraphNodeKernelImpl<Kokkos::Cuda, PolicyType, Functor, PatternTag,
   cudaGraphNode_t* get_cuda_graph_node_ptr() const { return m_graph_node_ptr; }
   cudaGraph_t const* get_cuda_graph_ptr() const { return m_graph_ptr; }
 
-  base_t* allocate_driver_memory_buffer(const CudaSpace& mem) const {
+  base_t* allocate_driver_memory_buffer(
+      [[maybe_unused]] const CudaInternal& cuda_instance) const {
     KOKKOS_EXPECTS(m_driver_storage == nullptr)
+
+    const auto& exec = this->get_policy().space();
+
+    KOKKOS_EXPECTS(cuda_instance.m_cudaDev == exec.cuda_device());
+    KOKKOS_EXPECTS(cuda_instance.m_stream == exec.cuda_stream());
+
     std::string alloc_label =
         label + " - GraphNodeKernel global memory functor storage";
+    auto mem =
+        Kokkos::CudaSpace::impl_create(exec.cuda_device(), exec.cuda_stream());
     m_driver_storage = std::unique_ptr<base_t, DriverStorageDeleter>(
-        static_cast<base_t*>(mem.allocate(alloc_label.c_str(), sizeof(base_t))),
+        static_cast<base_t*>(
+            mem.allocate(exec, alloc_label.c_str(), sizeof(base_t))),
         DriverStorageDeleter{.label = alloc_label, .mem = mem});
     KOKKOS_ENSURES(m_driver_storage != nullptr)
     return m_driver_storage.get();
@@ -167,16 +178,13 @@ struct get_graph_node_kernel_type<KernelType, Kokkos::ParallelReduceTag>
 // <editor-fold desc="get_cuda_graph_*() helper functions"> {{{1
 
 template <class KernelType>
-auto* allocate_driver_storage_for_kernel(const CudaSpace& mem,
+auto* allocate_driver_storage_for_kernel(const CudaInternal& cuda_instance,
                                          KernelType const& kernel) {
   using graph_node_kernel_t =
       typename get_graph_node_kernel_type<KernelType>::type;
   auto const& kernel_as_graph_kernel =
       static_cast<graph_node_kernel_t const&>(kernel);
-  // TODO @graphs we need to somehow indicate the need for a fence in the
-  //              destructor of the GraphImpl object (so that we don't have to
-  //              just always do it)
-  return kernel_as_graph_kernel.allocate_driver_memory_buffer(mem);
+  return kernel_as_graph_kernel.allocate_driver_memory_buffer(cuda_instance);
 }
 
 template <class KernelType>

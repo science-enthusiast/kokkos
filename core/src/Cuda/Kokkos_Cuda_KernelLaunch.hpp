@@ -548,10 +548,8 @@ struct CudaParallelLaunchKernelInvoker<DriverType, LaunchBounds,
       Impl::configure_max_dynamic_shmem<DriverType, LaunchBounds>(
           cuda_instance, base_t::get_kernel_func(), shmem);
 
-      auto* driver_ptr = Impl::allocate_driver_storage_for_kernel(
-          CudaSpace::impl_create(cuda_instance->m_cudaDev,
-                                 cuda_instance->m_stream),
-          driver);
+      auto* driver_ptr =
+          Impl::allocate_driver_storage_for_kernel(*cuda_instance, driver);
 
       // Unlike in the non-graph case, we can get away with doing an async copy
       // here because the `DriverType` instance is held in the GraphNodeImpl

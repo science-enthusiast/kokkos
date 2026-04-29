@@ -437,9 +437,8 @@ struct HIPParallelLaunchKernelInvoker<DriverType, LaunchBounds,
     KOKKOS_EXPECTS(!graph_node);
 
     if (!Impl::is_empty_launch(grid, block)) {
-      auto *driver_ptr = Impl::allocate_driver_storage_for_kernel(
-          HIPSpace::impl_create(hip_instance->m_hipDev, hip_instance->m_stream),
-          driver);
+      auto *driver_ptr =
+          Impl::allocate_driver_storage_for_kernel(*hip_instance, driver);
 
       // Unlike in the non-graph case, we can get away with doing an async copy
       // here because the `DriverType` instance is held in the GraphNodeImpl

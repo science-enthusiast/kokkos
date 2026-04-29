@@ -45,6 +45,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::HIP> {
 
   ParallelFor() = delete;
 
+  Policy const& get_policy() const { return m_policy; }
+
   inline __device__ void operator()() const {
     constexpr auto batch_size = Member(StaticBatchSize::batch_size);
     const auto work_stride    = Member(blockDim.y) * gridDim.x;
