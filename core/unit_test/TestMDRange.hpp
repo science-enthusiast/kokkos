@@ -3956,6 +3956,66 @@ struct Test2DStaticBatchSize {
   }
 };
 
+template <typename ExecSpace, typename StaticBatchSize>
+struct Test5DStaticBatchSize {
+  using view_type = Kokkos::View<int *****, ExecSpace>;
+
+  view_type m_flags;
+  view_type result_view;
+
+  struct AtomicAddTag {};
+  struct VerifyAtomicAddTag {};
+
+  size_t N0, N1, N2, N3, N4;
+
+  Test5DStaticBatchSize(const size_t N0_, const size_t N1_, const size_t N2_,
+                        const size_t N3_, const size_t N4_)
+      : m_flags(Kokkos::view_alloc(Kokkos::WithoutInitializing, "flags"), N0_,
+                N1_, N2_, N3_, N4_),
+        result_view(Kokkos::view_alloc(Kokkos::WithoutInitializing, "results"),
+                    N0_, N1_, N2_, N3_, N4_),
+        N0(N0_),
+        N1(N1_),
+        N2(N2_),
+        N3(N3_),
+        N4(N4_) {}
+
+  void test_batch_size() {
+    Kokkos::deep_copy(m_flags, 0);
+
+    Kokkos::parallel_for(Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<5>,
+                                               AtomicAddTag, StaticBatchSize>(
+                             {0, 0, 0, 0, 0}, {N0, N1, N2, N3, N4}),
+                         *this);
+
+    bool success = true;
+    Kokkos::parallel_reduce(
+        Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<5>, VerifyAtomicAddTag>(
+            {0, 0, 0, 0, 0}, {N0, N1, N2, N3, N4}),
+        *this, Kokkos::LAnd<bool>(success));
+
+    ASSERT_TRUE(success);
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const AtomicAddTag, const int i, const int j, const int k,
+                  const int l, const int m) const {
+    Kokkos::atomic_add(&m_flags(i, j, k, l, m), i + j + k + l + m);
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const VerifyAtomicAddTag, const int i, const int j,
+                  const int k, const int l, const int m, bool &success) const {
+    if (m_flags(i, j, k, l, m) != i + j + k + l + m) {
+      Kokkos::printf(
+          "Test5DStaticBatchSize {::test_batch_size_error at %d, %d, %d, %d, "
+          "%d != %d\n",
+          i, j, k, l, m, m_flags(i, j, k, l, m));
+    }
+    success = success && (m_flags(i, j, k, l, m) == i + j + k + l + m);
+  }
+};
+
 }  // namespace
 
 }  // namespace Test
