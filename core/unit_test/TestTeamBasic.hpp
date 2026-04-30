@@ -69,9 +69,6 @@ TEST(TEST_CATEGORY, team_reduce_large) {
   }
 }
 
-#if !defined(KOKKOS_ENABLE_OPENACC)
-// FIXME_OPENACC: Kokkos::single(..., value&) uses team_broadcast; scratch query
-// APIs and team_broadcast are not implemented for OpenACC.
 /*! \brief Test passing an aggregate to Kokkos::single in a parallel_for with
            team policy
 */
@@ -263,7 +260,6 @@ TEST(TEST_CATEGORY_DEATH, exceed_max_team_scratch_size_1) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   test_exceed_max_team_scratch_size_1();
 }
-#endif
 
 void test_exceed_max_team_size() {
   Kokkos::TeamPolicy<TEST_EXECSPACE> policy(1, 1);
@@ -297,7 +293,6 @@ TEST(TEST_CATEGORY_DEATH, exceed_max_team_size) {
   test_exceed_max_team_size();
 }
 
-#if !defined(KOKKOS_ENABLE_OPENACC)
 TEST(TEST_CATEGORY, team_broadcast_long) {
   TestTeamBroadcast<TEST_EXECSPACE, Kokkos::Schedule<Kokkos::Static>,
                     long>::test_teambroadcast(0, 1);
@@ -463,9 +458,7 @@ TEST(TEST_CATEGORY, team_broadcast_double) {
       }
   }
 }
-#endif
 
-#if !defined(KOKKOS_ENABLE_OPENACC)
 struct TeamBroadcastIntPtrFunctor {
   using TeamMember = typename Kokkos::TeamPolicy<TEST_EXECSPACE>::member_type;
 
@@ -494,7 +487,6 @@ TEST(TEST_CATEGORY, team_broadcast_int_ptr) {
   TeamBroadcastIntPtrFunctor team_broadcast_functor;
   team_broadcast_functor.run();
 }
-#endif
 
 struct TeamSingleThreadIntPtrFunctor {
   using TeamMember = typename Kokkos::TeamPolicy<TEST_EXECSPACE>::member_type;
@@ -527,7 +519,6 @@ TEST(TEST_CATEGORY, team_single_thread_int_ptr) {
   team_single_thread_functor.run();
 }
 
-#if !defined(KOKKOS_ENABLE_OPENACC)
 struct TeamSingleTeamIntPtrFunctor {
   using TeamMember = typename Kokkos::TeamPolicy<TEST_EXECSPACE>::member_type;
 
@@ -558,7 +549,6 @@ TEST(TEST_CATEGORY, team_single_team_int_ptr) {
   TeamSingleTeamIntPtrFunctor team_single_team_functor;
   team_single_team_functor.run();
 }
-#endif
 
 TEST(TEST_CATEGORY, team_handle_by_value) {
   { TestTeamPolicyHandleByValue<TEST_EXECSPACE>(); }
