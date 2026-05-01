@@ -126,4 +126,70 @@ TEST(TEST_CATEGORY, graph_construct_from_sycl_command_graph) {
   ASSERT_EQ(data(), 1);
 }
 
+// Retrieve the underlying SYCL node.
+TEST(TEST_CATEGORY, interact_with_sycl_node) {
+  using view_t = Kokkos::View<int, Kokkos::SYCLSharedUSMSpace>;
+
+  const Kokkos::SYCL exec{};
+
+  view_t data(Kokkos::view_alloc(exec, "witness"));
+
+  Kokkos::Experimental::Graph graph{
+      Kokkos::Experimental::get_device_handle(exec)};
+
+  auto node = graph.root_node().then_parallel_for(1, Increment<view_t>{data});
+
+  static_assert(std::same_as<decltype(node.sycl_node()),
+                             const sycl::ext::oneapi::experimental::node&>);
+
+  ASSERT_EQ(node.sycl_node().get_type(),
+            sycl::ext::oneapi::experimental::node_type::kernel);
+
+// 'update_range' on a node works from 2025.2.1 on.
+#if defined(KOKKOS_COMPILER_INTEL_LLVM) && \
+    KOKKOS_COMPILER_INTEL_LLVM >= 20250201
+  // According to
+  // https://github.com/intel/llvm/blob/sycl/sycl/doc/extensions/experimental/sycl_ext_oneapi_graph.asciidoc#83-node,
+  // the node has reference semantics.
+  // According to
+  // https://github.com/intel/llvm/blob/sycl/sycl/doc/extensions/experimental/sycl_ext_oneapi_graph.asciidoc#committing-updates,
+  // node updates will take effect immediately for nodes in modifiable
+  // command graphs.
+  auto sycl_node = node.sycl_node();
+  sycl_node.update_range(sycl::range<1>(0));
+
+  constexpr int value = 0;
+#else
+  constexpr int value = 1;
+#endif
+
+  ASSERT_EQ(data(), 0);
+  graph.submit(exec);
+  exec.fence();
+  ASSERT_EQ(data(), value);
+
+  graph.submit(exec);
+  exec.fence();
+  ASSERT_EQ(data(), 2 * value);
+
+// 'update' taking a node works from 2025.2.1 on.
+#if defined(KOKKOS_COMPILER_INTEL_LLVM) && \
+    KOKKOS_COMPILER_INTEL_LLVM >= 20250201
+  // According to
+  // https://github.com/intel/llvm/blob/sycl/sycl/doc/extensions/experimental/sycl_ext_oneapi_graph.asciidoc#committing-updates,
+  // a node update takes effect in an executable graph only after calling
+  // 'update'.
+  try {
+    auto sycl_graph_exec = graph.sycl_graph_exec();
+    ASSERT_TRUE(sycl_graph_exec.has_value());
+    sycl_graph_exec->update(sycl_node);
+    FAIL();
+  } catch (const std::exception& err) {
+    ASSERT_STREQ(err.what(),
+                 "update() cannot be called on a executable graph which was "
+                 "not created with property::updatable");
+  }
+#endif
+}
+
 }  // namespace

@@ -122,4 +122,46 @@ TEST(TEST_CATEGORY, graph_construct_from_hip_graph) {
   ASSERT_EQ(data(), 1);
 }
 
+// Retrieve the underlying HIP node.
+TEST(TEST_CATEGORY, interact_with_hip_node) {
+  using view_t = Kokkos::View<int, Kokkos::HIPManagedSpace>;
+
+  const Kokkos::HIP exec{};
+
+  view_t data(Kokkos::view_alloc(exec, "witness"));
+
+  Kokkos::Experimental::Graph graph{
+      Kokkos::Experimental::get_device_handle(exec)};
+
+  auto node = graph.root_node().then_parallel_for(1, Increment<view_t>{data});
+
+  static_assert(std::same_as<decltype(node.hip_node()), hipGraphNode_t>);
+
+  hipGraphNode_t hip_node = node.hip_node();
+
+  hipGraphNodeType node_type;
+  KOKKOS_IMPL_HIP_SAFE_CALL(hipGraphNodeGetType(hip_node, &node_type));
+
+  ASSERT_EQ(node_type, hipGraphNodeTypeKernel);
+
+  ASSERT_EQ(data(), 0);
+  graph.submit(exec);
+  exec.fence();
+  ASSERT_EQ(data(), 1);
+
+  KOKKOS_IMPL_HIP_SAFE_CALL(
+      hipGraphNodeSetEnabled(graph.hip_graph_exec(), hip_node, false));
+
+  graph.submit(exec);
+  exec.fence();
+  ASSERT_EQ(data(), 1);
+
+  KOKKOS_IMPL_HIP_SAFE_CALL(
+      hipGraphNodeSetEnabled(graph.hip_graph_exec(), hip_node, true));
+
+  graph.submit(exec);
+  exec.fence();
+  ASSERT_EQ(data(), 2);
+}
+
 }  // namespace
