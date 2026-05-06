@@ -148,7 +148,6 @@ class HPX {
           Kokkos::Tools::Experimental::Impl::DirectFenceIDHandle{m_instance_id},
           [&]() {
             auto &s = m_sender;
-
             hpx::this_thread::experimental::sync_wait(std::move(s));
             s = hpx::execution::experimental::unique_any_sender<>(
                 hpx::execution::experimental::just());
@@ -162,8 +161,7 @@ class HPX {
     hpx::spinlock m_sender_mutex;
   };
 
-  static void default_instance_deleter(instance_data *) {}
-  static instance_data m_default_instance_data;
+  static Kokkos::Impl::HostSharedPtr<instance_data> m_default_instance_data;
   Kokkos::Impl::HostSharedPtr<instance_data> m_instance_data;
 
  public:
@@ -183,8 +181,7 @@ class HPX {
       : m_instance_data(
             (Kokkos::Impl::check_execution_space_constructor_precondition(
                  name()),
-             Kokkos::Impl::HostSharedPtr<instance_data>(
-                 &m_default_instance_data, &default_instance_deleter))) {}
+             m_default_instance_data)) {}
 
 #pragma GCC diagnostic pop
 
@@ -198,8 +195,7 @@ class HPX {
              mode == instance_mode::independent
                  ? (Kokkos::Impl::HostSharedPtr<instance_data>(
                        new instance_data(m_next_instance_id++)))
-                 : Kokkos::Impl::HostSharedPtr<instance_data>(
-                       &m_default_instance_data, &default_instance_deleter))) {}
+                 : m_default_instance_data)) {}
   explicit HPX(hpx::execution::experimental::unique_any_sender<> &&sender)
       : m_instance_data(
             (Kokkos::Impl::check_execution_space_constructor_precondition(
@@ -1582,7 +1578,7 @@ class ParallelReduce<CombinedFunctorReducerType,
     const auto buffer_size = std::min(nchunks, num_worker_threads);
     buffer.resize(buffer_size, value_size + m_shared);
 
-    for (int t = 0; t < num_worker_threads; ++t) {
+    for (int t = 0; t < buffer_size; ++t) {
       reducer.init(reinterpret_cast<pointer_type>(buffer.get(t)));
     }
   }
@@ -1621,8 +1617,11 @@ class ParallelReduce<CombinedFunctorReducerType,
     hpx_thread_buffer &buffer    = m_policy.space().impl_get_buffer();
     const ReducerType &reducer   = m_functor_reducer.get_reducer();
     const int num_worker_threads = m_policy.space().concurrency();
+    const auto nchunks =
+        get_num_chunks(0, m_policy.chunk_size(), m_policy.league_size());
+    const auto buffer_size = std::min(nchunks, num_worker_threads);
     const pointer_type ptr = reinterpret_cast<pointer_type>(buffer.get(0));
-    for (int t = 1; t < num_worker_threads; ++t) {
+    for (int t = 1; t < buffer_size; ++t) {
       reducer.join(ptr, reinterpret_cast<pointer_type>(buffer.get(t)));
     }
 
