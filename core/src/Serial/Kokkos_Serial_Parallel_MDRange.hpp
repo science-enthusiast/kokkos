@@ -23,7 +23,8 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   const iterate_type m_iter;
 
   void exec() const {
-    const typename Policy::member_type e = m_iter.m_rp.m_num_tiles;
+    const typename Policy::member_type e = m_iter.num_outer_iters();
+
     for (typename Policy::member_type i = 0; i < e; ++i) {
       m_iter(i);
     }
