@@ -17,7 +17,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   using MDRangePolicy = Kokkos::MDRangePolicy<Traits...>;
   using Policy        = typename MDRangePolicy::impl_range_policy;
 
-  using iterate_type = typename Kokkos::Impl::HostIterateTile<
+  using iterate_type = typename Kokkos::Impl::HostIterTileLoopFunctor<
       MDRangePolicy, FunctorType, typename MDRangePolicy::work_tag, void>;
 
   const iterate_type m_iter;

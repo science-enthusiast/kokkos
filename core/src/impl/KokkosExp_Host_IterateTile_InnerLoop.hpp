@@ -7,13 +7,13 @@
 #include <Kokkos_Macros.hpp>
 #if defined(KOKKOS_ENABLE_AGGRESSIVE_VECTORIZATION) && \
     defined(KOKKOS_ENABLE_PRAGMA_IVDEP) && !defined(__CUDA_ARCH__)
-#define KOKKOS_MDRANGE_IVDEP
+#define KOKKOS_MDRANGE_INNER_LOOP_IVDEP
 #endif
 
 #ifdef KOKKOS_MDRANGE_IVDEP
-#define KOKKOS_ENABLE_IVDEP_MDRANGE _Pragma("ivdep")
+#define KOKKOS_ENABLE_IVDEP_MDRANGE_INNER_LOOP _Pragma("ivdep")
 #else
-#define KOKKOS_ENABLE_IVDEP_MDRANGE
+#define KOKKOS_ENABLE_IVDEP_MDRANGE_INNER_LOOP
 #endif
 
 #include <algorithm>
@@ -766,42 +766,43 @@ struct HostIterTileLoopFunctor<RP, Functor, Tag, ValueType,
     enum { value = (int)Rank };
   };
 
-  template <typename... Args>
-  std::enable_if_t<(sizeof...(Args) == (RP::rank-1) && std::is_void_v<Tag>), void>
-  m_func_innermost_loop(Args... args) {
+  // hack: Within m_func_innermost_loop, the loop should be limited to a tile,
+  // instead of the whole dimension
+
+  // m_func doesn't accept a tag
+  template <typename InnerTag = Tag, typename... Args>
+  std::enable_if_t<
+      (sizeof...(Args) == (RP::rank - 1) && std::is_void_v<InnerTag>), void>
+  m_func_innermost_loop(Args... args) const {
     if constexpr (RP::outer_direction == Iterate::Left) {
-      // hack: it should be limited to a tile, instead
-      // of the whole dimension 
-      KOKKOS_ENABLE_IVDEP_MDRANGE
-      for (int i = m_rp.m_lower[0]; i < m_rp.m_upper[0]; ++i) { 
-        m_func(i, args...); 
+      KOKKOS_ENABLE_IVDEP_MDRANGE_INNER_LOOP
+      for (int i = m_rp.m_lower[0]; i < m_rp.m_upper[0]; ++i) {
+        m_func(i, args...);
       }
     } else {
-      // hack: it should be limited to a tile, instead
-      // of the whole dimension 
-      KOKKOS_ENABLE_IVDEP_MDRANGE
-      for (int i = m_rp.m_lower[RP::rank - 1]; i < m_rp.m_upper[RP::rank - 1]; ++i) { 
-        m_func(args..., i); 
+      KOKKOS_ENABLE_IVDEP_MDRANGE_INNER_LOOP
+      for (int i = m_rp.m_lower[RP::rank - 1]; i < m_rp.m_upper[RP::rank - 1];
+           ++i) {
+        m_func(args..., i);
       }
     }
   }
 
-  template <typename... Args>
-  std::enable_if_t<(sizeof...(Args) == (RP::rank-1) && !std::is_void_v<Tag>), void>
-  m_func_innermost_loop(Tag tag, Args... args) {
+  // m_func accepts a tag
+  template <typename InnerTag = Tag, typename... Args>
+  std::enable_if_t<
+      (sizeof...(Args) == (RP::rank - 1) && !std::is_void_v<InnerTag>), void>
+  m_func_innermost_loop(InnerTag tag, Args... args) const {
     if constexpr (RP::outer_direction == Iterate::Left) {
-      // hack: it should be limited to a tile, instead
-      // of the whole dimension 
-      KOKKOS_ENABLE_IVDEP_MDRANGE
-      for (int i = m_rp.m_lower[0]; i < m_rp.m_upper[0]; ++i) { 
-        m_func(tag, i, args...); 
+      KOKKOS_ENABLE_IVDEP_MDRANGE_INNER_LOOP
+      for (int i = m_rp.m_lower[0]; i < m_rp.m_upper[0]; ++i) {
+        m_func(tag, i, args...);
       }
     } else {
-      // hack: it should be limited to a tile, instead
-      // of the whole dimension 
-      KOKKOS_ENABLE_IVDEP_MDRANGE
-      for (int i = m_rp.m_lower[RP::rank - 1]; i < m_rp.m_upper[RP::rank - 1]; ++i) { 
-        m_func(tag, args..., i); 
+      KOKKOS_ENABLE_IVDEP_MDRANGE_INNER_LOOP
+      for (int i = m_rp.m_lower[RP::rank - 1]; i < m_rp.m_upper[RP::rank - 1];
+           ++i) {
+        m_func(tag, args..., i);
       }
     }
   }
@@ -831,9 +832,16 @@ struct HostIterTileLoopFunctor<RP, Functor, Tag, ValueType,
     // partial tile dims
     const bool full_tile = check_iteration_bounds(m_tiledims, m_offset);
 
-    Tile_Inner_Loop_Type<RP::rank, (RP::inner_direction == Iterate::Left), index_type,
-                   Tag>::apply(m_func_innermost_loop, full_tile, m_offset, m_rp.m_tile,
-                               m_tiledims);
+    Tile_Inner_Loop_Type<RP::rank, (RP::inner_direction == Iterate::Left),
+                         index_type, Tag>::
+        apply(
+            // TODO: Is this lambda based approach the best possible one
+            // for calling the correct overload?
+            [this](auto&&... args) {
+              this->m_func_innermost_loop(
+                  std::forward<decltype(args)>(args)...);
+            },
+            full_tile, m_offset, m_rp.m_tile, m_tiledims);
   }
 
   index_type num_outer_iters() const { return m_num_outer_iters; }   
