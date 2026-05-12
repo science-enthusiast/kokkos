@@ -18,6 +18,11 @@ import kokkos.core;
 
 namespace {
 
+template <typename T>
+__global__ void increment_kernel(T* const data) {
+  ++data[0];
+}
+
 template <typename ViewType>
 struct Increment {
   ViewType data;
@@ -148,6 +153,65 @@ TEST_F(TEST_CATEGORY_FIXTURE(GraphInterOp), construct_from_cuda_graph) {
   this->exec.fence();
 
   ASSERT_EQ(data(), 1);
+}
+
+// Retrieve the underlying CUDA node.
+TEST_F(TEST_CATEGORY_FIXTURE(GraphInterOp), interact_with_cuda_node) {
+  graph_t increment{Kokkos::Experimental::get_device_handle(this->exec)};
+
+  auto node_tpf =
+      increment.root_node().then_parallel_for(1, Increment<view_t>{data});
+
+  auto node_cap = node_tpf.cuda_capture(
+      this->exec, [data_ = data](const Kokkos::Cuda& exec_) {
+        increment_kernel<<<1, 1, 0, exec_.cuda_stream()>>>(data_.data());
+      });
+
+  testing::StaticAssertTypeEq<decltype(node_tpf.cuda_node()),
+                              cudaGraphNode_t>();
+  testing::StaticAssertTypeEq<decltype(node_cap.cuda_node()),
+                              cudaGraphNode_t>();
+
+  cudaGraphNode_t cuda_node_tpf = node_tpf.cuda_node();
+  cudaGraphNode_t cuda_node_cap = node_cap.cuda_node();
+
+  cudaGraphNodeType node_type;
+
+  KOKKOS_IMPL_CUDA_SAFE_CALL(cudaGraphNodeGetType(cuda_node_tpf, &node_type));
+  ASSERT_EQ(node_type, cudaGraphNodeTypeKernel);
+
+  KOKKOS_IMPL_CUDA_SAFE_CALL(cudaGraphNodeGetType(cuda_node_cap, &node_type));
+  ASSERT_EQ(node_type, cudaGraphNodeTypeGraph);
+
+  cudaGraph_t capture_graph;
+  KOKKOS_IMPL_CUDA_SAFE_CALL(
+      cudaGraphChildGraphNodeGetGraph(cuda_node_cap, &capture_graph));
+  size_t capture_num_nodes;
+  KOKKOS_IMPL_CUDA_SAFE_CALL(
+      cudaGraphGetNodes(capture_graph, nullptr, &capture_num_nodes));
+  ASSERT_EQ(capture_num_nodes, 1);
+
+  ASSERT_EQ(data(), 0);
+  increment.submit(this->exec);
+  this->exec.fence();
+  ASSERT_EQ(data(), 2);
+
+// cudaGraphNodeSetEnabled was introduced in CUDA 11.6.
+#if CUDA_VERSION >= 11060
+  KOKKOS_IMPL_CUDA_SAFE_CALL(cudaGraphNodeSetEnabled(
+      increment.cuda_graph_exec(), cuda_node_tpf, false));
+
+  increment.submit(this->exec);
+  this->exec.fence();
+  ASSERT_EQ(data(), 3);
+
+  KOKKOS_IMPL_CUDA_SAFE_CALL(cudaGraphNodeSetEnabled(
+      increment.cuda_graph_exec(), cuda_node_tpf, true));
+
+  increment.submit(this->exec);
+  this->exec.fence();
+  ASSERT_EQ(data(), 5);
+#endif
 }
 // NOLINTEND(bugprone-unchecked-optional-access)
 
