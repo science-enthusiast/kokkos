@@ -131,13 +131,11 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>, Kokkos::Cuda> {
       grid_dim  = grid.x;
       block_dim = block.x;
 
-      nwork = grid_dim * block_dim;
-      nwork = nwork / batch_size + (nwork % batch_size == 0 ? 0 : 1);
-      const int maxGridSizeX =
-          m_policy.space().cuda_device_prop().maxGridSize[0];
+      nwork    = grid_dim * block_dim;
+      nwork    = (nwork + batch_size - 1) / batch_size;
       grid_dim = std::min(
           typename Policy::index_type((nwork + block_dim - 1) / block_dim),
-          typename Policy::index_type(maxGridSizeX));
+          typename Policy::index_type(m_max_grid_size[0]));
 
       grid.x = grid_dim;
     };

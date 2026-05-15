@@ -381,6 +381,9 @@ struct DeviceIterate {
                istride < static_cast<index_type>(end - stride * batch_size)
                    ? istride + stride * batch_size
                    : end) {
+#if defined(KOKKOS_COMPILER_NVCC)
+#pragma unroll
+#endif
         for (index_type i = 0;
              i < static_cast<index_type>(stride * batch_size) &&
              i < end - istride;
