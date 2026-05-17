@@ -8,7 +8,6 @@
 
 #include <Kokkos_Parallel.hpp>
 #include <KokkosExp_MDRangePolicy.hpp>
-#include <impl/KokkosExp_Host_IterateNestLoopWoTile.hpp>
 
 namespace Kokkos {
 namespace Impl {
