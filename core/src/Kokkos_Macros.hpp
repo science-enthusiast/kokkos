@@ -366,6 +366,23 @@
 #define KOKKOS_RESTRICT
 #endif
 
+// ---------------------------------------------------------------------------
+// Define macro for unreachable code:
+// Only available in C++23
+// FIXME_HIP doesn't support std::unreachable in device code
+#if defined(__cpp_lib_unreachable) && !defined(KOKKOS_ENABLE_HIP)
+#include <utility>
+#define KOKKOS_IMPL_UNREACHABLE() std::unreachable()
+#elif defined(__has_builtin)
+#if __has_builtin(__builtin_unreachable)
+#define KOKKOS_IMPL_UNREACHABLE() __builtin_unreachable()
+#endif
+#endif
+
+#if !defined(KOKKOS_IMPL_UNREACHABLE)
+#define KOKKOS_IMPL_UNREACHABLE()
+#endif
+
 //----------------------------------------------------------------------------
 // Define Macro for alignment:
 
