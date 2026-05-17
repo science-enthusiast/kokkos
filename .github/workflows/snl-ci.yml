@@ -23,6 +23,7 @@ jobs:
     strategy:
       matrix:
         view_legacy: [ON, OFF]
+        dep_code_5: [ON, OFF]
 
     steps:
       - name: checkout_kokkos
@@ -45,9 +46,11 @@ jobs:
             -DBUILD_SHARED_LIBS=OFF \
             -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
             -DKokkos_ENABLE_DEPRECATED_CODE_4=OFF \
+            -DKokkos_ENABLE_DEPRECATED_CODE_5=${{ matrix.dep_code_5 }}  \
             -DKokkos_ENABLE_IMPL_VIEW_LEGACY=${{ matrix.view_legacy }} \
             -DKokkos_ENABLE_TESTS=ON \
             -DKokkos_ENABLE_EXAMPLES=ON \
+            -DKokkos_ENABLE_LARGE_MEM_TESTS=ON \
             -DKokkos_ENABLE_BENCHMARKS=ON \
             -DKokkos_ENABLE_BENCHMARKS_HEAVY=${{ matrix.view_legacy == 'ON' && 'OFF' || 'ON' }} \
             ./
@@ -105,9 +108,11 @@ jobs:
             -DBUILD_SHARED_LIBS=OFF \
             -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
             -DKokkos_ENABLE_DEPRECATED_CODE_4=OFF \
+            -DKokkos_ENABLE_DEPRECATED_CODE_5=OFF \
             -DKokkos_ENABLE_IMPL_VIEW_LEGACY=${{ matrix.view_legacy }} \
             -DKokkos_ENABLE_TESTS=ON \
             -DKokkos_ENABLE_EXAMPLES=ON \
+            -DKokkos_ENABLE_LARGE_MEM_TESTS=ON \
             -DKokkos_ENABLE_BENCHMARKS=ON
 
       - name: build_and_install_kokkos
@@ -161,8 +166,10 @@ jobs:
             -DBUILD_SHARED_LIBS=OFF \
             -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
             -DKokkos_ENABLE_DEPRECATED_CODE_4=OFF \
+            -DKokkos_ENABLE_DEPRECATED_CODE_5=OFF \
             -DKokkos_ENABLE_TESTS=ON \
             -DKokkos_ENABLE_EXAMPLES=ON \
+            -DKokkos_ENABLE_LARGE_MEM_TESTS=ON \
             -DKokkos_ENABLE_BENCHMARKS=ON
 
       - name: build_and_install_kokkos
@@ -197,6 +204,7 @@ jobs:
     strategy:
       matrix:
         view_legacy: [ON, OFF]
+        dep_code_5: [ON, OFF]
 
     steps:
       - name: checkout_kokkos
@@ -217,9 +225,11 @@ jobs:
             -DKokkos_ARCH_SPR=ON \
             -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
             -DKokkos_ENABLE_DEPRECATED_CODE_4=OFF \
+            -DKokkos_ENABLE_DEPRECATED_CODE_5=${{ matrix.dep_code_5 }}  \
             -DKokkos_ENABLE_IMPL_VIEW_LEGACY=${{ matrix.view_legacy }} \
             -DKokkos_ENABLE_TESTS=ON \
             -DKokkos_ENABLE_EXAMPLES=ON \
+            -DKokkos_ENABLE_LARGE_MEM_TESTS=ON \
             -DKokkos_ENABLE_BENCHMARKS=ON \
             -DKokkos_ENABLE_BENCHMARKS_HEAVY=${{ matrix.view_legacy == 'ON' && 'OFF' || 'ON' }}
 
@@ -276,8 +286,10 @@ jobs:
             -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
             -DKokkos_ENABLE_DEPRECATED_CODE_4=OFF \
             -DKokkos_ENABLE_IMPL_VIEW_LEGACY=${{ matrix.view_legacy }} \
+            -DKokkos_ENABLE_DEPRECATED_CODE_5=OFF \
             -DKokkos_ENABLE_TESTS=ON \
             -DKokkos_ENABLE_EXAMPLES=ON \
+            -DKokkos_ENABLE_LARGE_MEM_TESTS=ON \
             -DKokkos_ENABLE_BENCHMARKS=ON
 
       - name: build_and_install_kokkos
@@ -328,6 +340,7 @@ jobs:
             -DKokkos_ENABLE_HWLOC=ON \
             -DKokkos_ENABLE_HPX=ON \
             -DKokkos_ENABLE_TESTS=ON \
+            -DKokkos_ENABLE_LARGE_MEM_TESTS=ON \
             -DKokkos_ENABLE_BENCHMARKS=ON \
             -DKokkos_ENABLE_BENCHMARKS_HEAVY=${{ matrix.view_legacy == 'ON' && 'OFF' || 'ON' }} \
             -DKokkos_ENABLE_EXAMPLES=ON \
@@ -352,9 +365,9 @@ jobs:
         working-directory: kokkos/build
         run: KOKKOS_NUM_THREADS=64 ctest --output-on-failure --timeout 3600
 
-  NextSilicon_1_0_0:
-    name: SNL_NextSilicon_1_0_0
-    runs-on: [ns-1.0.0]
+  NextSilicon_1_2_0:
+    name: SNL_NextSilicon_1_2_0
+    runs-on: [ns-1.2.0]
     continue-on-error: true
 
     steps:
@@ -373,3 +386,40 @@ jobs:
           nextcli system status | grep "Maverick 2"
           nextcli system status | grep "Status: OK"
           nextcli system terminate
+
+      - name: checkout_kokkos
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: kokkos/kokkos
+          path: kokkos
+
+      - name: configure_kokkos
+        run: |
+          cd kokkos
+          cmake -B build \
+            -DKokkos_ENABLE_NEXTSILICON=ON \
+            -DKokkos_ENABLE_TESTS=ON \
+            -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_AR=$NEXT_HOME/llvm/bin/ar \
+            -DCMAKE_RANLIB=$NEXT_HOME/llvm/bin/ranlib \
+            -DCMAKE_CXX_COMPILER=nextcxx \
+            -DCMAKE_CXX_STANDARD=20 \
+            -DCMAKE_CXX_FLAGS="-Werror -Wno-return-type -Wno-invalid-noreturn"
+
+      - name: build_kokkos
+        working-directory: kokkos
+        run: |
+          cmake --build build --parallel $(nproc) \
+            --target Kokkos_IncrementalTest_NEXTSILICON
+
+      # the SNL runners map a named volume to $HOME/optimizer-cache for a persistent
+      # optimizer cache across runs. If this doesn't get mapped, nextsystemd will
+      # create this directory and use it as a cache, but the contents will be lost
+      # when the container exits
+      - name: test_kokkos
+        working-directory: kokkos/build
+        env:
+          XDG_CACHE_HOME: $HOME/optimizer-cache
+        run: |
+          ctest -V --timeout 3600 -R Kokkos_IncrementalTest_NEXTSILICON

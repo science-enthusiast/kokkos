@@ -626,6 +626,7 @@ struct Random_UniqueIndex {
         (return DeviceType::execution_space::impl_hardware_thread_id();))
 
     KOKKOS_IF_ON_DEVICE((return 0;))
+    KOKKOS_IMPL_UNREACHABLE();
   }
 };
 
@@ -662,6 +663,7 @@ struct Random_UniqueIndex<
 
         return i;))
     KOKKOS_IF_ON_HOST(((void)locks_; return 0;))
+    KOKKOS_IMPL_UNREACHABLE();
   }
 };
 
@@ -905,17 +907,7 @@ class Random_XorShift64_Pool {
  public:
   using generator_type = Random_XorShift64<DeviceType>;
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEFAULTED_FUNCTION Random_XorShift64_Pool() = default;
-
-  KOKKOS_DEFAULTED_FUNCTION Random_XorShift64_Pool(
-      Random_XorShift64_Pool const&) = default;
-
-  KOKKOS_DEFAULTED_FUNCTION Random_XorShift64_Pool& operator=(
-      Random_XorShift64_Pool const&) = default;
-#else
-  Random_XorShift64_Pool()   = default;
-#endif
+  Random_XorShift64_Pool() = default;
 
   Random_XorShift64_Pool(uint64_t seed) {
     init_impl(execution_space(), seed, execution_space().concurrency());
@@ -935,13 +927,6 @@ class Random_XorShift64_Pool {
                          uint64_t num_states) {
     init_impl(exec, seed, num_states);
   }
-
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED void init(uint64_t seed, uint64_t num_states) {
-    init_impl(execution_space(), seed, num_states);
-    execution_space().fence("Random_XorShift64_Pool::init");
-  }
-#endif
 
  private:
   void init_impl(execution_space const& exec, uint64_t seed,
@@ -1185,17 +1170,7 @@ class Random_XorShift1024_Pool {
  public:
   using generator_type = Random_XorShift1024<DeviceType>;
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEFAULTED_FUNCTION Random_XorShift1024_Pool() = default;
-
-  KOKKOS_DEFAULTED_FUNCTION Random_XorShift1024_Pool(
-      Random_XorShift1024_Pool const&) = default;
-
-  KOKKOS_DEFAULTED_FUNCTION Random_XorShift1024_Pool& operator=(
-      Random_XorShift1024_Pool const&) = default;
-#else
   Random_XorShift1024_Pool() = default;
-#endif
 
   Random_XorShift1024_Pool(uint64_t seed) {
     init_impl(execution_space(), seed, execution_space().concurrency());
@@ -1215,13 +1190,6 @@ class Random_XorShift1024_Pool {
                            uint64_t num_states) {
     init_impl(exec, seed, num_states);
   }
-
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  void init(uint64_t seed, uint64_t num_states) {
-    init_impl(execution_space(), seed, num_states);
-    execution_space().fence("Random_XorShift1024_Pool::init");
-  }
-#endif
 
  private:
   void init_impl(execution_space const& exec, uint64_t seed,

@@ -1,8 +1,9 @@
 .common-setup:
   stage: test
   variables:
-    OMP_PLACES: "threads"
-    OMP_PROC_BIND: "spread"
+    OMP_NUM_THREADS: "8"
+    OMP_PLACES: "cores"
+    OMP_PROC_BIND: "close"
   before_script:
     - if [ ${CI_PIPELINE_SOURCE} == "schedule" ]; then
         export CDASH_MODEL="Nightly";
@@ -15,6 +16,8 @@
         export BUILD_TYPE="RelWithDebInfo";
         export GITHUB_PR_ID=$(echo ${CI_COMMIT_BRANCH} | cut -d \_ -f 1 | cut -c 3-);
       fi
+  after_script:
+    - sed -n "s/[0-9]*:[ ]\[[ ]*OK \] \([^ ]*\) (\([0-9]*\) ms)/\2 \1/p" test_results.txt | sort -nr | head
 
 NVIDIA-RTX5080:
   extends: .common-setup
@@ -41,6 +44,7 @@ NVIDIA-RTX5080:
         -S scripts/CTestRun.cmake
         -D CTEST_SITE="gitlab.spack.io"
         -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
   artifacts:
     when: always
     paths:
@@ -73,6 +77,7 @@ NVIDIA-GH200:
     - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D Kokkos_ENABLE_TESTS=ON"
     - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D Kokkos_ENABLE_IMPL_CUDA_MALLOC_ASYNC=ON"
     - export CTEST_BUILD_NAME="NVIDIA-GH200"
+    - export GTEST_FILTER="-cuda.debug_pin_um_to_host"
     - ctest -VV
         -D CDASH_MODEL=${CDASH_MODEL}
         -D GITHUB_PR_ID="${GITHUB_PR_ID}"
@@ -81,6 +86,7 @@ NVIDIA-GH200:
         -S scripts/CTestRun.cmake
         -D CTEST_SITE="gitlab.spack.io"
         -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
   artifacts:
     when: always
     paths:
@@ -113,6 +119,7 @@ NVIDIA-P100:
         -S scripts/CTestRun.cmake
         -D CTEST_SITE="gitlab.spack.io"
         -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
   artifacts:
     when: always
     paths:
@@ -153,6 +160,7 @@ INTEL-DATA-CENTER-MAX-1100:
         -S scripts/CTestRun.cmake
         -D CTEST_SITE="gitlab.spack.io"
         -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
   artifacts:
     when: always
     paths:
@@ -191,6 +199,7 @@ INTEL-DATA-CENTER-MAX-1100-OUT-OF-ORDER:
         -S scripts/CTestRun.cmake
         -D CTEST_SITE="gitlab.spack.io"
         -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
   artifacts:
     when: always
     paths:
@@ -228,6 +237,7 @@ AMD-MI300A:
       -S scripts/CTestRun.cmake
       -D CTEST_SITE="gitlab.spack.io"
       -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
   artifacts:
     when: always
     paths:
@@ -241,10 +251,13 @@ NVIDIA-GRACE-GRACE:
   image: ubuntu:latest
   script:
     - apt-get update && apt-get install -y cmake git g++
-    - export OMP_NUM_THREADS=8
-    - export OMP_PROC_BIND=close
-    - export OMP_PLACES=cores
     - export CMAKE_BUILD_PARALLEL_LEVEL=48
+    - git clone https://github.com/kokkos/mdspan
+    - cd mdspan
+    - git reset --hard $(cat ../tpls/mdspan-hash.txt)
+    - cmake -B build -DCMAKE_INSTALL_PREFIX=/tmp/mdspan-install -S .
+    - cmake --build build --target install
+    - cd ..
     - export ENV_CMAKE_OPTIONS=""
     - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D CMAKE_BUILD_TYPE=${BUILD_TYPE}"
     - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D CMAKE_CXX_COMPILER=g++"
@@ -255,6 +268,8 @@ NVIDIA-GRACE-GRACE:
     - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D Kokkos_ENABLE_TESTS=ON"
     - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D Kokkos_ENABLE_COMPILER_WARNINGS=ON"
     - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D Kokkos_ENABLE_DEPRECATED_CODE_5=OFF"
+    - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D Kokkos_ENABLE_MDSPAN_EXTERNAL=ON"
+    - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D mdspan_ROOT=/tmp/mdspan-install"
     - export CTEST_BUILD_NAME="NVIDIA-GRACE-GRACE"
     - ctest -VV
         -D CDASH_MODEL=${CDASH_MODEL}
@@ -264,9 +279,46 @@ NVIDIA-GRACE-GRACE:
         -S scripts/CTestRun.cmake
         -D CTEST_SITE="gitlab.spack.io"
         -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
+  after_script:
+    - sed -n "s/[0-9]*:[ ]\[[ ]*OK \] \([^ ]*\) (\([0-9]*\) ms)/\2 \1/p" test_results.txt | sort -nr | head
   artifacts:
     when: always
     paths:
       - build/result_grace_grace.xml
     reports:
       junit: build/result_grace_grace.xml
+
+NVIDIA-DGX-SPARK:
+  extends: .common-setup
+  tags: [nvidia-gb10, hpsf-gpu]
+  image: nvcr.io/nvidia/cuda:13.1.1-devel-ubuntu24.04
+  script:
+    - apt-get update && apt-get install -y cmake git python3
+    - export CMAKE_BUILD_PARALLEL_LEVEL=32
+    - export ENV_CMAKE_OPTIONS=""
+    - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D CMAKE_BUILD_TYPE=${BUILD_TYPE}"
+    - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D CMAKE_CUDA_FLAGS='-Werror=all-warnings'"
+    - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D CMAKE_CXX_STANDARD=20"
+    - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D Kokkos_ARCH_NATIVE=ON"
+    - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE=ON"
+    - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D Kokkos_ENABLE_CUDA=ON"
+    - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D Kokkos_ENABLE_COMPILER_WARNINGS=ON"
+    - export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D Kokkos_ENABLE_TESTS=ON"
+    - export CTEST_BUILD_NAME="NVIDIA-DGX-SPARK"
+    - export GTEST_FILTER="-cuda.debug_pin_um_to_host"
+    - ctest -VV
+        -D CDASH_MODEL=${CDASH_MODEL}
+        -D GITHUB_PR_ID="${GITHUB_PR_ID}"
+        -D CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS}"
+        -D OUTPUT_JUNIT_FILE=result_dgx_spark.xml
+        -S scripts/CTestRun.cmake
+        -D CTEST_SITE="gitlab.spack.io"
+        -D CTEST_BUILD_NAME="${CTEST_BUILD_NAME}"
+      | tee test_results.txt
+  artifacts:
+    when: always
+    paths:
+      - build/result_dgx_spark.xml
+    reports:
+      junit: build/result_dgx_spark.xml

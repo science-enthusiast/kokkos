@@ -40,9 +40,6 @@ struct GraphNodeImpl<ExecutionSpace, Kokkos::Experimental::TypeErasedTag,
   using device_handle_t       = Kokkos::Impl::DeviceHandle<ExecutionSpace>;
   using device_handle_storage_base_t = InstanceStorage<device_handle_t>;
 
- public:
-  virtual ~GraphNodeImpl() = default;
-
  protected:
   //----------------------------------------------------------------------------
   // <editor-fold desc="protected ctors and destructors"> {{{2
@@ -74,6 +71,7 @@ struct GraphNodeImpl<ExecutionSpace, Kokkos::Experimental::TypeErasedTag,
   GraphNodeImpl(GraphNodeImpl&&)                 = delete;
   GraphNodeImpl& operator=(GraphNodeImpl const&) = delete;
   GraphNodeImpl& operator=(GraphNodeImpl&&)      = delete;
+  virtual ~GraphNodeImpl()                       = default;
 
   // </editor-fold> end no other constructors }}}2
   //----------------------------------------------------------------------------
@@ -153,7 +151,7 @@ struct GraphNodeImpl<ExecutionSpace, Kernel,
   GraphNodeImpl(GraphNodeImpl&&)                 = delete;
   GraphNodeImpl& operator=(GraphNodeImpl const&) = delete;
   GraphNodeImpl& operator=(GraphNodeImpl&&)      = delete;
-  ~GraphNodeImpl() override                      = default;
+  ~GraphNodeImpl() noexcept override             = default;
 
   // </editor-fold> end Rule of 6 for not copyable or movable }}}3
   //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -228,7 +226,7 @@ struct GraphNodeImpl
   GraphNodeImpl(GraphNodeImpl&&)                 = delete;
   GraphNodeImpl& operator=(GraphNodeImpl const&) = delete;
   GraphNodeImpl& operator=(GraphNodeImpl&&)      = delete;
-  ~GraphNodeImpl() override                      = default;
+  ~GraphNodeImpl() noexcept override             = default;
 
   // Normal kernel-and-predecessor or capture-and-predecessor constructor.
   template <class KernelDeduced, class PredecessorPtrDeduced, class Tag,

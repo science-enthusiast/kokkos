@@ -28,12 +28,7 @@ class AnonymousSpace {
   using device_type = Kokkos::Device<execution_space, memory_space>;
 
   /**\brief  Default memory space instance */
-  AnonymousSpace()                                  = default;
-  AnonymousSpace(AnonymousSpace &&rhs)              = default;
-  AnonymousSpace(const AnonymousSpace &rhs)         = default;
-  AnonymousSpace &operator=(AnonymousSpace &&)      = default;
-  AnonymousSpace &operator=(const AnonymousSpace &) = default;
-  ~AnonymousSpace()                                 = default;
+  AnonymousSpace() = default;
 
   /**\brief Return Name of the MemorySpace */
   static constexpr const char *name() { return "Anonymous"; }
@@ -51,21 +46,18 @@ template <typename OtherSpace>
 struct MemorySpaceAccess<Kokkos::AnonymousSpace, OtherSpace> {
   enum : bool { assignable = true };
   enum : bool { accessible = true };
-  enum : bool { deepcopy = true };
 };
 
 template <typename OtherSpace>
 struct MemorySpaceAccess<OtherSpace, Kokkos::AnonymousSpace> {
   enum : bool { assignable = true };
   enum : bool { accessible = true };
-  enum : bool { deepcopy = true };
 };
 
 template <>
 struct MemorySpaceAccess<Kokkos::AnonymousSpace, Kokkos::AnonymousSpace> {
   enum : bool { assignable = true };
   enum : bool { accessible = true };
-  enum : bool { deepcopy = true };
 };
 
 }  // namespace Impl

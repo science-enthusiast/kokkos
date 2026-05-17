@@ -92,6 +92,7 @@ class SharedAllocationRecord<void, void> {
   SharedAllocationRecord(const SharedAllocationRecord&)            = delete;
   SharedAllocationRecord& operator=(SharedAllocationRecord&&)      = delete;
   SharedAllocationRecord& operator=(const SharedAllocationRecord&) = delete;
+  virtual ~SharedAllocationRecord()                                = default;
 
   /**\brief  Construct and insert into 'arg_root' tracking set.
    *         use_count is zero.
@@ -115,6 +116,7 @@ class SharedAllocationRecord<void, void> {
   static KOKKOS_FUNCTION int tracking_enabled() {
     KOKKOS_IF_ON_HOST(return t_tracking_enabled;)
     KOKKOS_IF_ON_DEVICE(return 0;)
+    KOKKOS_IMPL_UNREACHABLE();
   }
 #if defined(__EDG__)
 #pragma pop
@@ -129,8 +131,6 @@ class SharedAllocationRecord<void, void> {
    *        shared allocation tracking flag.
    */
   static void tracking_enable() { t_tracking_enabled = 1; }
-
-  virtual ~SharedAllocationRecord() = default;
 
   SharedAllocationRecord()
       : m_alloc_ptr(nullptr),
@@ -221,7 +221,15 @@ class SharedAllocationRecordCommon : public SharedAllocationRecord<void, void> {
   static void deallocate(record_base_t* arg_rec);
 
  public:
+  SharedAllocationRecordCommon(const SharedAllocationRecordCommon&) = delete;
+  SharedAllocationRecordCommon(SharedAllocationRecordCommon&&)      = delete;
+  SharedAllocationRecordCommon& operator=(const SharedAllocationRecordCommon&) =
+      delete;
+  SharedAllocationRecordCommon& operator=(SharedAllocationRecordCommon&&) =
+      delete;
+
   ~SharedAllocationRecordCommon();
+
   template <class ExecutionSpace>
   SharedAllocationRecordCommon(
       ExecutionSpace const& exec, MemorySpace const& space,
@@ -305,7 +313,17 @@ class HostInaccessibleSharedAllocationRecordCommon
   static void deallocate(record_base_t* arg_rec);
 
  public:
+  HostInaccessibleSharedAllocationRecordCommon(
+      const HostInaccessibleSharedAllocationRecordCommon&) = delete;
+  HostInaccessibleSharedAllocationRecordCommon(
+      HostInaccessibleSharedAllocationRecordCommon&&) = delete;
+  HostInaccessibleSharedAllocationRecordCommon& operator=(
+      const HostInaccessibleSharedAllocationRecordCommon&) = delete;
+  HostInaccessibleSharedAllocationRecordCommon& operator=(
+      HostInaccessibleSharedAllocationRecordCommon&&) = delete;
+
   ~HostInaccessibleSharedAllocationRecordCommon();
+
   template <class ExecutionSpace>
   HostInaccessibleSharedAllocationRecordCommon(
       ExecutionSpace const& exec, MemorySpace const& space,
@@ -468,11 +486,12 @@ class SharedAllocationRecord
             &Kokkos::Impl::deallocate<MemorySpace, DestroyFunctor>),
         m_destroy() {}
 
+ public:
   SharedAllocationRecord()                                         = delete;
   SharedAllocationRecord(const SharedAllocationRecord&)            = delete;
   SharedAllocationRecord& operator=(const SharedAllocationRecord&) = delete;
+  ~SharedAllocationRecord()                                        = default;
 
- public:
   DestroyFunctor m_destroy;
 
   // Allocate with a zero use count.  Incrementing the use count from zero to
@@ -485,6 +504,7 @@ class SharedAllocationRecord
         (return new SharedAllocationRecord(arg_space, arg_label, arg_alloc);))
     KOKKOS_IF_ON_DEVICE(
         ((void)arg_space; (void)arg_label; (void)arg_alloc; return nullptr;))
+    KOKKOS_IMPL_UNREACHABLE();
   }
 
   template <typename ExecutionSpace>
@@ -496,6 +516,7 @@ class SharedAllocationRecord
                                            arg_alloc);))
     KOKKOS_IF_ON_DEVICE(((void)exec_space; (void)arg_space; (void)arg_label;
                          (void)arg_alloc; return nullptr;))
+    KOKKOS_IMPL_UNREACHABLE();
   }
 };
 
@@ -575,6 +596,7 @@ union SharedAllocationTracker {
                        return (tmp ? tmp->use_count() : 0);))
 
     KOKKOS_IF_ON_DEVICE((return 0;))
+    KOKKOS_IMPL_UNREACHABLE();
   }
 
   KOKKOS_INLINE_FUNCTION bool has_record() const {
@@ -611,7 +633,7 @@ union SharedAllocationTracker {
   // Move:
 
   KOKKOS_FORCEINLINE_FUNCTION
-  SharedAllocationTracker(SharedAllocationTracker&& rhs)
+  SharedAllocationTracker(SharedAllocationTracker&& rhs) noexcept
       : m_record_bits(rhs.m_record_bits) {
     rhs.m_record_bits = DO_NOT_DEREF_FLAG;
   }

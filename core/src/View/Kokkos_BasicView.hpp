@@ -66,12 +66,10 @@ struct KokkosSliceToMDSpanSliceImpl {
 };
 
 template <>
-struct KokkosSliceToMDSpanSliceImpl<Kokkos::ALL_t> {
+struct KokkosSliceToMDSpanSliceImpl<ALL_t> {
   using type = full_extent_t;
   KOKKOS_FUNCTION
-  static constexpr decltype(auto) transform(Kokkos::ALL_t) {
-    return full_extent;
-  }
+  static constexpr decltype(auto) transform(ALL_t) { return full_extent; }
 };
 
 template <class T>
@@ -597,7 +595,8 @@ class BasicView {
     // Explicit cast is needed because submdspan_mapping may return a different
     // layout type.
     using sub_accessor_t = typename OtherAccessorPolicy::offset_policy;
-    m_ptr = src_view.m_acc.offset(src_view.m_ptr, sub_mapping_result.offset);
+    m_ptr                = static_cast<data_handle_type>(
+        src_view.m_acc.offset(src_view.m_ptr, sub_mapping_result.offset));
     m_map = mapping_type(sub_mapping_result.mapping);
     m_acc = sub_accessor_t(src_view.m_acc);
 
@@ -781,6 +780,9 @@ class BasicView {
     return m_map.is_strided();
   }
   KOKKOS_FUNCTION constexpr index_type stride(rank_type r) const {
+    // Need to cast in order to avoid warning for rank zero about pointless
+    // comparison to zero
+    KOKKOS_ASSERT(static_cast<int>(r) < static_cast<int>(rank()));
     return m_map.stride(r);
   }
 

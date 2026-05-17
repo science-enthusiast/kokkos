@@ -127,6 +127,9 @@ int get_device_count() {
 #elif defined(KOKKOS_ENABLE_OPENACC)
   return acc_get_num_devices(
       Kokkos::Experimental::Impl::OpenACC_Traits::dev_type);
+#elif defined(KOKKOS_ENABLE_NEXTSILICON)
+  // FIXME_NEXTSILICON: Need NextAPI support for querying the number of devices
+  return 1;
 #else
   Kokkos::abort("implementation bug");
   return -1;
@@ -215,8 +218,14 @@ void Kokkos::Impl::ExecSpaceManager::initialize_spaces(
 }
 
 void Kokkos::Impl::ExecSpaceManager::finalize_spaces() {
-  for (auto& to_finalize : exec_space_factory_list) {
-    to_finalize.second->finalize();
+  // Finalize and remove each backend immediately. Otherwise a later finalize()
+  // (or code it runs, e.g. deallocation) can call Kokkos::fence(), which
+  // dispatches static_fence() to every entry still in the map — including
+  // backends already torn down.
+  for (auto it = exec_space_factory_list.begin();
+       it != exec_space_factory_list.end();) {
+    it->second->finalize();
+    it = exec_space_factory_list.erase(it);
   }
 }
 
@@ -694,12 +703,22 @@ void pre_initialize_internal(const Kokkos::InitializationSettings& settings) {
   declare_configuration_metadata("architecture", "GPU architecture", "BLACKWELL103");
 #elif defined(KOKKOS_ARCH_BLACKWELL120)
   declare_configuration_metadata("architecture", "GPU architecture", "BLACKWELL120");
+#elif defined(KOKKOS_ARCH_BLACKWELL121)
+  declare_configuration_metadata("architecture", "GPU architecture", "BLACKWELL121");
 #elif defined(KOKKOS_ARCH_AMD_GFX906)
   declare_configuration_metadata("architecture", "GPU architecture", "AMD_GFX906");
 #elif defined(KOKKOS_ARCH_AMD_GFX908)
   declare_configuration_metadata("architecture", "GPU architecture", "AMD_GFX908");
 #elif defined(KOKKOS_ARCH_AMD_GFX90A)
   declare_configuration_metadata("architecture", "GPU architecture", "AMD_GFX90A");
+#elif defined(KOKKOS_ARCH_AMD_GFX940)
+  declare_configuration_metadata("architecture", "GPU architecture", "AMD_GFX940");
+#elif defined(KOKKOS_ARCH_AMD_GFX942_APU)
+  declare_configuration_metadata("architecture", "GPU architecture", "AMD_GFX942_APU");
+#elif defined(KOKKOS_ARCH_AMD_GFX942)
+  declare_configuration_metadata("architecture", "GPU architecture", "AMD_GFX942");
+#elif defined(KOKKOS_ARCH_AMD_GFX950)
+  declare_configuration_metadata("architecture", "GPU architecture", "AMD_GFX950");
 #elif defined(KOKKOS_ARCH_AMD_GFX1030)
   declare_configuration_metadata("architecture", "GPU architecture", "AMD_GFX1030");
 #elif defined(KOKKOS_ARCH_AMD_GFX1100)

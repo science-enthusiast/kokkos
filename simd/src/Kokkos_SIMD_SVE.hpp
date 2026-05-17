@@ -100,7 +100,7 @@ KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION static vls_bool_t get_pred(
   } else if constexpr (nbits == 64) {
     return svwhilele_b64(0, static_cast<std::int32_t>(lane));
   } else {
-    __builtin_unreachable();
+    KOKKOS_IMPL_UNREACHABLE();
   }
 }
 
@@ -485,29 +485,6 @@ class basic_simd<double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>> {
   operator[](Impl::simd_size_t i) const {
     return svlastb(Impl::get_pred<64>(i), m_value);
   }
-
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_load() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_from(value_type const* ptr,
-                                                       element_aligned_tag) {
-    m_value = svld1(svptrue_b64(), ptr);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_load() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_from(value_type const* ptr,
-                                                       vector_aligned_tag) {
-    m_value = svld1(svptrue_b64(), ptr);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_store() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_to(
-      value_type* ptr, element_aligned_tag) const {
-    svst1(svptrue_b64(), ptr, m_value);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_store() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_to(value_type* ptr,
-                                                     vector_aligned_tag) const {
-    svst1(svptrue_b64(), ptr, m_value);
-  }
-#endif
 
   KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION constexpr explicit
   operator vls_float64_t() const noexcept {
@@ -919,29 +896,6 @@ class basic_simd<float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>> {
     return svlastb(Impl::get_pred<32>(i), m_value);
   }
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_load() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_from(value_type const* ptr,
-                                                       element_aligned_tag) {
-    m_value = svld1(svptrue_b32(), ptr);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_load() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_from(value_type const* ptr,
-                                                       vector_aligned_tag) {
-    m_value = svld1(svptrue_b32(), ptr);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_store() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_to(
-      value_type* ptr, element_aligned_tag) const {
-    svst1(svptrue_b32(), ptr, m_value);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_store() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_to(value_type* ptr,
-                                                     vector_aligned_tag) const {
-    svst1(svptrue_b32(), ptr, m_value);
-  }
-#endif
-
   KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION constexpr explicit
   operator vls_float32_t() const noexcept {
     return m_value;
@@ -1344,29 +1298,6 @@ class basic_simd<std::int32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>> {
   operator[](Impl::simd_size_t i) const {
     return svlastb(Impl::get_pred<32>(i), m_value);
   }
-
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_load() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_from(value_type const* ptr,
-                                                       element_aligned_tag) {
-    m_value = svld1(svptrue_b32(), ptr);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_load() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_from(value_type const* ptr,
-                                                       vector_aligned_tag) {
-    m_value = svld1(svptrue_b32(), ptr);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_store() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_to(
-      value_type* ptr, element_aligned_tag) const {
-    svst1(svptrue_b32(), ptr, m_value);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_store() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_to(value_type* ptr,
-                                                     vector_aligned_tag) const {
-    svst1(svptrue_b32(), ptr, m_value);
-  }
-#endif
 
   KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION constexpr explicit
   operator vls_int32_t() const noexcept {
@@ -1835,29 +1766,6 @@ class basic_simd<std::uint32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>> {
     return svlastb(Impl::get_pred<32>(i), m_value);
   }
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_load() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_from(value_type const* ptr,
-                                                       element_aligned_tag) {
-    m_value = svld1(svptrue_b32(), ptr);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_load() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_from(value_type const* ptr,
-                                                       vector_aligned_tag) {
-    m_value = svld1(svptrue_b32(), ptr);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_store() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_to(
-      value_type* ptr, element_aligned_tag) const {
-    svst1(svptrue_b32(), ptr, m_value);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_store() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_to(value_type* ptr,
-                                                     vector_aligned_tag) const {
-    svst1(svptrue_b32(), ptr, m_value);
-  }
-#endif
-
   KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION constexpr explicit
   operator vls_uint32_t() const noexcept {
     return m_value;
@@ -2298,29 +2206,6 @@ class basic_simd<std::int64_t,
   operator[](Impl::simd_size_t i) const {
     return svlastb(Impl::get_pred<64>(i), m_value);
   }
-
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_load() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_from(value_type const* ptr,
-                                                       element_aligned_tag) {
-    m_value = svld1(svptrue_b64(), ptr);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_load() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_from(value_type const* ptr,
-                                                       vector_aligned_tag) {
-    m_value = svld1(svptrue_b64(), ptr);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_store() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_to(
-      value_type* ptr, element_aligned_tag) const {
-    svst1(svptrue_b64(), ptr, m_value);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_store() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_to(value_type* ptr,
-                                                     vector_aligned_tag) const {
-    svst1(svptrue_b64(), ptr, m_value);
-  }
-#endif
 
   KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION constexpr explicit
   operator vls_int64_t() const noexcept {
@@ -2785,29 +2670,6 @@ class basic_simd<std::uint64_t,
   operator[](Impl::simd_size_t i) const {
     return svlastb(Impl::get_pred<64>(i), m_value);
   }
-
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_load() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_from(value_type const* ptr,
-                                                       element_aligned_tag) {
-    m_value = svld1(svptrue_b64(), ptr);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_load() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_from(value_type const* ptr,
-                                                       vector_aligned_tag) {
-    m_value = svld1(svptrue_b64(), ptr);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_store() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_to(
-      value_type* ptr, element_aligned_tag) const {
-    svst1(svptrue_b64(), ptr, m_value);
-  }
-  KOKKOS_DEPRECATED_WITH_COMMENT("Use simd_unchecked_store() instead")
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void copy_to(value_type* ptr,
-                                                     vector_aligned_tag) const {
-    svst1(svptrue_b64(), ptr, m_value);
-  }
-#endif
 
   KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION constexpr explicit
   operator vls_uint64_t() const noexcept {
@@ -3547,666 +3409,323 @@ condition(
       [=](Impl::simd_size_t i) { return a[i] ? b[i] : c[i]; });
 }
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-KOKKOS_IMPL_DISABLE_DEPRECATED_WARNINGS_PUSH()
-template <>
-class KOKKOS_DEPRECATED const_where_expression<
-    basic_simd_mask<double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>,
-    basic_simd<double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>> {
- public:
-  using abi_type   = simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>;
-  using value_type = basic_simd<double, abi_type>;
-  using mask_type  = basic_simd_mask<double, abi_type>;
-
- protected:
-  value_type& m_value;
-  mask_type const& m_mask;
-
- public:
-  const_where_expression(mask_type const& mask_arg, value_type const& value_arg)
-      : m_value(const_cast<value_type&>(value_arg)), m_mask(mask_arg) {}
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_to(double* mem, element_aligned_tag) const {
-    svst1(static_cast<vls_bool_t>(m_mask), mem,
-          static_cast<vls_float64_t>(m_value));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_to(double* mem, vector_aligned_tag) const {
-    svst1(static_cast<vls_bool_t>(m_mask), mem,
-          static_cast<vls_float64_t>(m_value));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void scatter_to(
-      double* mem,
-      basic_simd<std::int32_t,
-                 simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>> const& index)
-      const {
-    svst1_scatter_index(static_cast<vls_bool_t>(m_mask), mem, index.to_s64(),
-                        static_cast<vls_float64_t>(m_value));
-  }
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION value_type const& impl_get_value()
-      const {
-    return m_value;
-  }
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION mask_type const& impl_get_mask() const {
-    return m_mask;
-  }
-};
-
-template <>
-class KOKKOS_DEPRECATED where_expression<
-    basic_simd_mask<double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>,
-    basic_simd<double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>>
-    : public const_where_expression<
-          basic_simd_mask<double,
-                          simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>,
-          basic_simd<double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>> {
- public:
-  where_expression(
-      basic_simd_mask<double,
-                      simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>> const&
-          mask_arg,
-      basic_simd<double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>&
-          value_arg)
-      : const_where_expression(mask_arg, value_arg) {}
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_from(double const* mem, element_aligned_tag) {
-    m_value = value_type(static_cast<vls_float64_t>(
-        svld1(static_cast<vls_bool_t>(m_mask), mem)));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_from(double const* mem, vector_aligned_tag) {
-    m_value = value_type(static_cast<vls_float64_t>(
-        svld1(static_cast<vls_bool_t>(m_mask), mem)));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void gather_from(
-      double const* mem,
-      basic_simd<std::int32_t,
-                 simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>> const&
-          index) {
-    // NOTE: Since SVE does not support "Gather-and-select" operation like x86
-    // (inactive elements are zero-ed instead). We must use an extra select
-    // to keep original value of inactive elements.
-    vls_float64_t tmp = svld1_gather_index(static_cast<vls_bool_t>(m_mask), mem,
-                                           index.to_s64());
-    m_value           = value_type(
-        static_cast<vls_float64_t>(svsel(static_cast<vls_bool_t>(m_mask), tmp,
-                                                   static_cast<vls_float64_t>(m_value))));
-  }
-  template <class U, std::enable_if_t<
-                         std::is_convertible_v<
-                             U, basic_simd<double, simd_abi::sve_fixed_size<
-                                                       SVE_DOUBLES_IN_VECTOR>>>,
-                         bool> = false>
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void operator=(U&& x) {
-    auto const x_as_value_type = static_cast<
-        basic_simd<double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>>(
-        std::forward<U>(x));
-    m_value = static_cast<
-        basic_simd<double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>>(
-        static_cast<vls_float64_t>(
-            svsel(static_cast<vls_bool_t>(m_mask),
-                  static_cast<vls_float64_t>(x_as_value_type),
-                  static_cast<vls_float64_t>(m_value))));
-  }
-};
-
-template <>
-class KOKKOS_DEPRECATED const_where_expression<
-    basic_simd_mask<float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>,
-    basic_simd<float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>> {
- public:
-  using abi_type   = simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>;
-  using value_type = basic_simd<float, abi_type>;
-  using mask_type  = basic_simd_mask<float, abi_type>;
-
- protected:
-  value_type& m_value;
-  mask_type const& m_mask;
-
- public:
-  const_where_expression(mask_type const& mask_arg, value_type const& value_arg)
-      : m_value(const_cast<value_type&>(value_arg)), m_mask(mask_arg) {}
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_to(float* mem, element_aligned_tag) const {
-    svst1(static_cast<vls_bool_t>(m_mask), mem,
-          static_cast<vls_float32_t>(m_value));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_to(float* mem, vector_aligned_tag) const {
-    svst1(static_cast<vls_bool_t>(m_mask), mem,
-          static_cast<vls_float32_t>(m_value));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void scatter_to(
-      float* mem,
-      basic_simd<std::int32_t,
-                 simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>> const& index)
-      const {
-    svst1_scatter_index(static_cast<vls_bool_t>(m_mask), mem,
-                        static_cast<vls_int32_t>(index),
-                        static_cast<vls_float32_t>(m_value));
-  }
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION value_type const& impl_get_value()
-      const {
-    return m_value;
-  }
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION mask_type const& impl_get_mask() const {
-    return m_mask;
-  }
-};
-
-template <>
-class KOKKOS_DEPRECATED where_expression<
-    basic_simd_mask<float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>,
-    basic_simd<float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>>
-    : public const_where_expression<
-          basic_simd_mask<float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>,
-          basic_simd<float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>> {
- public:
-  where_expression(
-      basic_simd_mask<
-          float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>> const& mask_arg,
-      basic_simd<float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>&
-          value_arg)
-      : const_where_expression(mask_arg, value_arg) {}
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_from(float const* mem, element_aligned_tag) {
-    m_value = value_type(static_cast<vls_float32_t>(
-        svld1(static_cast<vls_bool_t>(m_mask), mem)));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_from(float const* mem, vector_aligned_tag) {
-    m_value = value_type(static_cast<vls_float32_t>(
-        svld1(static_cast<vls_bool_t>(m_mask), mem)));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void gather_from(
-      float const* mem,
-      basic_simd<std::int32_t,
-                 simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>> const& index) {
-    // NOTE: Since SVE does not support "Gather-and-select" operation like x86
-    // (inactive elements are zero-ed instead). We must use an extra select
-    // to keep original value of inactive elements.
-    vls_float32_t tmp = svld1_gather_index(static_cast<vls_bool_t>(m_mask), mem,
-                                           static_cast<vls_int32_t>(index));
-    m_value           = value_type(
-        static_cast<vls_float32_t>(svsel(static_cast<vls_bool_t>(m_mask), tmp,
-                                                   static_cast<vls_float32_t>(m_value))));
-  }
-  template <
-      class U,
-      std::enable_if_t<
-          std::is_convertible_v<U, basic_simd<float, simd_abi::sve_fixed_size<
-                                                         SVE_WORDS_IN_VECTOR>>>,
-          bool> = false>
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void operator=(U&& x) {
-    auto const x_as_value_type = static_cast<
-        basic_simd<float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>>(
-        std::forward<U>(x));
-    m_value = static_cast<
-        basic_simd<float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>>(
-        static_cast<vls_float32_t>(
-            svsel(static_cast<vls_bool_t>(m_mask),
-                  static_cast<vls_float32_t>(x_as_value_type),
-                  static_cast<vls_float32_t>(m_value))));
-  }
-};
-
-template <>
-class KOKKOS_DEPRECATED const_where_expression<
-    basic_simd_mask<std::int32_t,
-                    simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>,
-    basic_simd<std::int32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>> {
- public:
-  using abi_type   = simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>;
-  using value_type = basic_simd<std::int32_t, abi_type>;
-  using mask_type  = basic_simd_mask<std::int32_t, abi_type>;
-
- protected:
-  value_type& m_value;
-  mask_type const& m_mask;
-
- public:
-  const_where_expression(mask_type const& mask_arg, value_type const& value_arg)
-      : m_value(const_cast<value_type&>(value_arg)), m_mask(mask_arg) {}
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_to(std::int32_t* mem, element_aligned_tag) const {
-    svst1(static_cast<vls_bool_t>(m_mask), mem,
-          static_cast<vls_int32_t>(m_value));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_to(std::int32_t* mem, vector_aligned_tag) const {
-    svst1(static_cast<vls_bool_t>(m_mask), mem,
-          static_cast<vls_int32_t>(m_value));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void scatter_to(
-      std::int32_t* mem,
-      basic_simd<std::int32_t,
-                 simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>> const& index)
-      const {
-    svst1_scatter_index(static_cast<vls_bool_t>(m_mask), mem,
-                        static_cast<vls_int32_t>(index),
-                        static_cast<vls_int32_t>(m_value));
-  }
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION value_type const& impl_get_value()
-      const {
-    return m_value;
-  }
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION mask_type const& impl_get_mask() const {
-    return m_mask;
-  }
-};
-
-template <>
-class KOKKOS_DEPRECATED where_expression<
-    basic_simd_mask<std::int32_t,
-                    simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>,
-    basic_simd<std::int32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>>
-    : public const_where_expression<
-          basic_simd_mask<std::int32_t,
-                          simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>,
-          basic_simd<std::int32_t,
-                     simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>> {
- public:
-  where_expression(
-      basic_simd_mask<std::int32_t,
-                      simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>> const&
-          mask_arg,
-      basic_simd<std::int32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>&
-          value_arg)
-      : const_where_expression(mask_arg, value_arg) {}
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_from(std::int32_t const* mem, element_aligned_tag) {
-    m_value = value_type(
-        static_cast<vls_int32_t>(svld1(static_cast<vls_bool_t>(m_mask), mem)));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_from(std::int32_t const* mem, vector_aligned_tag) {
-    m_value = value_type(
-        static_cast<vls_int32_t>(svld1(static_cast<vls_bool_t>(m_mask), mem)));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void gather_from(
-      std::int32_t const* mem,
-      basic_simd<std::int32_t,
-                 simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>> const& index) {
-    // NOTE: Since SVE does not support "Gather-and-select" operation like x86
-    // (inactive elements are zero-ed instead). We must use an extra select
-    // to keep original value of inactive elements.
-    vls_int32_t tmp = svld1_gather_index(static_cast<vls_bool_t>(m_mask), mem,
-                                         static_cast<vls_int32_t>(index));
-    m_value         = value_type(
-        static_cast<vls_int32_t>(svsel(static_cast<vls_bool_t>(m_mask), tmp,
-                                               static_cast<vls_int32_t>(m_value))));
-  }
-  template <class U,
-            std::enable_if_t<
-                std::is_convertible_v<
-                    U, basic_simd<std::int32_t, simd_abi::sve_fixed_size<
-                                                    SVE_WORDS_IN_VECTOR>>>,
-                bool> = false>
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void operator=(U&& x) {
-    auto const x_as_value_type =
-        static_cast<basic_simd<std::int32_t,
-                               simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>>(
-            std::forward<U>(x));
-    m_value =
-        static_cast<basic_simd<std::int32_t,
-                               simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>>(
-            static_cast<vls_int32_t>(
-                svsel(static_cast<vls_bool_t>(m_mask),
-                      static_cast<vls_int32_t>(x_as_value_type),
-                      static_cast<vls_int32_t>(m_value))));
-  }
-};
-
-template <>
-class KOKKOS_DEPRECATED const_where_expression<
-    basic_simd_mask<std::uint32_t,
-                    simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>,
-    basic_simd<std::uint32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>> {
- public:
-  using abi_type   = simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>;
-  using value_type = basic_simd<std::uint32_t, abi_type>;
-  using mask_type  = basic_simd_mask<std::uint32_t, abi_type>;
-
- protected:
-  value_type& m_value;
-  mask_type const& m_mask;
-
- public:
-  const_where_expression(mask_type const& mask_arg, value_type const& value_arg)
-      : m_value(const_cast<value_type&>(value_arg)), m_mask(mask_arg) {}
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_to(std::uint32_t* mem, element_aligned_tag) const {
-    svst1(static_cast<vls_bool_t>(m_mask), mem,
-          static_cast<vls_uint32_t>(m_value));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_to(std::uint32_t* mem, vector_aligned_tag) const {
-    svst1(static_cast<vls_bool_t>(m_mask), mem,
-          static_cast<vls_uint32_t>(m_value));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void scatter_to(
-      std::uint32_t* mem,
-      basic_simd<std::int32_t,
-                 simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>> const& index)
-      const {
-    svst1_scatter_index(static_cast<vls_bool_t>(m_mask), mem,
-                        static_cast<vls_int32_t>(index),
-                        static_cast<vls_uint32_t>(m_value));
-  }
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION value_type const& impl_get_value()
-      const {
-    return m_value;
-  }
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION mask_type const& impl_get_mask() const {
-    return m_mask;
-  }
-};
-
-template <>
-class KOKKOS_DEPRECATED where_expression<
-    basic_simd_mask<std::uint32_t,
-                    simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>,
-    basic_simd<std::uint32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>>
-    : public const_where_expression<
-          basic_simd_mask<std::uint32_t,
-                          simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>,
-          basic_simd<std::uint32_t,
-                     simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>> {
- public:
-  where_expression(
-      basic_simd_mask<std::uint32_t,
-                      simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>> const&
-          mask_arg,
-      basic_simd<std::uint32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>&
-          value_arg)
-      : const_where_expression(mask_arg, value_arg) {}
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_from(std::uint32_t const* mem, element_aligned_tag) {
-    m_value = value_type(
-        static_cast<vls_uint32_t>(svld1(static_cast<vls_bool_t>(m_mask), mem)));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_from(std::uint32_t const* mem, vector_aligned_tag) {
-    m_value = value_type(
-        static_cast<vls_uint32_t>(svld1(static_cast<vls_bool_t>(m_mask), mem)));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void gather_from(
-      std::uint32_t const* mem,
-      basic_simd<std::int32_t,
-                 simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>> const& index) {
-    // NOTE: Since SVE does not support "Gather-and-select" operation like x86
-    // (inactive elements are zero-ed instead). We must use an extra select
-    // to keep original value of inactive elements.
-    vls_uint32_t tmp = svld1_gather_index(static_cast<vls_bool_t>(m_mask), mem,
-                                          static_cast<vls_int32_t>(index));
-    m_value          = value_type(
-        static_cast<vls_uint32_t>(svsel(static_cast<vls_bool_t>(m_mask), tmp,
-                                                 static_cast<vls_uint32_t>(m_value))));
-  }
-  template <class U,
-            std::enable_if_t<
-                std::is_convertible_v<
-                    U, basic_simd<std::uint32_t, simd_abi::sve_fixed_size<
-                                                     SVE_WORDS_IN_VECTOR>>>,
-                bool> = false>
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void operator=(U&& x) {
-    auto const x_as_value_type =
-        static_cast<basic_simd<std::uint32_t,
-                               simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>>(
-            std::forward<U>(x));
-    m_value =
-        static_cast<basic_simd<std::uint32_t,
-                               simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>>(
-            static_cast<vls_uint32_t>(
-                svsel(static_cast<vls_bool_t>(m_mask),
-                      static_cast<vls_uint32_t>(x_as_value_type),
-                      static_cast<vls_uint32_t>(m_value))));
-  }
-};
-
-template <>
-class KOKKOS_DEPRECATED const_where_expression<
-    basic_simd_mask<std::int64_t,
-                    simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>,
-    basic_simd<std::int64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>> {
- public:
-  using abi_type   = simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>;
-  using value_type = basic_simd<std::int64_t, abi_type>;
-  using mask_type  = basic_simd_mask<std::int64_t, abi_type>;
-
- protected:
-  value_type& m_value;
-  mask_type const& m_mask;
-
- public:
-  const_where_expression(mask_type const& mask_arg, value_type const& value_arg)
-      : m_value(const_cast<value_type&>(value_arg)), m_mask(mask_arg) {}
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_to(std::int64_t* mem, element_aligned_tag) const {
-    svst1(static_cast<vls_bool_t>(m_mask), mem,
-          static_cast<vls_int64_t>(m_value));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_to(std::int64_t* mem, vector_aligned_tag) const {
-    svst1(static_cast<vls_bool_t>(m_mask), mem,
-          static_cast<vls_int64_t>(m_value));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void scatter_to(
-      std::int64_t* mem,
-      basic_simd<std::int32_t,
-                 simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>> const& index)
-      const {
-    svst1_scatter_index(static_cast<vls_bool_t>(m_mask), mem, index.to_s64(),
-                        static_cast<vls_int64_t>(m_value));
-  }
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION value_type const& impl_get_value()
-      const {
-    return m_value;
-  }
-
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION mask_type const& impl_get_mask() const {
-    return m_mask;
-  }
-};
-
-template <>
-class KOKKOS_DEPRECATED where_expression<
-    basic_simd_mask<std::int64_t,
-                    simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>,
-    basic_simd<std::int64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>>
-    : public const_where_expression<
-          basic_simd_mask<std::int64_t,
-                          simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>,
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_GATHER_FROM(
+    double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>, {
+      vls_int64_t idx = static_cast<vls_int64_t>(
           basic_simd<std::int64_t,
-                     simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>> {
- public:
-  where_expression(
-      basic_simd_mask<std::int64_t,
-                      simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>> const&
-          mask_arg,
-      basic_simd<std::int64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>&
-          value_arg)
-      : const_where_expression(mask_arg, value_arg) {}
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_from(std::int64_t const* mem, element_aligned_tag) {
-    m_value = value_type(
-        static_cast<vls_int64_t>(svld1(static_cast<vls_bool_t>(m_mask), mem)));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_from(std::int64_t const* mem, vector_aligned_tag) {
-    m_value = value_type(
-        static_cast<vls_int64_t>(svld1(static_cast<vls_bool_t>(m_mask), mem)));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void gather_from(
-      std::int64_t const* mem,
-      basic_simd<std::int32_t,
-                 simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>> const&
-          index) {
-    // NOTE: Since SVE does not support "Gather-and-select" operation like x86
-    // (inactive elements are zero-ed instead). We must use an extra select
-    // to keep original value of inactive elements.
-    vls_int64_t tmp = svld1_gather_index(static_cast<vls_bool_t>(m_mask), mem,
-                                         index.to_s64());
-    m_value         = value_type(
-        static_cast<vls_int64_t>(svsel(static_cast<vls_bool_t>(m_mask), tmp,
-                                               static_cast<vls_int64_t>(m_value))));
-  }
-  template <class U,
-            std::enable_if_t<
-                std::is_convertible_v<
-                    U, basic_simd<std::int64_t, simd_abi::sve_fixed_size<
-                                                    SVE_DOUBLES_IN_VECTOR>>>,
-                bool> = false>
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void operator=(U&& x) {
-    auto const x_as_value_type = static_cast<basic_simd<
-        std::int64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>>(
-        std::forward<U>(x));
-    m_value = static_cast<basic_simd<
-        std::int64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>>(
-        static_cast<vls_int64_t>(
-            svsel(static_cast<vls_bool_t>(m_mask),
-                  static_cast<vls_int64_t>(x_as_value_type),
-                  static_cast<vls_int64_t>(m_value))));
-  }
-};
+                     simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>{indices});
+      return V(static_cast<vls_float64_t>(
+          svld1_gather_index(svptrue_b64(), Impl::Ranges::data(in), idx)));
+    })
 
-template <>
-class KOKKOS_DEPRECATED const_where_expression<
-    basic_simd_mask<std::uint64_t,
-                    simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>,
-    basic_simd<std::uint64_t,
-               simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>> {
- public:
-  using abi_type   = simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>;
-  using value_type = basic_simd<std::uint64_t, abi_type>;
-  using mask_type  = basic_simd_mask<std::uint64_t, abi_type>;
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_GATHER_FROM_WITH_MASK(
+    double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>, {
+      vls_int64_t idx = static_cast<vls_int64_t>(
+          basic_simd<std::int64_t,
+                     simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>{indices});
+      return V(static_cast<vls_float64_t>(svld1_gather_index(
+          static_cast<vls_bool_t>(mask), Impl::Ranges::data(in), idx)));
+    })
 
- protected:
-  value_type& m_value;
-  mask_type const& m_mask;
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_GATHER_FROM(
+    double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>,
+    { return unchecked_gather_from<V>(in, indices, flag); })
 
- public:
-  const_where_expression(mask_type const& mask_arg, value_type const& value_arg)
-      : m_value(const_cast<value_type&>(value_arg)), m_mask(mask_arg) {}
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_GATHER_FROM_WITH_MASK(
+    double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>,
+    { return unchecked_gather_from<V>(in, mask, indices, flag); })
 
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_to(std::uint64_t* mem, element_aligned_tag) const {
-    svst1(static_cast<vls_bool_t>(m_mask), mem,
-          static_cast<vls_uint64_t>(m_value));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_to(std::uint64_t* mem, vector_aligned_tag) const {
-    svst1(static_cast<vls_bool_t>(m_mask), mem,
-          static_cast<vls_uint64_t>(m_value));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void scatter_to(
-      std::uint64_t* mem,
-      basic_simd<std::int32_t,
-                 simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>> const& index)
-      const {
-    svst1_scatter_index(static_cast<vls_bool_t>(m_mask), mem, index.to_s64(),
-                        static_cast<vls_uint64_t>(m_value));
-  }
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_SCATTER_TO(
+    double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>, {
+      vls_int64_t idx = static_cast<vls_int64_t>(
+          basic_simd<std::int64_t,
+                     simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>{indices});
+      svst1_scatter_index(svptrue_b64(), Impl::Ranges::data(out), idx,
+                          static_cast<vls_float64_t>(v));
+    })
 
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION value_type const& impl_get_value()
-      const {
-    return m_value;
-  }
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_SCATTER_TO_WITH_MASK(
+    double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>, {
+      vls_int64_t idx = static_cast<vls_int64_t>(
+          basic_simd<std::int64_t,
+                     simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>{indices});
+      svst1_scatter_index(static_cast<vls_bool_t>(mask),
+                          Impl::Ranges::data(out), idx,
+                          static_cast<vls_float64_t>(v));
+    })
 
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION mask_type const& impl_get_mask() const {
-    return m_mask;
-  }
-};
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_SCATTER_TO(
+    double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>,
+    { unchecked_scatter_to<V>(v, out, indices, flag); })
 
-template <>
-class KOKKOS_DEPRECATED where_expression<
-    basic_simd_mask<std::uint64_t,
-                    simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>,
-    basic_simd<std::uint64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>>
-    : public const_where_expression<
-          basic_simd_mask<std::uint64_t,
-                          simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>,
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_SCATTER_TO_WITH_MASK(
+    double, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>,
+    { unchecked_scatter_to<V>(v, out, mask, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_GATHER_FROM(
+    float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>, {
+      vls_int32_t idx = static_cast<vls_int32_t>(
+          basic_simd<std::int32_t,
+                     simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>{indices});
+      return V(static_cast<vls_float32_t>(
+          svld1_gather_index(svptrue_b32(), Impl::Ranges::data(in), idx)));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_GATHER_FROM_WITH_MASK(
+    float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>, {
+      vls_int32_t idx = static_cast<vls_int32_t>(
+          basic_simd<std::int32_t,
+                     simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>{indices});
+      return V(static_cast<vls_float32_t>(svld1_gather_index(
+          static_cast<vls_bool_t>(mask), Impl::Ranges::data(in), idx)));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_GATHER_FROM(
+    float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>,
+    { return unchecked_gather_from<V>(in, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_GATHER_FROM_WITH_MASK(
+    float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>,
+    { return unchecked_gather_from<V>(in, mask, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_SCATTER_TO(
+    float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>, {
+      vls_int32_t idx = static_cast<vls_int32_t>(
+          basic_simd<std::int32_t,
+                     simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>{indices});
+      svst1_scatter_index(svptrue_b32(), Impl::Ranges::data(out), idx,
+                          static_cast<vls_float32_t>(v));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_SCATTER_TO_WITH_MASK(
+    float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>, {
+      vls_int32_t idx = static_cast<vls_int32_t>(
+          basic_simd<std::int32_t,
+                     simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>{indices});
+      svst1_scatter_index(static_cast<vls_bool_t>(mask),
+                          Impl::Ranges::data(out), idx,
+                          static_cast<vls_float32_t>(v));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_SCATTER_TO(
+    float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>,
+    { unchecked_scatter_to<V>(v, out, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_SCATTER_TO_WITH_MASK(
+    float, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>,
+    { unchecked_scatter_to<V>(v, out, mask, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_GATHER_FROM(
+    std::int32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>, {
+      vls_int32_t idx = static_cast<vls_int32_t>(
+          basic_simd<std::int32_t,
+                     simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>{indices});
+      return V(static_cast<vls_int32_t>(
+          svld1_gather_index(svptrue_b32(), Impl::Ranges::data(in), idx)));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_GATHER_FROM_WITH_MASK(
+    std::int32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>, {
+      vls_int32_t idx = static_cast<vls_int32_t>(
+          basic_simd<std::int32_t,
+                     simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>{indices});
+      return V(static_cast<vls_int32_t>(svld1_gather_index(
+          static_cast<vls_bool_t>(mask), Impl::Ranges::data(in), idx)));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_GATHER_FROM(
+    std::int32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>,
+    { return unchecked_gather_from<V>(in, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_GATHER_FROM_WITH_MASK(
+    std::int32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>,
+    { return unchecked_gather_from<V>(in, mask, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_SCATTER_TO(
+    std::int32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>, {
+      vls_int32_t idx = static_cast<vls_int32_t>(
+          basic_simd<std::int32_t,
+                     simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>{indices});
+      svst1_scatter_index(svptrue_b32(), Impl::Ranges::data(out), idx,
+                          static_cast<vls_int32_t>(v));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_SCATTER_TO_WITH_MASK(
+    std::int32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>, {
+      vls_int32_t idx = static_cast<vls_int32_t>(
+          basic_simd<std::int32_t,
+                     simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>{indices});
+      svst1_scatter_index(static_cast<vls_bool_t>(mask),
+                          Impl::Ranges::data(out), idx,
+                          static_cast<vls_int32_t>(v));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_SCATTER_TO(
+    std::int32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>,
+    { unchecked_scatter_to<V>(v, out, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_SCATTER_TO_WITH_MASK(
+    std::int32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>,
+    { unchecked_scatter_to<V>(v, out, mask, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_GATHER_FROM(
+    std::uint32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>, {
+      vls_int32_t idx = static_cast<vls_int32_t>(
+          basic_simd<std::int32_t,
+                     simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>{indices});
+      return V(static_cast<vls_uint32_t>(
+          svld1_gather_index(svptrue_b32(), Impl::Ranges::data(in), idx)));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_GATHER_FROM_WITH_MASK(
+    std::uint32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>, {
+      vls_int32_t idx = static_cast<vls_int32_t>(
+          basic_simd<std::int32_t,
+                     simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>{indices});
+      return V(static_cast<vls_uint32_t>(svld1_gather_index(
+          static_cast<vls_bool_t>(mask), Impl::Ranges::data(in), idx)));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_GATHER_FROM(
+    std::uint32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>,
+    { return unchecked_gather_from<V>(in, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_GATHER_FROM_WITH_MASK(
+    std::uint32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>,
+    { return unchecked_gather_from<V>(in, mask, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_SCATTER_TO(
+    std::uint32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>, {
+      vls_int32_t idx = static_cast<vls_int32_t>(
+          basic_simd<std::int32_t,
+                     simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>{indices});
+      svst1_scatter_index(svptrue_b32(), Impl::Ranges::data(out), idx,
+                          static_cast<vls_uint32_t>(v));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_SCATTER_TO_WITH_MASK(
+    std::uint32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>, {
+      vls_int32_t idx = static_cast<vls_int32_t>(
+          basic_simd<std::int32_t,
+                     simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>>{indices});
+      svst1_scatter_index(static_cast<vls_bool_t>(mask),
+                          Impl::Ranges::data(out), idx,
+                          static_cast<vls_uint32_t>(v));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_SCATTER_TO(
+    std::uint32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>,
+    { unchecked_scatter_to<V>(v, out, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_SCATTER_TO_WITH_MASK(
+    std::uint32_t, simd_abi::sve_fixed_size<SVE_WORDS_IN_VECTOR>,
+    { unchecked_scatter_to<V>(v, out, mask, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_GATHER_FROM(
+    std::int64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>, {
+      vls_int64_t idx = static_cast<vls_int64_t>(
+          basic_simd<std::int64_t,
+                     simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>{indices});
+      return V(static_cast<vls_int64_t>(
+          svld1_gather_index(svptrue_b64(), Impl::Ranges::data(in), idx)));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_GATHER_FROM_WITH_MASK(
+    std::int64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>, {
+      vls_int64_t idx = static_cast<vls_int64_t>(
+          basic_simd<std::int64_t,
+                     simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>{indices});
+      return V(static_cast<vls_int64_t>(svld1_gather_index(
+          static_cast<vls_bool_t>(mask), Impl::Ranges::data(in), idx)));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_GATHER_FROM(
+    std::int64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>,
+    { return unchecked_gather_from<V>(in, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_GATHER_FROM_WITH_MASK(
+    std::int64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>,
+    { return unchecked_gather_from<V>(in, mask, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_SCATTER_TO(
+    std::int64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>, {
+      vls_int64_t idx = static_cast<vls_int64_t>(
+          basic_simd<std::int64_t,
+                     simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>{indices});
+      svst1_scatter_index(svptrue_b64(), Impl::Ranges::data(out), idx,
+                          static_cast<vls_int64_t>(v));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_SCATTER_TO_WITH_MASK(
+    std::int64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>, {
+      vls_int64_t idx = static_cast<vls_int64_t>(
+          basic_simd<std::int64_t,
+                     simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>{indices});
+      svst1_scatter_index(static_cast<vls_bool_t>(mask),
+                          Impl::Ranges::data(out), idx,
+                          static_cast<vls_int64_t>(v));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_SCATTER_TO(
+    std::int64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>,
+    { unchecked_scatter_to<V>(v, out, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_SCATTER_TO_WITH_MASK(
+    std::int64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>,
+    { unchecked_scatter_to<V>(v, out, mask, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_GATHER_FROM(
+    std::uint64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>, {
+      vls_uint64_t idx = static_cast<vls_uint64_t>(
           basic_simd<std::uint64_t,
-                     simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>> {
- public:
-  where_expression(
-      basic_simd_mask<std::uint64_t,
-                      simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>> const&
-          mask_arg,
-      basic_simd<std::uint64_t,
-                 simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>& value_arg)
-      : const_where_expression(mask_arg, value_arg) {}
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_from(std::uint64_t const* mem, element_aligned_tag) {
-    m_value = value_type(
-        static_cast<vls_uint64_t>(svld1(static_cast<vls_bool_t>(m_mask), mem)));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void copy_from(std::uint64_t const* mem, vector_aligned_tag) {
-    m_value = value_type(
-        static_cast<vls_uint64_t>(svld1(static_cast<vls_bool_t>(m_mask), mem)));
-  }
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
-  void gather_from(
-      std::uint64_t const* mem,
-      basic_simd<std::int32_t,
-                 simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>> const&
-          index) {
-    // NOTE: Since SVE does not support "Gather-and-select" operation like x86
-    // (inactive elements are zero-ed instead). We must use an extra select
-    // to keep original value of inactive elements.
-    vls_uint64_t tmp = svld1_gather_index(static_cast<vls_bool_t>(m_mask), mem,
-                                          index.to_s64());
-    m_value          = value_type(
-        static_cast<vls_uint64_t>(svsel(static_cast<vls_bool_t>(m_mask), tmp,
-                                                 static_cast<vls_uint64_t>(m_value))));
-  }
-  template <class U,
-            std::enable_if_t<
-                std::is_convertible_v<
-                    U, basic_simd<std::uint64_t, simd_abi::sve_fixed_size<
-                                                     SVE_DOUBLES_IN_VECTOR>>>,
-                bool> = false>
-  KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION void operator=(U&& x) {
-    auto const x_as_value_type = static_cast<basic_simd<
-        std::uint64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>>(
-        std::forward<U>(x));
-    m_value = static_cast<basic_simd<
-        std::uint64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>>(
-        static_cast<vls_uint64_t>(
-            svsel(static_cast<vls_bool_t>(m_mask),
-                  static_cast<vls_uint64_t>(x_as_value_type),
-                  static_cast<vls_uint64_t>(m_value))));
-  }
-};
+                     simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>{indices});
+      return V(static_cast<vls_uint64_t>(
+          svld1_gather_index(svptrue_b64(), Impl::Ranges::data(in), idx)));
+    })
 
-KOKKOS_IMPL_DISABLE_DEPRECATED_WARNINGS_POP()
-#endif
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_GATHER_FROM_WITH_MASK(
+    std::uint64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>, {
+      vls_uint64_t idx = static_cast<vls_uint64_t>(
+          basic_simd<std::uint64_t,
+                     simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>{indices});
+      return V(static_cast<vls_uint64_t>(svld1_gather_index(
+          static_cast<vls_bool_t>(mask), Impl::Ranges::data(in), idx)));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_GATHER_FROM(
+    std::uint64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>,
+    { return unchecked_gather_from<V>(in, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_GATHER_FROM_WITH_MASK(
+    std::uint64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>,
+    { return unchecked_gather_from<V>(in, mask, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_SCATTER_TO(
+    std::uint64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>, {
+      vls_uint64_t idx = static_cast<vls_uint64_t>(
+          basic_simd<std::uint64_t,
+                     simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>{indices});
+      svst1_scatter_index(svptrue_b64(), Impl::Ranges::data(out), idx,
+                          static_cast<vls_uint64_t>(v));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_UNCHECKED_SCATTER_TO_WITH_MASK(
+    std::uint64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>, {
+      vls_uint64_t idx = static_cast<vls_uint64_t>(
+          basic_simd<std::uint64_t,
+                     simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>>{indices});
+      svst1_scatter_index(static_cast<vls_bool_t>(mask),
+                          Impl::Ranges::data(out), idx,
+                          static_cast<vls_uint64_t>(v));
+    })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_SCATTER_TO(
+    std::uint64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>,
+    { unchecked_scatter_to<V>(v, out, indices, flag); })
+
+KOKKOS_SIMD_IMPL_MEMORY_PERMUTE_PARTIAL_SCATTER_TO_WITH_MASK(
+    std::uint64_t, simd_abi::sve_fixed_size<SVE_DOUBLES_IN_VECTOR>,
+    { unchecked_scatter_to<V>(v, out, mask, indices, flag); })
 
 }  // namespace Experimental
 }  // namespace Kokkos

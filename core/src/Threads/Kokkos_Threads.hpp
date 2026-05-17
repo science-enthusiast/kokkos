@@ -50,12 +50,6 @@ class Threads {
   //! \name Static functions that all Kokkos devices must implement.
   //@{
 
-  /// \brief True if and only if this method is being called in a
-  ///   thread-parallel function.
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED static int in_parallel();
-#endif
-
   /// \brief Print configuration information to the given output stream.
   void print_configuration(std::ostream& os, bool verbose = false) const;
 
@@ -71,11 +65,7 @@ class Threads {
                  "Kokkos::Threads::fence: Unnamed Instance Fence") const;
 
   /** \brief  Return the maximum amount of concurrency.  */
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  static int concurrency();
-#else
   int concurrency() const;
-#endif
 
   /// \brief Free any resources being consumed by the device.
   ///
@@ -111,8 +101,13 @@ class Threads {
 
   uint32_t impl_instance_id() const noexcept { return 1; }
 
-  Threads(const Threads&)            = default;
-  Threads& operator=(const Threads&) = default;
+  KOKKOS_DEFAULTED_FUNCTION Threads(const Threads&) = default;
+  KOKKOS_FUNCTION Threads(Threads&& other) noexcept
+      : Threads(static_cast<const Threads&>(other)) {}
+  KOKKOS_DEFAULTED_FUNCTION Threads& operator=(const Threads&) = default;
+  KOKKOS_FUNCTION Threads& operator=(Threads&& other) noexcept {
+    return *this = static_cast<const Threads&>(other);
+  }
 
   ~Threads() { Impl::check_execution_space_destructor_precondition(name()); }
 
@@ -147,7 +142,6 @@ struct MemorySpaceAccess<Kokkos::Threads::memory_space,
                          Kokkos::Threads::scratch_memory_space> {
   enum : bool { assignable = false };
   enum : bool { accessible = true };
-  enum : bool { deepcopy = false };
 };
 
 }  // namespace Impl

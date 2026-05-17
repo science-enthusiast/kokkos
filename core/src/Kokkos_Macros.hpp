@@ -15,8 +15,13 @@
  *  KOKKOS_ENABLE_SYCL                Kokkos::SYCL execution space
  *  KOKKOS_ENABLE_HWLOC               HWLOC library is available.
  *  KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK  Insert array bounds checks, is expensive!
- *  KOKKOS_ENABLE_CUDA_UVM            Use CUDA UVM for Cuda memory space.
  */
+
+#ifndef KOKKOS_DONT_INCLUDE_CORE_CONFIG_H
+#include <KokkosCore_config.h>
+#include <impl/Kokkos_DesulAtomicsConfig.hpp>
+#include <impl/Kokkos_NvidiaGpuArchitectures.hpp>
+#endif
 
 #define KOKKOS_VERSION_LESS(MAJOR, MINOR, PATCH) \
   (KOKKOS_VERSION < ((MAJOR)*10000 + (MINOR)*100 + (PATCH)))
@@ -36,12 +41,6 @@
 #if !KOKKOS_VERSION_EQUAL(KOKKOS_VERSION_MAJOR, KOKKOS_VERSION_MINOR, \
                           KOKKOS_VERSION_PATCH)
 #error implementation bug
-#endif
-
-#ifndef KOKKOS_DONT_INCLUDE_CORE_CONFIG_H
-#include <KokkosCore_config.h>
-#include <impl/Kokkos_DesulAtomicsConfig.hpp>
-#include <impl/Kokkos_NvidiaGpuArchitectures.hpp>
 #endif
 
 #if __has_include(<version>)
@@ -126,7 +125,8 @@
 // CRAY compiler for host code
 #define KOKKOS_COMPILER_CRAYC _CRAYC
 
-#elif defined(__APPLE_CC__) && defined(__clang__)
+#elif defined(__APPLE_CC__) && defined(__clang__) && \
+    defined(__apple_build_version__)
 #define KOKKOS_COMPILER_APPLECC __APPLE_CC__
 
 #elif defined(__NVCOMPILER)
@@ -366,57 +366,25 @@
 #define KOKKOS_RESTRICT
 #endif
 
+// ---------------------------------------------------------------------------
+// Define macro for unreachable code:
+// Only available in C++23
+// FIXME_HIP doesn't support std::unreachable in device code
+#if defined(__cpp_lib_unreachable) && !defined(KOKKOS_ENABLE_HIP)
+#include <utility>
+#define KOKKOS_IMPL_UNREACHABLE() std::unreachable()
+#elif defined(__has_builtin)
+#if __has_builtin(__builtin_unreachable)
+#define KOKKOS_IMPL_UNREACHABLE() __builtin_unreachable()
+#endif
+#endif
+
+#if !defined(KOKKOS_IMPL_UNREACHABLE)
+#define KOKKOS_IMPL_UNREACHABLE()
+#endif
+
 //----------------------------------------------------------------------------
 // Define Macro for alignment:
-
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-#ifndef KOKKOS_MEMORY_ALIGNMENT
-#define KOKKOS_IMPL_MEMORY_ALIGNMENT 64
-#ifdef KOKKOS_ENABLE_DEPRECATION_WARNINGS
-#define KOKKOS_MEMORY_ALIGNMENT                                         \
-  [] {                                                                  \
-    int memory_alignment                                                \
-        [[deprecated("KOKKOS_MEMORY_ALIGNMENT macro is deprecated")]] = \
-            KOKKOS_IMPL_MEMORY_ALIGNMENT;                               \
-    return memory_alignment;                                            \
-  }();
-#else
-#define KOKKOS_MEMORY_ALIGNMENT KOKKOS_IMPL_MEMORY_ALIGNMENT
-#endif
-#else
-#define KOKKOS_IMPL_MEMORY_ALIGNMENT KOKKOS_MEMORY_ALIGNMENT
-#endif
-#else  // KOKKOS_ENABLE_DEPRECATED_CODE_4
-#ifdef KOKKOS_MEMORY_ALIGNMENT
-static_assert(false,
-              "External definition of KOKKOS_MEMORY_ALIGNMENT is not allowed");
-#endif
-#endif
-
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-#ifndef KOKKOS_MEMORY_ALIGNMENT_THRESHOLD
-#define KOKKOS_IMPL_MEMORY_ALIGNMENT_THRESHOLD 1
-#ifdef KOKKOS_ENABLE_DEPRECATION_WARNINGS
-#define KOKKOS_MEMORY_ALIGNMENT_THRESHOLD                            \
-  [] {                                                               \
-    int memory_alignment [[deprecated(                               \
-        "KOKKOS_MEMORY_ALIGNMENT_THRESHOLD macro is deprecated")]] = \
-        KOKKOS_IMPL_MEMORY_ALIGNMENT_THRESHOLD;                      \
-    return memory_alignment;                                         \
-  }();
-#else
-#define KOKKOS_MEMORY_ALIGNMENT_THRESHOLD KOKKOS_IMPL_MEMORY_ALIGNMENT_THRESHOLD
-#endif
-#else
-#define KOKKOS_IMPL_MEMORY_ALIGNMENT_THRESHOLD KOKKOS_MEMORY_ALIGNMENT_THRESHOLD
-#endif
-#else  // KOKKOS_ENABLE_DEPRECATED_CODE_4
-#ifdef KOKKOS_MEMORY_ALIGNMENT_THRESHOLD
-static_assert(
-    false,
-    "External definition of KOKKOS_MEMORY_ALIGNMENT_THRESHOLD is not allowed");
-#endif
-#endif
 
 #if !defined(KOKKOS_IMPL_ALIGN_PTR)
 #define KOKKOS_IMPL_ALIGN_PTR(size) /* */
@@ -426,24 +394,26 @@ static_assert(
 // Determine the default execution space for parallel dispatch.
 // There is zero or one default execution space specified.
 
-#if 1 < ((defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_CUDA) ? 1 : 0) +    \
-         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_HIP) ? 1 : 0) +     \
-         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SYCL) ? 1 : 0) +    \
-         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENACC) ? 1 : 0) + \
-         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENMP) ? 1 : 0) +  \
-         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_THREADS) ? 1 : 0) + \
-         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_HPX) ? 1 : 0) +     \
+#if 1 < ((defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_CUDA) ? 1 : 0) +        \
+         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_HIP) ? 1 : 0) +         \
+         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SYCL) ? 1 : 0) +        \
+         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENACC) ? 1 : 0) +     \
+         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_NEXTSILICON) ? 1 : 0) + \
+         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENMP) ? 1 : 0) +      \
+         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_THREADS) ? 1 : 0) +     \
+         (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_HPX) ? 1 : 0) +         \
          (defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SERIAL) ? 1 : 0))
 #error "More than one KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_* specified."
 #endif
 
 // If default is not specified then chose from enabled execution spaces.
-// Priority: CUDA, HIP, SYCL, OPENACC, OPENMP, THREADS, HPX,
+// Priority: CUDA, HIP, SYCL, OPENACC, NEXTSILICON, OPENMP, THREADS, HPX,
 // SERIAL
 #if defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_CUDA)
 #elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_HIP)
 #elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SYCL)
 #elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENACC)
+#elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_NEXTSILICON)
 #elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENMP)
 #elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_THREADS)
 #elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_HPX)
@@ -456,6 +426,8 @@ static_assert(
 #define KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SYCL
 #elif defined(KOKKOS_ENABLE_OPENACC)
 #define KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENACC
+#elif defined(KOKKOS_ENABLE_NEXTSILICON)
+#define KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_NEXTSILICON
 #elif defined(KOKKOS_ENABLE_OPENMP)
 #define KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENMP
 #elif defined(KOKKOS_ENABLE_THREADS)
@@ -505,6 +477,12 @@ static_assert(
 #endif
 #endif
 
+#ifdef KOKKOS_ENABLE_NEXTSILICON
+// FIXME_NEXTSILICON: Placeholder until proper ON_DEVICE/ON_HOST
+#define KOKKOS_IF_ON_DEVICE(CODE)
+#define KOKKOS_IF_ON_HOST(CODE) KOKKOS_IMPL_STRIP_PARENS(CODE)
+#endif
+
 #if !defined(KOKKOS_IF_ON_HOST) && !defined(KOKKOS_IF_ON_DEVICE)
 #if (defined(KOKKOS_ENABLE_CUDA) && defined(__CUDA_ARCH__)) ||         \
     (defined(KOKKOS_ENABLE_HIP) && defined(__HIP_DEVICE_COMPILE__)) || \
@@ -522,10 +500,6 @@ static_assert(
 #endif
 
 //----------------------------------------------------------------------------
-
-#if defined(KOKKOS_ENABLE_CUDA) && defined(KOKKOS_ENABLE_DEPRECATED_CODE_4)
-#define KOKKOS_ENABLE_CUDA_LDG_INTRINSIC
-#endif
 
 #define KOKKOS_INVALID_INDEX (~std::size_t(0))
 
@@ -613,11 +587,17 @@ static_assert(
 #define KOKKOS_IMPL_DISABLE_UNREACHABLE_WARNINGS_PUSH()
 #define KOKKOS_IMPL_DISABLE_UNREACHABLE_WARNINGS_POP()
 #endif
-// clang-format on
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-#define KOKKOS_ATTRIBUTE_NODISCARD [[nodiscard]]
+#if defined(__NVCC__)
+#define KOKKOS_IMPL_DISABLE_CALLING_HOST_FROM_DEVICE_WARNINGS_PUSH() \
+  _Pragma("nv_diag_suppress 20011, 20013, 20014, 20015")
+#define KOKKOS_IMPL_DISABLE_CALLING_HOST_FROM_DEVICE_WARNINGS_POP() \
+  _Pragma("nv_diag_default 20011, 20013, 20014, 20015")
+#else
+#define KOKKOS_IMPL_DISABLE_CALLING_HOST_FROM_DEVICE_WARNINGS_PUSH()
+#define KOKKOS_IMPL_DISABLE_CALLING_HOST_FROM_DEVICE_WARNINGS_POP()
 #endif
+// clang-format on
 
 #if (defined(KOKKOS_COMPILER_GNU) || defined(KOKKOS_COMPILER_CLANG) ||         \
      defined(KOKKOS_COMPILER_INTEL_LLVM) || defined(KOKKOS_COMPILER_NVHPC)) && \

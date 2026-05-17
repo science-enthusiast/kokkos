@@ -4,6 +4,8 @@
 #ifndef KOKKOS_HIP_PARALLEL_FOR_RANGE_HPP
 #define KOKKOS_HIP_PARALLEL_FOR_RANGE_HPP
 
+#include <cstdint>
+
 #include <Kokkos_Parallel.hpp>
 
 #include <HIP/Kokkos_HIP_BlockSize_Deduction.hpp>
@@ -41,9 +43,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::HIP> {
  public:
   using functor_type = FunctorType;
 
-  ParallelFor()                              = delete;
-  ParallelFor(ParallelFor const&)            = default;
-  ParallelFor& operator=(ParallelFor const&) = delete;
+  ParallelFor() = delete;
 
   inline __device__ void operator()() const {
     constexpr auto batch_size = Member(StaticBatchSize::batch_size);
@@ -57,22 +57,28 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::HIP> {
              iwork < static_cast<Member>(work_end - work_stride * batch_size)
                  ? iwork + work_stride * batch_size
                  : work_end) {
-      for (Member i = 0; i < static_cast<Member>(work_stride * batch_size) &&
-                         i < work_end - iwork;
-           i = (i < static_cast<Member>(work_end - work_stride - iwork))
-                   ? i + work_stride
-                   : work_end - iwork) {
-        this->template exec_range<WorkTag>(iwork + i);
+      if constexpr (batch_size == 1) {
+        this->template exec_range<WorkTag>(iwork);
+      } else {
+        for (Member i = 0; i < static_cast<Member>(work_stride * batch_size) &&
+                           i < work_end - iwork;
+             i = (i < static_cast<Member>(work_end - work_stride - iwork))
+                     ? i + work_stride
+                     : work_end - iwork) {
+          this->template exec_range<WorkTag>(iwork + i);
+        }
       }
     }
   }
 
   inline void execute() const {
+    typename Policy::index_type nwork = m_policy.end() - m_policy.begin();
     constexpr typename Policy::index_type batch_size =
         StaticBatchSize::batch_size;
-    const typename Policy::index_type nwork =
-        (m_policy.end() - m_policy.begin()) / batch_size +
-        ((m_policy.end() - m_policy.begin()) % batch_size == 0 ? 0 : 1);
+
+    if constexpr (batch_size != 1) {
+      nwork = (uint64_t(nwork) + batch_size - 1) / batch_size;
+    }
 
     using DriverType = ParallelFor<FunctorType, Policy, Kokkos::HIP>;
     const int block_size =

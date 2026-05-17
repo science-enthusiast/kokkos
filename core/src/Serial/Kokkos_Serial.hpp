@@ -48,6 +48,8 @@ class SerialInternal {
   static std::vector<SerialInternal*> all_instances;
   static std::mutex all_instances_mutex;
 
+  void fence(const std::string& name);
+
   // Resize thread team data scratch memory
   void resize_thread_team_data(size_t pool_reduce_bytes,
                                size_t team_reduce_bytes,
@@ -96,31 +98,17 @@ class Serial {
 
   //@}
 
-  Serial(const Serial&)            = default;
-  Serial& operator=(const Serial&) = default;
+  KOKKOS_DEFAULTED_FUNCTION Serial(const Serial&) = default;
+  KOKKOS_FUNCTION Serial(Serial&& other) noexcept
+      : Serial(static_cast<const Serial&>(other)) {}
+  KOKKOS_DEFAULTED_FUNCTION Serial& operator=(const Serial&) = default;
+  KOKKOS_FUNCTION Serial& operator=(Serial&& other) noexcept {
+    return *this = static_cast<const Serial&>(other);
+  }
   ~Serial();
   Serial();
 
   explicit Serial(NewInstance);
-
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  template <typename T = void>
-  KOKKOS_DEPRECATED_WITH_COMMENT(
-      "Serial execution space should be constructed explicitly.")
-  Serial(NewInstance)
-      : Serial(NewInstance{}) {}
-#endif
-
-  /// \brief True if and only if this method is being called in a
-  ///   thread-parallel function.
-  ///
-  /// For the Serial device, this method <i>always</i> returns false,
-  /// because parallel_for or parallel_reduce with the Serial device
-  /// always execute sequentially.
-
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_DEPRECATED inline static int in_parallel() { return false; }
-#endif
 
   /// \brief Wait until all dispatched functors complete.
   ///
@@ -157,32 +145,11 @@ class Serial {
 
   void fence(const std::string& name =
                  "Kokkos::Serial::fence: Unnamed Instance Fence") const {
-#ifdef KOKKOS_ENABLE_ATOMICS_BYPASS
-    auto fence = []() {};
-#else
-    auto fence = [this]() {
-      auto* internal_instance = this->impl_internal_space_instance();
-      std::lock_guard<std::mutex> lock(internal_instance->m_instance_mutex);
-    };
-#endif
-    if (Kokkos::Tools::profileLibraryLoaded()) {
-      Kokkos::Tools::Experimental::Impl::profile_fence_event<Kokkos::Serial>(
-          name, Kokkos::Tools::Experimental::Impl::DirectFenceIDHandle{1},
-          fence);  // TODO: correct device ID
-    } else {
-      fence();
-    }
-#ifndef KOKKOS_ENABLE_ATOMICS_BYPASS
-    Kokkos::memory_fence();
-#endif
+    this->impl_internal_space_instance()->fence(name);
   }
 
   /** \brief  Return the maximum amount of concurrency.  */
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  static int concurrency() { return 1; }
-#else
   int concurrency() const { return 1; }
-#endif
 
   //! Print configuration information to the given output stream.
   void print_configuration(std::ostream& os, bool verbose = false) const;
@@ -248,7 +215,6 @@ struct MemorySpaceAccess<Kokkos::Serial::memory_space,
                          Kokkos::Serial::scratch_memory_space> {
   enum : bool { assignable = false };
   enum : bool { accessible = true };
-  enum : bool { deepcopy = false };
 };
 
 }  // namespace Impl

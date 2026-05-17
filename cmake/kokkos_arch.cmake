@@ -96,6 +96,7 @@ kokkos_arch_option(HOPPER90 GPU "NVIDIA Hopper generation CC 9.0" "KOKKOS_SHOW_C
 kokkos_arch_option(BLACKWELL100 GPU "NVIDIA Blackwell generation CC 10.0" "KOKKOS_SHOW_CUDA_ARCHS")
 kokkos_arch_option(BLACKWELL103 GPU "NVIDIA Blackwell generation CC 10.3" "KOKKOS_SHOW_CUDA_ARCHS")
 kokkos_arch_option(BLACKWELL120 GPU "NVIDIA Blackwell generation CC 12.0" "KOKKOS_SHOW_CUDA_ARCHS")
+kokkos_arch_option(BLACKWELL121 GPU "NVIDIA Blackwell generation CC 12.1" "KOKKOS_SHOW_CUDA_ARCHS")
 
 if(Kokkos_ENABLE_HIP OR Kokkos_ENABLE_OPENACC OR Kokkos_ENABLE_SYCL)
   set(KOKKOS_SHOW_HIP_ARCHS ON)
@@ -632,15 +633,15 @@ if(KOKKOS_ARCH_HSW)
 endif()
 
 if(KOKKOS_ARCH_RISCV_SG2042)
-  if(NOT (KOKKOS_CXX_COMPILER_ID STREQUAL GNU AND KOKKOS_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12))
-    message(SEND_ERROR "Only gcc >= 12 support RISC-V.")
+  if(KOKKOS_CXX_COMPILER_ID STREQUAL GNU AND KOKKOS_CXX_COMPILER_VERSION VERSION_LESS 12)
+    message(FATAL_ERROR "Only gcc >= 12 support RISC-V.")
   endif()
   compiler_specific_flags(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID DEFAULT -march=rv64imafdcv)
 endif()
 
 if(KOKKOS_ARCH_RISCV_RVA22V)
-  if(NOT (KOKKOS_CXX_COMPILER_ID STREQUAL GNU AND KOKKOS_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12))
-    message(SEND_ERROR "Only gcc >= 12 support RISC-V.")
+  if(KOKKOS_CXX_COMPILER_ID STREQUAL GNU AND KOKKOS_CXX_COMPILER_VERSION VERSION_LESS 12)
+    message(FATAL_ERROR "Only gcc >= 12 support RISC-V.")
   endif()
   compiler_specific_flags(
     COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID DEFAULT
@@ -649,8 +650,8 @@ if(KOKKOS_ARCH_RISCV_RVA22V)
 endif()
 
 if(KOKKOS_ARCH_RISCV_U74MC)
-  if(NOT (KOKKOS_CXX_COMPILER_ID STREQUAL GNU AND KOKKOS_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12))
-    message(SEND_ERROR "Only gcc >= 12 support RISC-V.")
+  if(KOKKOS_CXX_COMPILER_ID STREQUAL GNU AND KOKKOS_CXX_COMPILER_VERSION VERSION_LESS 12)
+    message(FATAL_ERROR "Only gcc >= 12 support RISC-V.")
   endif()
   compiler_specific_flags(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID DEFAULT -march=rv64imafdc_zicntr_zicsr_zifencei_zihpm)
 endif()
@@ -891,6 +892,13 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR "x${CMAKE_CXX_SIMULATE_ID}" STREQUAL
   compiler_specific_defs(Clang _CRT_SECURE_NO_WARNINGS)
 endif()
 
+# MSVC needs another flag to allow using __VA_OPT__
+if(KOKKOS_CXX_COMPILER_ID STREQUAL NVIDIA)
+  compiler_specific_options(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID MSVC -Xcompiler=/Zc:preprocessor)
+else()
+  compiler_specific_options(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID MSVC /Zc:preprocessor)
+endif()
+
 #Right now we cannot get the compiler ID when cross-compiling, so just check
 #that HIP is enabled
 if(KOKKOS_ENABLE_HIP)
@@ -1032,6 +1040,7 @@ check_cuda_arch(HOPPER90 sm_90)
 check_cuda_arch(BLACKWELL100 sm_100)
 check_cuda_arch(BLACKWELL103 sm_103)
 check_cuda_arch(BLACKWELL120 sm_120)
+check_cuda_arch(BLACKWELL121 sm_121)
 
 set(AMDGPU_ARCH_ALREADY_SPECIFIED "")
 function(CHECK_AMDGPU_ARCH ARCH FLAG)
@@ -1316,7 +1325,11 @@ if(KOKKOS_ARCH_HOPPER90)
   set(KOKKOS_ARCH_HOPPER ON)
 endif()
 
-if(KOKKOS_ARCH_BLACKWELL100 OR KOKKOS_ARCH_BLACKWELL103 OR KOKKOS_ARCH_BLACKWELL120)
+if(KOKKOS_ARCH_BLACKWELL100
+   OR KOKKOS_ARCH_BLACKWELL103
+   OR KOKKOS_ARCH_BLACKWELL120
+   OR KOKKOS_ARCH_BLACKWELL121
+)
   set(KOKKOS_ARCH_BLACKWELL ON)
 endif()
 
@@ -1435,11 +1448,29 @@ foreach(ARCH IN LISTS SUPPORTED_AMD_ARCHS)
   endif()
 endforeach()
 
+#FIXME_HIP right now we only check if the arch autodetected by hip is the same as the one enabled in Kokkos. If not we warn/error
+if(Kokkos_ENABLE_HIP)
+  foreach(arch IN LISTS GPU_TARGETS)
+    if(NOT (arch STREQUAL KOKKOS_HIP_ARCHITECTURES))
+      if(KOKKOS_ENABLE_DEPRECATED_CODE_5)
+        set(MESSAGE_TYPE WARNING)
+      else()
+        set(MESSAGE_TYPE FATAL_ERROR)
+      endif()
+      message(
+        ${MESSAGE_TYPE}
+        "AMD GPU architectures given via GPU_TARGETS=\"${GPU_TARGETS}\" are not compatible with the architecture enabled in Kokkos which is ${KOKKOS_HIP_ARCHITECTURES}. Kokkos allows only one device architecture to be active. To resolve this, configure with -DGPU_TARGETS=\"${KOKKOS_HIP_ARCHITECTURES}\" to prevent it from being set implicitly by find_package calls."
+      )
+      break()
+    endif()
+  endforeach()
+endif()
+
 #CMake verbose is kind of pointless
 #Let's just always print things
 message(STATUS "Built-in Execution Spaces:")
 
-foreach(_BACKEND Cuda HIP SYCL OpenACC)
+foreach(_BACKEND Cuda HIP SYCL OpenACC NextSilicon)
   string(TOUPPER ${_BACKEND} UC_BACKEND)
   if(KOKKOS_ENABLE_${UC_BACKEND})
     if(_DEVICE_PARALLEL)
@@ -1452,15 +1483,6 @@ foreach(_BACKEND Cuda HIP SYCL OpenACC)
       )
     endif()
     if(${_BACKEND} STREQUAL "Cuda")
-      if(KOKKOS_ENABLE_CUDA_UVM)
-        message(
-          DEPRECATION
-            "Setting Kokkos_ENABLE_CUDA_UVM is deprecated - use the portable Kokkos::SharedSpace as an explicit memory space in your code instead"
-        )
-        if(NOT KOKKOS_ENABLE_DEPRECATED_CODE_4)
-          message(FATAL_ERROR "Kokkos_ENABLE_DEPRECATED_CODE_4 must be set to use Kokkos_ENABLE_CUDA_UVM")
-        endif()
-      endif()
       set(_DEVICE_PARALLEL "Kokkos::${_BACKEND}")
     elseif(${_BACKEND} STREQUAL "HIP" OR ${_BACKEND} STREQUAL "SYCL")
       set(_DEVICE_PARALLEL "Kokkos::${_BACKEND}")

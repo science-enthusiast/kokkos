@@ -34,7 +34,7 @@ cudaStream_t Kokkos::Impl::cuda_get_deep_copy_stream() {
   static cudaStream_t s = nullptr;
   if (s == nullptr) {
     KOKKOS_IMPL_CUDA_SAFE_CALL(
-        (CudaInternal::singleton().cuda_stream_create_wrapper(&s)));
+        (CudaInternal::default_instance->cuda_stream_create_wrapper(&s)));
   }
   return s;
 }
@@ -43,8 +43,9 @@ namespace Kokkos {
 namespace Impl {
 
 void DeepCopyCuda(void *dst, const void *src, size_t n) {
-  KOKKOS_IMPL_CUDA_SAFE_CALL((CudaInternal::singleton().cuda_memcpy_wrapper(
-      dst, src, n, cudaMemcpyDefault)));
+  KOKKOS_IMPL_CUDA_SAFE_CALL(
+      (CudaInternal::default_instance->cuda_memcpy_wrapper(dst, src, n,
+                                                           cudaMemcpyDefault)));
 }
 
 void DeepCopyAsyncCuda(const Cuda &instance, void *dst, const void *src,
@@ -72,12 +73,6 @@ void DeepCopyAsyncCuda(void *dst, const void *src, size_t n) {
 /*--------------------------------------------------------------------------*/
 
 namespace Kokkos {
-
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-bool CudaUVMSpace::available() { return true; }
-#endif
-
-/*--------------------------------------------------------------------------*/
 
 #ifdef KOKKOS_IMPL_DEBUG_CUDA_PIN_UVM_TO_HOST
 // The purpose of the following variable is to allow a state-based choice

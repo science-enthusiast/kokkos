@@ -29,41 +29,22 @@
 namespace Kokkos {
 // BEGIN macro definitions
 #if defined(KOKKOS_HALF_T_IS_FLOAT) && !KOKKOS_HALF_T_IS_FLOAT
-// FIXME_MSVC Use /Zc:preprocessor
-#if defined(KOKKOS_COMPILER_MSVC)
-  #define KOKKOS_IMPL_MATH_H_FUNC_WRAPPER(MACRO, FUNC, /*MAYBE_RET*/...) \
-    MACRO(FUNC, Kokkos::Experimental::half_t, ##__VA_ARGS__)
-#else
   #define KOKKOS_IMPL_MATH_H_FUNC_WRAPPER(MACRO, FUNC, /*MAYBE_RET*/...) \
     MACRO(FUNC, Kokkos::Experimental::half_t __VA_OPT__(,) __VA_ARGS__)
-#endif
 #else
   #define KOKKOS_IMPL_MATH_H_FUNC_WRAPPER(MACRO, FUNC, ...)
 #endif
 
 #if defined(KOKKOS_BHALF_T_IS_FLOAT) && !KOKKOS_BHALF_T_IS_FLOAT
-// FIXME_MSVC Use /Zc:preprocessor
-#if defined(KOKKOS_COMPILER_MSVC)
-  #define KOKKOS_IMPL_MATH_B_FUNC_WRAPPER(MACRO, FUNC, /*MAYBE_RET*/...) \
-    MACRO(FUNC, Kokkos::Experimental::bhalf_t, ##__VA_ARGS__)
-#else
   #define KOKKOS_IMPL_MATH_B_FUNC_WRAPPER(MACRO, FUNC, /*MAYBE_RET*/...) \
     MACRO(FUNC, Kokkos::Experimental::bhalf_t __VA_OPT__(,) __VA_ARGS__)
-#endif
 #else
   #define KOKKOS_IMPL_MATH_B_FUNC_WRAPPER(MACRO, FUNC, ...)
 #endif
 
-// FIXME_MSVC Use /Zc:preprocessor
-#if defined(KOKKOS_COMPILER_MSVC)
-#define KOKKOS_IMPL_MATH_HALF_FUNC_WRAPPER(MACRO, FUNC, /*MAYBE_RETURN_TYPE*/...) \
-  KOKKOS_IMPL_MATH_H_FUNC_WRAPPER(MACRO, FUNC, ##__VA_ARGS__)          \
-  KOKKOS_IMPL_MATH_B_FUNC_WRAPPER(MACRO, FUNC, ##__VA_ARGS__)
-#else
 #define KOKKOS_IMPL_MATH_HALF_FUNC_WRAPPER(MACRO, FUNC, /*MAYBE_RETURN_TYPE*/...) \
   KOKKOS_IMPL_MATH_H_FUNC_WRAPPER(MACRO, FUNC __VA_OPT__(,) __VA_ARGS__)          \
   KOKKOS_IMPL_MATH_B_FUNC_WRAPPER(MACRO, FUNC __VA_OPT__(,) __VA_ARGS__)
-#endif
 
 #define KOKKOS_IMPL_MATH_UNARY_FUNCTION_HALF_TYPE(FUNC, HALF_TYPE)      \
   namespace Impl {                                                      \
@@ -412,7 +393,7 @@ KOKKOS_INLINE_FUNCTION fp16_t nextafter_half_helper(fp16_t from, fp16_t to) {
 
    // Handle Nans
    if (isnan(from) || isnan(to)) {
-     return Kokkos::Experimental::quiet_NaN<fp16_t>::value;
+     return Kokkos::quiet_NaN<fp16_t>::value;
    }
 
    // Handle equality
@@ -490,8 +471,8 @@ KOKKOS_INLINE_FUNCTION bool isnormal(Kokkos::Experimental::half_t x) {
     if (x != x) { return false; }
 #endif
     auto abs = Kokkos::abs(x);
-    return (abs >= Kokkos::Experimental::norm_min_v<Kokkos::Experimental::half_t>)&&(
-      abs <= Kokkos::Experimental::finite_max_v<Kokkos::Experimental::half_t>);
+    return (abs >= Kokkos::norm_min_v<Kokkos::Experimental::half_t>) &&
+           (abs <= Kokkos::finite_max_v<Kokkos::Experimental::half_t>);
 }
 #endif
 
@@ -503,8 +484,8 @@ KOKKOS_INLINE_FUNCTION bool isnormal(Kokkos::Experimental::bhalf_t x) {
     if (x != x) { return false; }
 #endif
     auto abs = Kokkos::abs(x);
-    return (abs >= Kokkos::Experimental::norm_min_v<Kokkos::Experimental::bhalf_t>)&&(
-      abs <= Kokkos::Experimental::finite_max_v<Kokkos::Experimental::bhalf_t>);
+    return (abs >= Kokkos::norm_min_v<Kokkos::Experimental::bhalf_t>) &&
+           (abs <= Kokkos::finite_max_v<Kokkos::Experimental::bhalf_t>);
 }
 #endif
 
@@ -514,9 +495,9 @@ KOKKOS_INLINE_FUNCTION bool isnormal(Kokkos::Experimental::bhalf_t x) {
       return FP_NAN;                                                       \
     } else if (x == 0) {                                                   \
       return FP_ZERO;                                                      \
-    } else if (Kokkos::abs(x) < Kokkos::Experimental::norm_min_v<TYPE>) {  \
+    } else if (Kokkos::abs(x) < Kokkos::norm_min_v<TYPE>) {  \
       return FP_SUBNORMAL;                                                 \
-    } else if (Kokkos::abs(x) == Kokkos::Experimental::infinity_v<TYPE>) { \
+    } else if (Kokkos::abs(x) == Kokkos::infinity_v<TYPE>) { \
       return FP_INFINITE;                                                  \
     } else {                                                               \
       return FP_NORMAL;                                                    \
