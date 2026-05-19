@@ -1059,7 +1059,7 @@ struct TestMDRange_2D {
       using point_type = typename range_type::point_type;
 
       range_type range(point_type{{0, 0}}, point_type{{N0, N1}},
-                       tile_type{{1, 1}});
+                       tile_type{{N0, N1}});
       TestMDRange_2D functor(N0, N1);
 
       parallel_for(range, functor);
@@ -1076,8 +1076,10 @@ struct TestMDRange_2D {
         }
 
       if (counter != 0) {
-        printf("D D + {1, 1} Tiles: Errors in test_for2; mismatches = %d\n\n",
-               counter);
+        printf(
+            "D D + global nested loops: Errors in test_for2; mismatches = "
+            "%d\n\n",
+            counter);
       }
 
       ASSERT_EQ(counter, 0);
@@ -1091,7 +1093,7 @@ struct TestMDRange_2D {
       using point_type = typename range_type::point_type;
 
       range_type range(point_type{{0, 0}}, point_type{{N0, N1}},
-                       tile_type{{1, 1}});
+                       tile_type{{N0, N1}});
       TestMDRange_2D functor(N0, N1);
 
       parallel_for(range, functor);
@@ -1108,8 +1110,10 @@ struct TestMDRange_2D {
         }
 
       if (counter != 0) {
-        printf("L L + {1, 1} Tiles: Errors in test_for2; mismatches = %d\n\n",
-               counter);
+        printf(
+            "L L + global nested loops: Errors in test_for2; mismatches = "
+            "%d\n\n",
+            counter);
       }
 
       ASSERT_EQ(counter, 0);
@@ -1122,7 +1126,7 @@ struct TestMDRange_2D {
       using point_type = typename range_type::point_type;
 
       range_type range(point_type{{0, 0}}, point_type{{N0, N1}},
-                       tile_type{{1, 1}});
+                       tile_type{{N0, N1}});
       TestMDRange_2D functor(N0, N1);
 
       parallel_for(range, functor);
@@ -1139,8 +1143,10 @@ struct TestMDRange_2D {
         }
 
       if (counter != 0) {
-        printf("R R + {1, 1} Tiles: Errors in test_for2; mismatches = %d\n\n",
-               counter);
+        printf(
+            "R R + global nested loops: Errors in test_for2; mismatches = "
+            "%d\n\n",
+            counter);
       }
 
       ASSERT_EQ(counter, 0);
@@ -3071,7 +3077,7 @@ struct TestMDRange_5D {
 
       range_type range(point_type{{0, 0, 0, 0, 0}},
                        point_type{{N0, N1, N2, N3, N4}},
-                       tile_type{{1, 1, 1, 1, 1}});
+                       tile_type{{N0, N1, N2, N3, N4}});
       TestMDRange_5D functor(N0, N1, N2, N3, N4);
 
       parallel_for(range, functor);
@@ -3092,7 +3098,7 @@ struct TestMDRange_5D {
 
       if (counter != 0) {
         printf(
-            "D D + {1, 1, 1, 1, 1} Tiles: Errors in test_for5; mismatches = "
+            "D D + global nested loops: Errors in test_for5; mismatches = "
             "%d\n\n",
             counter);
       }
@@ -3109,7 +3115,7 @@ struct TestMDRange_5D {
 
       range_type range(point_type{{0, 0, 0, 0, 0}},
                        point_type{{N0, N1, N2, N3, N4}},
-                       tile_type{{1, 1, 1, 1, 1}});
+                       tile_type{{N0, N1, N2, N3, N4}});
       TestMDRange_5D functor(N0, N1, N2, N3, N4);
 
       parallel_for(range, functor);
@@ -3130,7 +3136,7 @@ struct TestMDRange_5D {
 
       if (counter != 0) {
         printf(
-            "L L + {1, 1, 1, 1, 1} Tiles: Errors in test_for5; mismatches = "
+            "L L + global nested loops: Errors in test_for5; mismatches = "
             "%d\n\n",
             counter);
       }
@@ -3146,7 +3152,7 @@ struct TestMDRange_5D {
 
       range_type range(point_type{{0, 0, 0, 0, 0}},
                        point_type{{N0, N1, N2, N3, N4}},
-                       tile_type{{1, 1, 1, 1, 1}});
+                       tile_type{{N0, N1, N2, N3, N4}});
       TestMDRange_5D functor(N0, N1, N2, N3, N4);
 
       parallel_for(range, functor);
@@ -3167,7 +3173,8 @@ struct TestMDRange_5D {
 
       if (counter != 0) {
         printf(
-            "R R + {1, 1, 1, 1, 1} Tiles: Errors in test_for5; mismatches = "
+            "R R + {N0, N1, N2, N3, N4} Tiles: Errors in test_for5; mismatches "
+            "= "
             "%d\n\n",
             counter);
       }
