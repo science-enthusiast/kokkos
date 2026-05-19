@@ -59,6 +59,7 @@
  *  KOKKOS_COMPILER_INTEL_LLVM
  *  KOKKOS_COMPILER_CRAYC
  *  KOKKOS_COMPILER_APPLECC
+ *  KOKKOS_COMPILER_NEXT_LLVM
  *  KOKKOS_COMPILER_CLANG
  *  KOKKOS_COMPILER_NVHPC
  *  KOKKOS_COMPILER_MSVC
@@ -133,6 +134,10 @@
 #define KOKKOS_COMPILER_NVHPC                                 \
   __NVCOMPILER_MAJOR__ * 10000 + __NVCOMPILER_MINOR__ * 100 + \
       __NVCOMPILER_PATCHLEVEL__
+
+#elif defined(__NEXTSILICON__)
+#define KOKKOS_COMPILER_NEXT_LLVM \
+  __clang_major__ * 100 + __clang_minor__ * 10 + __clang_patchlevel__
 
 #elif defined(__clang__)
 // Check this after the Clang-based proprietary compilers which will also define
@@ -259,6 +264,27 @@
      defined(__x86_64__) || defined(__PPC64__))
 #define KOKKOS_ENABLE_ASM 1
 #endif
+#endif
+
+//----------------------------------------------------------------------------
+// NextLLVM compiler macros
+
+#if defined(KOKKOS_COMPILER_NEXT_LLVM)
+// #define KOKKOS_ENABLE_PRAGMA_UNROLL 1
+// #define KOKKOS_ENABLE_PRAGMA_IVDEP 1
+// #define KOKKOS_ENABLE_PRAGMA_LOOPCOUNT 1
+// #define KOKKOS_ENABLE_PRAGMA_VECTOR 1
+
+#if !defined(KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION)
+#define KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION \
+  inline __attribute__((always_inline))
+#define KOKKOS_IMPL_HOST_FORCEINLINE __attribute__((always_inline))
+#endif
+
+#if !defined(KOKKOS_IMPL_ALIGN_PTR)
+#define KOKKOS_IMPL_ALIGN_PTR(size) __attribute__((aligned(size)))
+#endif
+
 #endif
 
 //----------------------------------------------------------------------------
@@ -478,9 +504,35 @@
 #endif
 
 #ifdef KOKKOS_ENABLE_NEXTSILICON
-// FIXME_NEXTSILICON: Placeholder until proper ON_DEVICE/ON_HOST
-#define KOKKOS_IF_ON_DEVICE(CODE)
-#define KOKKOS_IF_ON_HOST(CODE) KOKKOS_IMPL_STRIP_PARENS(CODE)
+#include <nextapi/intrinsics.h>
+#include <NextSilicon/Kokkos_NextSilicon_InParallelRegion.hpp>
+
+// For grid execution, the optimizer knows __next_is_in_handed_of_code() is
+// always true, in_parallel_region() will short-circuit, and not actually be
+// called and the underlying flag will never be migrated to the device.
+//
+// During host execution the macro will check if we are in a parallel region by
+// checking the flag and execute CODE only if we are IN a parallel region
+// - hence we are on device!
+#define KOKKOS_IF_ON_DEVICE(CODE)                                \
+  if (__next_is_in_handed_off_code() ||                          \
+      Kokkos::Impl::NextSiliconParallelRegionScopeGuard::in()) { \
+    KOKKOS_IMPL_STRIP_PARENS(CODE)                               \
+  }
+
+// For grid execution, the optimizer knows __next_is_in_handed_of_code() is
+// always true. Hence all code in KOKKOS_IF_ON_HOST will be dead code and
+// optimized out. This is important to avoid unnecessary enlargening of
+// the projection.
+//
+// For hosts execution macro will check if we are in a parallel region by
+// checking the flag and execute CODE only if we are NOT IN a parallel
+// region - we are on host!
+#define KOKKOS_IF_ON_HOST(CODE)                                   \
+  if (!__next_is_in_handed_off_code() &&                          \
+      !Kokkos::Impl::NextSiliconParallelRegionScopeGuard::in()) { \
+    KOKKOS_IMPL_STRIP_PARENS(CODE)                                \
+  }
 #endif
 
 #if !defined(KOKKOS_IF_ON_HOST) && !defined(KOKKOS_IF_ON_DEVICE)
@@ -599,8 +651,9 @@
 #endif
 // clang-format on
 
-#if (defined(KOKKOS_COMPILER_GNU) || defined(KOKKOS_COMPILER_CLANG) ||         \
-     defined(KOKKOS_COMPILER_INTEL_LLVM) || defined(KOKKOS_COMPILER_NVHPC)) && \
+#if (defined(KOKKOS_COMPILER_GNU) || defined(KOKKOS_COMPILER_CLANG) ||        \
+     defined(KOKKOS_COMPILER_INTEL_LLVM) ||                                   \
+     defined(KOKKOS_COMPILER_NEXT_LLVM) || defined(KOKKOS_COMPILER_NVHPC)) && \
     !defined(_WIN32) && !defined(__ANDROID__)
 #if __has_include(<execinfo.h>)
 #define KOKKOS_IMPL_ENABLE_STACKTRACE
