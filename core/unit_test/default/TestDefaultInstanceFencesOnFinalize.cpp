@@ -7,14 +7,14 @@ import kokkos.core;
 #else
 #include <Kokkos_Core.hpp>
 #endif
-#include <TestHPX_Category.hpp>
 
+#include <TestDefaultDeviceType_Category.hpp>
 #include "tools/include/ToolTestingUtilities.hpp"
 
 namespace Test {
 
-// Test whether the HPX default instance fences on finalize.
-TEST(hpx, default_instance_fences_on_finalize) {
+// Test whether the default instance fences on finalize.
+void test_default_instance_fences_on_finalize() {
   Kokkos::Test::Tools::listen_tool_events(
       Kokkos::Test::Tools::Config::DisableAll(),
       Kokkos::Test::Tools::Config::EnableFences());
@@ -23,10 +23,10 @@ TEST(hpx, default_instance_fences_on_finalize) {
       [&]() {
         Kokkos::initialize();
         {
-          const Kokkos::Experimental::HPX exec{};
+          const TEST_EXECSPACE exec{};
 
           Kokkos::parallel_for(Kokkos::RangePolicy(exec, 0, 100),
-                               KOKKOS_LAMBDA(const auto){});
+                               KOKKOS_LAMBDA(const int){});
         }
         Kokkos::finalize();
       },
@@ -40,6 +40,10 @@ TEST(hpx, default_instance_fences_on_finalize) {
 
   Kokkos::Test::Tools::listen_tool_events(
       Kokkos::Test::Tools::Config::DisableAll());
+}
+
+TEST(TEST_CATEGORY, default_instance_fences_on_finalize) {
+  test_default_instance_fences_on_finalize();
 }
 
 }  // namespace Test

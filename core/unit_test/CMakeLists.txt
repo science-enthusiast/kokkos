@@ -472,6 +472,11 @@ foreach(PairDeviceSpace HIP-HostPinned;HIP-Managed;Cuda-HostPinned;Cuda-UVM;SYCL
   endif()
 endforeach()
 
+kokkos_add_executable_and_test(
+  CoreUnitTest_DefaultInstanceFencesOnFinalize SOURCES UnitTestMain.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/default/TestDefaultInstanceFencesOnFinalize.cpp
+)
+
 if(Kokkos_ENABLE_OPENACC)
   list(
     REMOVE_ITEM
@@ -652,10 +657,6 @@ endif()
 
 if(Kokkos_ENABLE_HPX)
   kokkos_add_executable_and_test(CoreUnitTest_HPX SOURCES UnitTestMainInit.cpp ${HPX_SOURCES})
-  kokkos_add_executable_and_test(
-    CoreUnitTest_HPXDefaultInstanceFencesOnFinalize SOURCES UnitTestMain.cpp
-    hpx/TestHPX_DefaultInstanceFencesOnFinalize.cpp
-  )
   kokkos_add_executable_and_test(CoreUnitTest_HPXInterOp SOURCES UnitTestMain.cpp hpx/TestHPX_InterOp.cpp)
   kokkos_add_executable_and_test(
     CoreUnitTest_HPX_IndependentInstances
