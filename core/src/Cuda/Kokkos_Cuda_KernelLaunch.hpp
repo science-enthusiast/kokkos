@@ -128,7 +128,8 @@ inline bool is_empty_launch(dim3 const& grid, dim3 const& block) {
 }
 
 inline void check_shmem_request(CudaInternal const* cuda_instance, int shmem) {
-  int const maxShmemPerBlock = cuda_instance->m_deviceProp.sharedMemPerBlock;
+  int const maxShmemPerBlock = static_cast<int>(
+      get_max_shared_mem_per_block(cuda_instance->m_deviceProp));
   if (maxShmemPerBlock < shmem) {
     Kokkos::Impl::throw_runtime_exception(
         "CudaParallelLaunch (or graph node creation) FAILED: shared memory "
@@ -240,6 +241,27 @@ inline void configure_shmem_preference(const CudaInternal* cuda_instance,
   if (cache_config_preference_cached != carveout) {
     cache_config_preference_cached = set_cache_config();
   }
+}
+
+// Opt in to the maximum dynamic shared memory size when the request
+// exceeds the default limit.
+template <class DriverType, class LaunchBounds, class KernelFuncPtr>
+inline void configure_max_dynamic_shmem(const CudaInternal* cuda_instance,
+                                        const KernelFuncPtr& func, int shmem) {
+  const auto& func_attr =
+      get_cuda_kernel_func_attributes<DriverType, LaunchBounds>(cuda_instance,
+                                                                func);
+  const auto cuda_device = cuda_instance->m_cudaDev;
+  static std::map<int, int> cached_max_per_device;
+  if (cached_max_per_device.find(cuda_device) == cached_max_per_device.end()) {
+    cached_max_per_device.emplace(cuda_device,
+                                  func_attr.maxDynamicSharedSizeBytes);
+  }
+  int& cached_max = cached_max_per_device[cuda_device];
+  if (shmem <= cached_max) return;
+  KOKKOS_IMPL_CUDA_SAFE_CALL((cuda_instance->cuda_func_set_attribute_wrapper(
+      func, cudaFuncAttributeMaxDynamicSharedMemorySize, shmem)));
+  cached_max = shmem;
 }
 
 // </editor-fold> end Some helper functions for launch code readability }}}1
@@ -386,6 +408,8 @@ struct CudaParallelLaunchKernelInvoker<DriverType, LaunchBounds,
                             CudaInternal const* cuda_instance) {
     // Set cuda device before launching kernel
     cuda_instance->set_cuda_device();
+    Impl::configure_max_dynamic_shmem<DriverType, LaunchBounds>(
+        cuda_instance, base_t::get_kernel_func(), shmem);
 
     (base_t::
          get_kernel_func())<<<grid, block, shmem, cuda_instance->m_stream>>>(
@@ -403,7 +427,6 @@ struct CudaParallelLaunchKernelInvoker<DriverType, LaunchBounds,
     KOKKOS_EXPECTS(!bool(graph_node));
 
     if (!Impl::is_empty_launch(grid, block)) {
-      Impl::check_shmem_request(cuda_instance, shmem);
       if constexpr (DriverType::Policy::
                         experimental_contains_desired_occupancy) {
         int desired_occupancy =
@@ -413,6 +436,9 @@ struct CudaParallelLaunchKernelInvoker<DriverType, LaunchBounds,
             cuda_instance->m_cudaDev, base_t::get_kernel_func(),
             cuda_instance->m_deviceProp, block_size, shmem, desired_occupancy);
       }
+      Impl::check_shmem_request(cuda_instance, shmem);
+      Impl::configure_max_dynamic_shmem<DriverType, LaunchBounds>(
+          cuda_instance, base_t::get_kernel_func(), shmem);
 
       void const* args[] = {&driver};
 
@@ -490,6 +516,8 @@ struct CudaParallelLaunchKernelInvoker<DriverType, LaunchBounds,
 
     // Set cuda device before launching kernel
     cuda_instance->set_cuda_device();
+    Impl::configure_max_dynamic_shmem<DriverType, LaunchBounds>(
+        cuda_instance, base_t::get_kernel_func(), shmem);
 
     (base_t::
          get_kernel_func())<<<grid, block, shmem, cuda_instance->m_stream>>>(
@@ -507,7 +535,6 @@ struct CudaParallelLaunchKernelInvoker<DriverType, LaunchBounds,
     KOKKOS_EXPECTS(!bool(graph_node));
 
     if (!Impl::is_empty_launch(grid, block)) {
-      Impl::check_shmem_request(cuda_instance, shmem);
       if constexpr (DriverType::Policy::
                         experimental_contains_desired_occupancy) {
         int desired_occupancy =
@@ -517,6 +544,9 @@ struct CudaParallelLaunchKernelInvoker<DriverType, LaunchBounds,
             cuda_instance, base_t::get_kernel_func(), block_size, shmem,
             desired_occupancy);
       }
+      Impl::check_shmem_request(cuda_instance, shmem);
+      Impl::configure_max_dynamic_shmem<DriverType, LaunchBounds>(
+          cuda_instance, base_t::get_kernel_func(), shmem);
 
       auto* driver_ptr = Impl::allocate_driver_storage_for_kernel(
           CudaSpace::impl_create(cuda_instance->m_cudaDev,
@@ -626,6 +656,8 @@ struct CudaParallelLaunchKernelInvoker<DriverType, LaunchBounds,
 
     // Set cuda device before launching kernel
     cuda_instance->set_cuda_device();
+    Impl::configure_max_dynamic_shmem<DriverType, LaunchBounds>(
+        cuda_instance, base_t::get_kernel_func(), shmem);
 
     // Invoke the driver function on the device
     (base_t::
