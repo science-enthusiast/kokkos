@@ -35,14 +35,20 @@ pipeline {
         }
         stage('Build-1') {
             parallel {
-                stage('C++20-Modules-Clang-19') {
+                stage('C++20-Modules-GCC-16') {
                     agent {
-                        dockerfile {
-                            filename 'Dockerfile.modules'
-                            dir 'scripts/docker'
-                            label 'nvidia-docker || docker'
-                            args '--env NODE_NAME=${env.NODE_NAME} --env STAGE_NAME=${env.STAGE_NAME}'
-                        }
+                         dockerfile {
+                             filename 'Dockerfile.gcc-16'
+                             dir 'scripts/docker'
+                             label 'nvidia-docker || docker'
+                             args '--env NODE_NAME=${env.NODE_NAME} --env STAGE_NAME=${env.STAGE_NAME}'
+                         }
+                     }
+                    environment {
+                        OMP_NUM_THREADS = 8
+                        OMP_NESTED = 'true'
+                        OMP_MAX_ACTIVE_LEVELS = 3
+                        OMP_PROC_BIND = 'true'
                     }
                     steps {
                         sh '''#!/bin/bash
@@ -53,37 +59,30 @@ pipeline {
                               cmake \
                                 -B build \
                                 -GNinja \
-                                -DCMAKE_CXX_COMPILER=clang++-19 \
-                                -DCMAKE_CXX_FLAGS="-Werror" \
-                                -DCMAKE_CXX_STANDARD=20 \
+                                -DCMAKE_CXX_COMPILER=g++-16 \
+                                -DCMAKE_CXX_FLAGS=-Werror \
+                                -DKokkos_ARCH_NATIVE=ON \
                                 -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
                                 -DKokkos_ENABLE_EXPERIMENTAL_CXX20_MODULES=ON \
-                                -DKokkos_ENABLE_DEPRECATED_CODE_4=OFF \
-                                -DKokkos_ENABLE_DEPRECATED_CODE_5=OFF \
-                                -DKokkos_ENABLE_TESTS=ON \
-                                -DKokkos_ENABLE_EXAMPLES=ON \
+                                -DKokkos_ENABLE_OPENMP=ON \
                                 -DKokkos_ENABLE_SERIAL=ON && \
                               set +x && \
-                              cmake --build build --target install -j 8 && \
-                              ctest --test-dir build --no-compress-output -T Test --verbose && \
+                              cmake --build build --target kokkoscore &&
                               cd example/build_cmake_installed_modules && \
                               rm -rf build && \
                               set -x && \
                               cmake \
                                 -B build \
                                 -GNinja \
-                                -DCMAKE_CXX_COMPILER=clang++-19 \
-                                -DCMAKE_CXX_FLAGS="-Werror" && \
+                                -DCMAKE_CXX_COMPILER=g++-16 \
+                                -DCMAKE_CXX_FLAGS="-Werror" \
+                                -DKokkos_ROOT=../../build && \
                               set +x && \
-                              cmake --build build -j 8 && \
+                              cmake --build build && \
                               ctest --test-dir build --verbose'''
                     }
-                    post {
-                        always {
-                            xunit([CTest(deleteOutputFiles: true, failIfNotNew: true, pattern: 'build/Testing/**/Test.xml', skipNoTestFiles: false, stopProcessingIfError: true)])
-                        }
-                    }
                 }
+
                 stage('GCC-10.5.0') {
                     agent {
                          dockerfile {
@@ -282,6 +281,56 @@ pipeline {
         }
         stage('Build-2') {
             parallel {
+                stage('C++20-Modules-Clang-19') {
+                    agent {
+                        dockerfile {
+                            filename 'Dockerfile.modules'
+                            dir 'scripts/docker'
+                            label 'nvidia-docker || docker'
+                            args '--env NODE_NAME=${env.NODE_NAME} --env STAGE_NAME=${env.STAGE_NAME}'
+                        }
+                    }
+                    steps {
+                        sh '''#!/bin/bash
+                              exec > >(awk '{ print "[" ENVIRON["STAGE_NAME"] "]", $0 }') 2>&1 && \
+                              echo "Hostname: ${NODE_NAME}" && \
+                              rm -rf build && \
+                              set -x && \
+                              cmake \
+                                -B build \
+                                -GNinja \
+                                -DCMAKE_CXX_COMPILER=clang++-19 \
+                                -DCMAKE_CXX_FLAGS="-Werror" \
+                                -DCMAKE_CXX_STANDARD=20 \
+                                -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
+                                -DKokkos_ENABLE_EXPERIMENTAL_CXX20_MODULES=ON \
+                                -DKokkos_ENABLE_DEPRECATED_CODE_4=OFF \
+                                -DKokkos_ENABLE_DEPRECATED_CODE_5=OFF \
+                                -DKokkos_ENABLE_TESTS=ON \
+                                -DKokkos_ENABLE_EXAMPLES=ON \
+                                -DKokkos_ENABLE_SERIAL=ON && \
+                              set +x && \
+                              cmake --build build --target install -j 8 && \
+                              ctest --test-dir build --no-compress-output -T Test --verbose && \
+                              cd example/build_cmake_installed_modules && \
+                              rm -rf build && \
+                              set -x && \
+                              cmake \
+                                -B build \
+                                -GNinja \
+                                -DCMAKE_CXX_COMPILER=clang++-19 \
+                                -DCMAKE_CXX_FLAGS="-Werror" && \
+                              set +x && \
+                              cmake --build build -j 8 && \
+                              ctest --test-dir build --verbose'''
+                    }
+                    post {
+                        always {
+                            xunit([CTest(deleteOutputFiles: true, failIfNotNew: true, pattern: 'build/Testing/**/Test.xml', skipNoTestFiles: false, stopProcessingIfError: true)])
+                        }
+                    }
+                }
+
                 stage('OPENACC-NVHPC-CUDA-12.2') {
                     agent {
                         dockerfile {
