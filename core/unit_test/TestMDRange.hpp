@@ -4205,6 +4205,57 @@ struct TestMDRange_ReduceScalar {
 };
 
 template <typename ExecSpace, typename StaticBatchSize>
+struct Test1DStaticBatchSize {
+  using view_type = Kokkos::View<int *, ExecSpace>;
+
+  view_type m_flags;
+  view_type result_view;
+
+  struct AtomicAddTag {};
+  struct VerifyAtomicAddTag {};
+
+  size_t N0;
+
+  Test1DStaticBatchSize(const size_t N0_)
+      : m_flags(Kokkos::view_alloc(Kokkos::WithoutInitializing, "flags"), N0_),
+        result_view(Kokkos::view_alloc(Kokkos::WithoutInitializing, "results"),
+                    N0_),
+        N0(N0_) {}
+
+  void test_batch_size() {
+    Kokkos::deep_copy(m_flags, 0);
+
+    Kokkos::parallel_for(
+        Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<1>, AtomicAddTag,
+                              StaticBatchSize>({0}, {N0}),
+        *this);
+
+    bool success = true;
+    Kokkos::parallel_reduce(
+        Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<1>, VerifyAtomicAddTag>(
+            {0}, {N0}),
+        *this, Kokkos::LAnd<bool>(success));
+
+    ASSERT_TRUE(success);
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const AtomicAddTag, const int i) const {
+    Kokkos::atomic_add(&m_flags(i), i + 1);
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const VerifyAtomicAddTag, const int i, bool &success) const {
+    if (m_flags(i) != i + 1) {
+      Kokkos::printf(
+          "Test1DStaticBatchSize {::test_batch_size_error at %d != %d\n", i,
+          m_flags(i));
+    }
+    success = success && (m_flags(i) == i + 1);
+  }
+};
+
+template <typename ExecSpace, typename StaticBatchSize>
 struct Test2DStaticBatchSize {
   using view_type = Kokkos::View<int **, ExecSpace>;
 

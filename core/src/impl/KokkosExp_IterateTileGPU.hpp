@@ -373,12 +373,12 @@ struct DeviceIterate {
 
 // Static batch size currently implemented for CUDA backend only
 #ifdef KOKKOS_ENABLE_CUDA
-    // unroll only the inner-most loop of the thread grid
-    // this loop is encountered either when rank index == 1 and it is a
-    // packed index OR when rank index == 0 and it is an unpacked index
-    if constexpr ((batch_size > 1) &&
-                  ((is_packed_index<rankIdx>() && (rankIdx == 1)) ||
-                   ((!is_packed_index<rankIdx>()) && (rankIdx == 0)))) {
+    // unroll only the outer-most loop of the thread grid
+    // this loop is encountered when rank index == Rank - 1
+    // FIXME: batch_size == 1 can be treated without nested loops but
+    // Range Policy faced issue with cuda-12.6.2 on Hopper90 GPU
+    // (compiler hangs) when implementing that
+    if (rankIdx == Rank - 1) {
       for (index_type istride = start; istride < end;
            istride =
                istride < static_cast<index_type>(end - stride * batch_size)
@@ -398,11 +398,11 @@ struct DeviceIterate {
         }
       }
     } else {
+#else
+    for (index_type idx = start; idx < end; idx += stride) {
+      iterate_rank_idx<R, rankIdx>(idx, idxs...);
+    }
 #endif
-      // no nested loops when static batch size == 1
-      for (index_type idx = start; idx < end; idx += stride) {
-        iterate_rank_idx<R, rankIdx>(idx, idxs...);
-      }
 #ifdef KOKKOS_ENABLE_CUDA
     }
 #endif
