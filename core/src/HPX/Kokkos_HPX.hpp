@@ -1963,7 +1963,7 @@ KOKKOS_INLINE_FUNCTION void parallel_scan(
       Kokkos::Impl::FunctorPatternInterface::SCAN, void, FunctorType,
       void>::value_type;
 
-  value_type scan_val;
+  value_type scan_val{};
   parallel_scan(loop_bounds, lambda, scan_val);
 }
 
@@ -1988,7 +1988,7 @@ KOKKOS_INLINE_FUNCTION void parallel_scan(
                                      TeamPolicy<Experimental::HPX>, FunctorType,
                                      void>::value_type;
 
-  value_type scan_val = value_type();
+  value_type scan_val{};
 
 #ifdef KOKKOS_ENABLE_PRAGMA_IVDEP
 #pragma ivdep
