@@ -1050,6 +1050,15 @@ struct TestMDRange_2D {
 
       ASSERT_EQ(counter, 0);
     }
+  }  // test_for2
+
+  // Test nested for loop based iteration without tiles as implemented in
+  // core/src/impl/KokkosExp_Host_IterateNestLoopWoTile.hpp
+  static void test_wo_tiles_for2(const int N0, const int N1) {
+    if constexpr (!std::is_same_v<typename TEST_EXECSPACE::memory_space,
+                                  Kokkos::HostSpace>) {
+      GTEST_SKIP() << "Disabling for device backends";
+    }
 
     {
       using range_type = typename Kokkos::MDRangePolicy<
@@ -1152,7 +1161,7 @@ struct TestMDRange_2D {
       ASSERT_EQ(counter, 0);
     }
 
-  }  // end test_for2
+  }  // end test_wo_tiles_for2
 };   // MDRange_2D
 
 template <typename ExecSpace>
@@ -3067,6 +3076,16 @@ struct TestMDRange_5D {
 
       ASSERT_EQ(counter, 0);
     }
+  }  // end test_for5
+
+  // Test nested for loop based iteration without tiles as implemented in
+  // core/src/impl/KokkosExp_Host_IterateNestLoopWoTile.hpp
+  static void test_wo_tiles_for5(const int N0, const int N1, const int N2,
+                                 const int N3, const int N4) {
+    if constexpr (!std::is_same_v<typename TEST_EXECSPACE::memory_space,
+                                  Kokkos::HostSpace>) {
+      GTEST_SKIP() << "Disabling for device backends";
+    }
 
     {
       using range_type = typename Kokkos::MDRangePolicy<
@@ -3173,7 +3192,7 @@ struct TestMDRange_5D {
 
       if (counter != 0) {
         printf(
-            "R R + {N0, N1, N2, N3, N4} Tiles: Errors in test_for5; mismatches "
+            "R R + global nested loops: Errors in test_for5; mismatches "
             "= "
             "%d\n\n",
             counter);
@@ -3182,7 +3201,7 @@ struct TestMDRange_5D {
       ASSERT_EQ(counter, 0);
     }
 
-  }  // end test_for5
+  }  // end test_wo_tiles_for5
 
   // test that each iteration is evaluated only once
   // see #7697
