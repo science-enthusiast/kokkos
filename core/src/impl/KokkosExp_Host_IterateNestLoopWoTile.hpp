@@ -120,9 +120,7 @@ struct HostIterateNestLoopWoTile<RP, Functor, Tag, ValueType,
   }
 
   inline void execute() const {
-    if (m_rp.m_num_tiles > 0) {
-      iterate(std::integral_constant<unsigned, 0u>());
-    }
+    iterate(std::integral_constant<unsigned, 0u>());
   }
 
   const RP m_rp;
