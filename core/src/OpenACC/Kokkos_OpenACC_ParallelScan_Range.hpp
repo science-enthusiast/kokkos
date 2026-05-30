@@ -162,21 +162,15 @@ KOKKOS_IMPL_ACC_PRAGMA(parallel loop gang vector_length(chunk_size) KOKKOS_IMPL_
 KOKKOS_IMPL_ACC_PRAGMA(parallel loop gang vector_length(chunk_size) KOKKOS_IMPL_ACC_ELEMENT_VALUES_CLAUSE present(functor, offset_values, final_reducer) copyin(m_result_total) async(async_arg))
     /* clang-format on */
     for (IndexType team_id = 0; team_id < n_chunks; ++team_id) {
-      // Initializing exclusive scan by considering offsets
 #pragma acc loop vector
       for (IndexType thread_id = 0; thread_id < chunk_size; ++thread_id) {
         const IndexType local_offset = team_id * chunk_size + begin;
         const IndexType idx          = local_offset + thread_id;
         ValueType update;
         final_reducer.init(&update);
-        if (thread_id == 0) {
-          final_reducer.join(&update, &offset_values(team_id));
-        } else {
-          if ((idx > begin) && (idx < end)) functor(idx - 1, update, false);
-        }
+        if (idx < end) functor(idx, update, false);
         KOKKOS_IMPL_ACC_ACCESS_ELEMENTS(thread_id) = update;
       }
-      // chunk-local exclusive scan
       IndexType current_step = 0;
       IndexType next_step    = 1;
       IndexType temp;
@@ -202,13 +196,21 @@ KOKKOS_IMPL_ACC_PRAGMA(parallel loop gang vector_length(chunk_size) KOKKOS_IMPL_
         current_step = next_step;
         next_step    = temp;
       }
-      // write final exclusive scan values
 #pragma acc loop vector
       for (IndexType thread_id = 0; thread_id < chunk_size; ++thread_id) {
         const IndexType local_offset = team_id * chunk_size + begin;
         const IndexType idx          = local_offset + thread_id;
-        ValueType update             = KOKKOS_IMPL_ACC_ACCESS_ELEMENTS(
-            current_step * chunk_size + thread_id);
+
+        ValueType update;
+        final_reducer.init(&update);
+        final_reducer.join(&update, &offset_values(team_id));
+        // Reconstruct the exclusive prefix from the chunk-local inclusive scan
+        // to avoid rereading the previous chunk tail.
+        if (thread_id > 0) {
+          final_reducer.join(&update,
+                             &KOKKOS_IMPL_ACC_ACCESS_ELEMENTS(
+                                 current_step * chunk_size + thread_id - 1));
+        }
 
         if (idx < end) functor(idx, update, true);
         if (idx == end - 1) {
