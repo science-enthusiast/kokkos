@@ -14,6 +14,7 @@ static_assert(false,
 #include <impl/Kokkos_Tools.hpp>
 #include <Kokkos_ScratchSpace.hpp>
 #include <iosfwd>
+#include <type_traits>
 
 namespace Kokkos::Experimental {
 
@@ -25,6 +26,7 @@ class NextSiliconSharedSpace {
   using execution_space = NextSilicon;
   using device_type     = Kokkos::Device<execution_space, memory_space>;
   using size_type       = size_t;
+  using index_type      = std::make_signed_t<size_type>;
 
   NextSiliconSharedSpace() = default;
 
@@ -97,7 +99,6 @@ struct MemorySpaceAccess<Kokkos::Experimental::NextSiliconSharedSpace,
   };  // This is a lie, because NextSilicon can access HostSpace. Set this way
       // so the HostMirror of NextSiliconSharedSpace uses the host execution
       // space.
-  enum : bool { deepcopy = true };
 };
 
 template <>
@@ -108,7 +109,6 @@ struct MemorySpaceAccess<Kokkos::HostSpace,
     accessible = true
   };  // Unlike <NextSiliconSharedSpace, HostSpace>, this is true so that
       // HostMirror uses NextSiliconSharedSpace as the memory space
-  enum : bool { deepcopy = true };
 };
 
 }  // namespace Impl

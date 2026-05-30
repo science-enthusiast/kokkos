@@ -471,6 +471,7 @@ class OffsetView : public View<DataType, Properties...> {
     KOKKOS_IF_ON_HOST((return runtime_check_begins_ends_host(begins, ends);))
     KOKKOS_IF_ON_DEVICE(
         (return runtime_check_begins_ends_device(begins, ends);))
+    KOKKOS_IMPL_UNREACHABLE();
   }
 
   // Constructor around unmanaged data after checking begins < ends for all
@@ -1461,6 +1462,16 @@ create_mirror_view_and_copy(
     std::string const& name = "") {
   return {create_mirror_view_and_copy(space, src.view(), name), src.begins()};
 }
+
+template <class T, class... P>
+auto create_mirror_view_and_copy(
+    const Kokkos::Experimental::OffsetView<T, P...>& src) {
+  return create_mirror_view_and_copy(
+      typename Kokkos::Experimental::OffsetView<
+          T, P...>::host_mirror_type::memory_space{},
+      src);
+}
+
 } /* namespace Kokkos */
 
 //----------------------------------------------------------------------------

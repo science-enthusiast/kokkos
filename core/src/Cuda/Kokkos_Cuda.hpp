@@ -86,6 +86,9 @@ class Cuda {
   //! This execution space preferred device_type
   using device_type = Kokkos::Device<execution_space, memory_space>;
 
+  //! The index_type best suited for this execution space.
+  using index_type = memory_space::index_type;
+
   //! The size_type best suited for this execution space.
   using size_type = memory_space::size_type;
 
@@ -198,7 +201,6 @@ struct MemorySpaceAccess<Kokkos::CudaSpace,
                          Kokkos::Cuda::scratch_memory_space> {
   enum : bool { assignable = false };
   enum : bool { accessible = true };
-  enum : bool { deepcopy = false };
 };
 
 }  // namespace Impl

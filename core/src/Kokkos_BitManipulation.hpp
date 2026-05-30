@@ -13,6 +13,11 @@
 
 namespace Kokkos::Impl {
 
+// This is not technically a valid use of KOKKOS_IF_ON_HOST/DEVICE macros:
+// NextSilicon compiler doesn't permit it to be used in a constexpr way, so work
+// around: KOKKOS_IF_ON_HOST here really just means "can we call the host
+// compiler intrinsic", which we are allowed to do on NextSilicon
+#if !defined(KOKKOS_ENABLE_NEXTSILICON)
 template <template <bool /*constant_evaluated*/, bool /*device*/> class Op,
           class T>
 KOKKOS_FUNCTION constexpr auto dispatch_helper(T x) noexcept {
@@ -33,18 +38,31 @@ KOKKOS_FUNCTION constexpr auto dispatch_helper(T x) noexcept {
   KOKKOS_IF_ON_DEVICE((return Op<true, true>::do_compute(x);))
 #endif
 #endif
+  KOKKOS_IMPL_UNREACHABLE();
 }
+#else
+template <template <bool /*constant_evaluated*/, bool /*device*/> class Op,
+          class T>
+KOKKOS_FUNCTION constexpr auto dispatch_helper(T x) noexcept {
+#if defined(__cpp_if_consteval)  // since C++23
+  if consteval {
+    return Op<true, false>::do_compute(x);
+
+  } else {
+    return Op<false, false>::do_compute(x);
+  }
+#else
+  return Op<true, false>::do_compute(x);
+#endif
+}
+#endif
 
 template <template <bool /*constant_evaluated*/, bool /*device*/> class Op,
           class T>
 KOKKOS_FUNCTION constexpr auto dispatch_helper_builtin(T x) noexcept {
   KOKKOS_IF_ON_HOST((return Op<false, false>::do_compute(x);))
   KOKKOS_IF_ON_DEVICE((return Op<false, true>::do_compute(x);))
-
-  // FIXME_NVHPC: erroneous warning about return from non-void function
-#if defined(KOKKOS_ENABLE_OPENACC) && defined(KOKKOS_COMPILER_NVHPC)
-  return T();
-#endif
+  KOKKOS_IMPL_UNREACHABLE();
 }
 
 #if defined(KOKKOS_COMPILER_CLANG) || defined(KOKKOS_COMPILER_INTEL_LLVM) || \

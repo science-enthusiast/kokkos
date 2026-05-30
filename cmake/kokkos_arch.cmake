@@ -118,6 +118,9 @@ list(APPEND CORRESPONDING_AMD_FLAGS gfx1201 gfx1100 gfx1030 gfx1030)
 list(APPEND SUPPORTED_AMD_GPUS PHOENIX)
 list(APPEND SUPPORTED_AMD_ARCHS AMD_GFX1103)
 list(APPEND CORRESPONDING_AMD_FLAGS gfx1103)
+list(APPEND SUPPORTED_AMD_GPUS STRIX_HALO)
+list(APPEND SUPPORTED_AMD_ARCHS AMD_GFX1151)
+list(APPEND CORRESPONDING_AMD_FLAGS gfx1151)
 
 #FIXME CAN BE REPLACED WITH LIST_ZIP IN CMAKE 3.17
 foreach(ARCH IN LISTS SUPPORTED_AMD_ARCHS)
@@ -633,15 +636,15 @@ if(KOKKOS_ARCH_HSW)
 endif()
 
 if(KOKKOS_ARCH_RISCV_SG2042)
-  if(NOT (KOKKOS_CXX_COMPILER_ID STREQUAL GNU AND KOKKOS_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12))
-    message(SEND_ERROR "Only gcc >= 12 support RISC-V.")
+  if(KOKKOS_CXX_COMPILER_ID STREQUAL GNU AND KOKKOS_CXX_COMPILER_VERSION VERSION_LESS 12)
+    message(FATAL_ERROR "Only gcc >= 12 support RISC-V.")
   endif()
   compiler_specific_flags(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID DEFAULT -march=rv64imafdcv)
 endif()
 
 if(KOKKOS_ARCH_RISCV_RVA22V)
-  if(NOT (KOKKOS_CXX_COMPILER_ID STREQUAL GNU AND KOKKOS_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12))
-    message(SEND_ERROR "Only gcc >= 12 support RISC-V.")
+  if(KOKKOS_CXX_COMPILER_ID STREQUAL GNU AND KOKKOS_CXX_COMPILER_VERSION VERSION_LESS 12)
+    message(FATAL_ERROR "Only gcc >= 12 support RISC-V.")
   endif()
   compiler_specific_flags(
     COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID DEFAULT
@@ -650,8 +653,8 @@ if(KOKKOS_ARCH_RISCV_RVA22V)
 endif()
 
 if(KOKKOS_ARCH_RISCV_U74MC)
-  if(NOT (KOKKOS_CXX_COMPILER_ID STREQUAL GNU AND KOKKOS_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12))
-    message(SEND_ERROR "Only gcc >= 12 support RISC-V.")
+  if(KOKKOS_CXX_COMPILER_ID STREQUAL GNU AND KOKKOS_CXX_COMPILER_VERSION VERSION_LESS 12)
+    message(FATAL_ERROR "Only gcc >= 12 support RISC-V.")
   endif()
   compiler_specific_flags(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID DEFAULT -march=rv64imafdc_zicntr_zicsr_zifencei_zihpm)
 endif()
@@ -897,6 +900,20 @@ if(KOKKOS_CXX_COMPILER_ID STREQUAL NVIDIA)
   compiler_specific_options(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID MSVC -Xcompiler=/Zc:preprocessor)
 else()
   compiler_specific_options(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID MSVC /Zc:preprocessor)
+endif()
+
+# MSVC requires /EHsc for C++ exception handling (unwind semantics); without it
+# STL headers like <chrono> trigger C4530.  For CUDA nvcc already forwards /EHsc
+# to the host compiler automatically, so only inject it for non-NVIDIA builds.
+if(NOT KOKKOS_CXX_COMPILER_ID STREQUAL NVIDIA)
+  compiler_specific_options(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID MSVC /EHsc)
+endif()
+
+# nvcc-generated .cudafe1.cpp files can exceed the default COFF section count
+# limit (C1128) on MSVC; in fact /bigobj is only needed for test targets,
+# not for the whole library.
+if(KOKKOS_CXX_COMPILER_ID STREQUAL NVIDIA AND Kokkos_ENABLE_TESTS)
+  compiler_specific_options(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID MSVC -Xcompiler=/bigobj)
 endif()
 
 #Right now we cannot get the compiler ID when cross-compiling, so just check
