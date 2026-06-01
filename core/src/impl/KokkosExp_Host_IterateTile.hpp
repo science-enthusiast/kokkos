@@ -865,22 +865,17 @@ struct HostIterateTile<RP, Functor, Tag, ValueType,
   inline HostIterateTile(RP const& rp, Functor const& func)
       : m_rp(rp), m_func(func) {}
 
-  inline bool check_iteration_bounds(point_type& actual_tile,
+  inline void check_iteration_bounds(point_type& actual_tile,
                                      const point_type& offset) const {
-    bool is_full_tile = true;
-
     for (int i = 0; i < RP::rank; ++i) {
       if ((offset[i] + m_rp.m_tile[i]) <= m_rp.m_upper[i]) {
         actual_tile[i] = m_rp.m_tile[i];
       } else {
-        is_full_tile = false;
         actual_tile[i] =
             m_rp.m_upper[i] - offset[i];  // remaining elements in dimension i
       }
     }
-
-    return is_full_tile;
-  }  // end check bounds
+  }  // end check_iteration_bounds
 
   template <int Rank>
   struct RankTag {
@@ -890,11 +885,11 @@ struct HostIterateTile<RP, Functor, Tag, ValueType,
 
   // functor encapsulating the inner-most loop
   template <typename TileOffset, typename TileDims, typename... Idxs>
-  void m_func_innermost_loop(TileOffset t_offset, TileDims t_dims,
-                             Idxs&&... idxs) const {
+  void func_innermost_loop(TileOffset const& offset, TileDims const& tiledims,
+                           Idxs&&... idxs) const {
     if constexpr (RP::inner_direction == Iterate::Left) {
       KOKKOS_ENABLE_IVDEP_MDRANGE
-      for (int i = t_offset[0]; i < t_offset[0] + t_dims[0]; ++i) {
+      for (index_type i = offset[0]; i < offset[0] + tiledims[0]; ++i) {
         if constexpr (std::is_void_v<Tag>) {
           m_func(i, (Idxs&&)idxs...);
         } else {
@@ -903,8 +898,8 @@ struct HostIterateTile<RP, Functor, Tag, ValueType,
       }
     } else {
       KOKKOS_ENABLE_IVDEP_MDRANGE
-      for (int i = t_offset[RP::rank - 1];
-           i < t_offset[RP::rank - 1] + t_dims[RP::rank - 1]; ++i) {
+      for (index_type i = offset[RP::rank - 1];
+           i < offset[RP::rank - 1] + tiledims[RP::rank - 1]; ++i) {
         if constexpr (std::is_void_v<Tag>) {
           m_func((Idxs&&)idxs..., i);
         } else {
@@ -926,73 +921,72 @@ struct HostIterateTile<RP, Functor, Tag, ValueType,
   //
   // Indices accumulated in parameter pack Idxs...
   //
-  // Functor call order depends on the iteration order:
+  // Loop indices passed according to iteration order:
   //  Iterate::Left:
-  //    functor(i_0, i_1, i_2, ..., i_{R-1})
+  //    functor(i_{inner_most}, ..., i_{outer_most})
   //  Iterate::Right:
-  //    functor(i_{R-1}, ..., i_2, i_1, i_0)
+  //    functor(i_{outer_most}, ..., i_{inner_most})
   //
   //  \tparam IterLevel iteration level of the nested loops
-  //  \tpraram Idxs... index pack
+  //  \tparam Idxs... index pack
   template <unsigned IterLevel, typename TileOffset, typename TileDims,
             typename... Idxs>
   inline void iterate(std::integral_constant<unsigned, IterLevel>,
-                      TileOffset t_offset, TileDims t_dims,
+                      TileOffset const& offset, TileDims const& tiledims,
                       Idxs... idxs) const {
     const index_type start = (RP::inner_direction == Iterate::Left)
-                                 ? t_offset[RP::rank - 1 - IterLevel]
-                                 : t_offset[IterLevel];
+                                 ? offset[RP::rank - 1 - IterLevel]
+                                 : offset[IterLevel];
     const index_type end   = (RP::inner_direction == Iterate::Left)
-                                 ? t_offset[RP::rank - 1 - IterLevel] +
-                                     t_dims[RP::rank - 1 - IterLevel]
-                                 : t_offset[IterLevel] + t_dims[IterLevel];
+                                 ? offset[RP::rank - 1 - IterLevel] +
+                                     tiledims[RP::rank - 1 - IterLevel]
+                                 : offset[IterLevel] + tiledims[IterLevel];
 
     for (index_type idx = start; idx < end; ++idx) {
       if constexpr (RP::inner_direction == Iterate::Left) {
-        iterate(std::integral_constant<unsigned, IterLevel + 1>(), t_offset,
-                t_dims, idx, idxs...);
+        iterate(std::integral_constant<unsigned, IterLevel + 1>(), offset,
+                tiledims, idx, idxs...);
       } else {
-        iterate(std::integral_constant<unsigned, IterLevel + 1>(), t_offset,
-                t_dims, idxs..., idx);
+        iterate(std::integral_constant<unsigned, IterLevel + 1>(), offset,
+                tiledims, idxs..., idx);
       }
     }
   }
 
   template <typename TileOffset, typename TileDims, typename... Idxs>
   inline void iterate(std::integral_constant<unsigned, RP::rank - 1>,
-                      TileOffset t_offset, TileDims t_dims,
+                      TileOffset const& offset, TileDims const& tiledims,
                       Idxs... idxs) const {
-    m_func_innermost_loop(t_offset, t_dims, idxs...);
+    func_innermost_loop(offset, tiledims, idxs...);
   }
 
   template <typename IType>
   inline void operator()(IType tile_idx) const {
-    point_type m_offset;
-    point_type m_tiledims;
+    point_type offset;
+    point_type tiledims;
 
     if constexpr (RP::outer_direction == Iterate::Left) {
       for (int i = 0; i < RP::rank; ++i) {
-        m_offset[i] =
+        offset[i] =
             (tile_idx % m_rp.m_tile_end[i]) * m_rp.m_tile[i] + m_rp.m_lower[i];
         tile_idx /= m_rp.m_tile_end[i];
       }
     } else {
       for (int i = RP::rank - 1; i >= 0; --i) {
-        m_offset[i] =
+        offset[i] =
             (tile_idx % m_rp.m_tile_end[i]) * m_rp.m_tile[i] + m_rp.m_lower[i];
         tile_idx /= m_rp.m_tile_end[i];
       }
     }
 
-    // Check if offset+tiledim in bounds - return actual tile dims in m_tiledims
-    [[maybe_unused]] const bool full_tile =
-        check_iteration_bounds(m_tiledims, m_offset);
+    // Check if offset+tiledim in bounds - return actual tile dims in tiledims
+    check_iteration_bounds(tiledims, offset);
 
-    iterate(std::integral_constant<unsigned, 0u>(), m_offset, m_tiledims);
+    iterate(std::integral_constant<unsigned, 0u>(), offset, tiledims);
   }
 
   RP const m_rp;
-  Functor const m_func;
+  Functor const& m_func;
   std::conditional_t<std::is_void_v<Tag>, int, Tag> m_tag{};
 };
 
