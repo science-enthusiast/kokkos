@@ -49,10 +49,10 @@ struct HostIterateNestLoopWoTile<RP, Functor, Tag, ValueType,
       : m_rp(rp), m_func(func) {}
 
   template <typename... Idxs>
-  void m_func_innermost_loop(Idxs&&... idxs) const {
+  void func_innermost_loop(Idxs&&... idxs) const {
     if constexpr (RP::outer_direction == Iterate::Left) {
       KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP
-      for (int i = m_rp.m_lower[0]; i < m_rp.m_upper[0]; ++i) {
+      for (index_type i = m_rp.m_lower[0]; i < m_rp.m_upper[0]; ++i) {
         if constexpr (std::is_void_v<Tag>) {
           m_func(i, (Idxs&&)idxs...);
         } else {
@@ -61,8 +61,8 @@ struct HostIterateNestLoopWoTile<RP, Functor, Tag, ValueType,
       }
     } else {
       KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP
-      for (int i = m_rp.m_lower[RP::rank - 1]; i < m_rp.m_upper[RP::rank - 1];
-           ++i) {
+      for (index_type i = m_rp.m_lower[RP::rank - 1];
+           i < m_rp.m_upper[RP::rank - 1]; ++i) {
         if constexpr (std::is_void_v<Tag>) {
           m_func((Idxs&&)idxs..., i);
         } else {
@@ -116,7 +116,7 @@ struct HostIterateNestLoopWoTile<RP, Functor, Tag, ValueType,
   template <typename... Idxs>
   inline void iterate(std::integral_constant<unsigned, RP::rank - 1>,
                       Idxs... idxs) const {
-    m_func_innermost_loop(idxs...);
+    func_innermost_loop(idxs...);
   }
 
   inline void execute() const {
@@ -124,7 +124,7 @@ struct HostIterateNestLoopWoTile<RP, Functor, Tag, ValueType,
   }
 
   const RP m_rp;
-  const Functor m_func;
+  const Functor& m_func;
 };
 
 }  // namespace Impl

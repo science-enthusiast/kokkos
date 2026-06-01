@@ -4,8 +4,6 @@
 #ifndef KOKKOS_SERIAL_PARALLEL_MDRANGE_HPP
 #define KOKKOS_SERIAL_PARALLEL_MDRANGE_HPP
 
-#include <algorithm>
-
 #include <Kokkos_Parallel.hpp>
 #include <KokkosExp_MDRangePolicy.hpp>
 
@@ -33,15 +31,15 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
     // 1. Nested for loop directly over all the elements
     // 2. A single for loop over all the tiles, with a nested for loop
     // inside each tile
-    bool choose_tiles = false;
-    int i_rank        = 0;
-    while ((!choose_tiles) && (i_rank < MDRangePolicy::rank)) {
+    bool tiling = false;
+    int i_rank  = 0;
+    while ((!tiling) && (i_rank < MDRangePolicy::rank)) {
       if (m_rp.m_tile[i_rank] != m_rp.m_upper[i_rank] - m_rp.m_lower[i_rank]) {
-        choose_tiles = true;
+        tiling = true;
       }
       ++i_rank;
     }
-    if (choose_tiles) {
+    if (tiling) {
       const typename Policy::member_type e = m_rp.m_num_tiles;
       const iter_loopwithtile_type iter(m_rp, m_func);
       for (typename Policy::member_type i = 0; i < e; ++i) {
