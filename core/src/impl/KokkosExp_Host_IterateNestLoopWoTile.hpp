@@ -124,7 +124,7 @@ struct HostIterateNestLoopWoTile<RP, Functor, Tag, ValueType,
   }
 
   const RP m_rp;
-  const Functor& m_func;
+  const Functor m_func;
 };
 
 }  // namespace Impl
