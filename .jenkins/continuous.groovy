@@ -23,6 +23,7 @@ pipeline {
                 docker {
                     image 'jfxs/pre-commit:4.4.0-002@sha256:40078d585cc17c502d8c2390b8d57e7ecb028d75dcc821f2f75ac8e9c485bf84'
                     label 'nvidia-docker || docker'
+                    registryCredentialsId 'dockerhub'
                     args '--env NODE_NAME=${env.NODE_NAME} --env STAGE_NAME=${env.STAGE_NAME}'
                 }
             }
@@ -41,6 +42,7 @@ pipeline {
                              filename 'Dockerfile.gcc-16'
                              dir 'scripts/docker'
                              label 'nvidia-docker || docker'
+                             registryCredentialsId 'dockerhub'
                              args '--env NODE_NAME=${env.NODE_NAME} --env STAGE_NAME=${env.STAGE_NAME}'
                          }
                      }
@@ -89,6 +91,7 @@ pipeline {
                              filename 'Dockerfile.gcc-10'
                              dir 'scripts/docker'
                              label 'nvidia-docker || docker'
+                             registryCredentialsId 'dockerhub'
                              args '--env NODE_NAME=${env.NODE_NAME} --env STAGE_NAME=${env.STAGE_NAME}'
                          }
                      }
@@ -134,6 +137,7 @@ pipeline {
                             dir 'scripts/docker'
                             additionalBuildArgs '--build-arg BASE=rocm/dev-ubuntu-22.04:6.2.4-complete@sha256:6604a97283a218fc62ab59e23c54ec34ad634be9201b001435844a59ba1b8eb5'
                             label 'rocm-docker'
+                            registryCredentialsId 'dockerhub'
                             args '-v /tmp/ccache.kokkos:/tmp/ccache --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video --env HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES --env NODE_NAME=${env.NODE_NAME} --env STAGE_NAME=${env.STAGE_NAME}'
                         }
                     }
@@ -287,6 +291,7 @@ pipeline {
                             filename 'Dockerfile.modules'
                             dir 'scripts/docker'
                             label 'nvidia-docker || docker'
+                            registryCredentialsId 'dockerhub'
                             args '--env NODE_NAME=${env.NODE_NAME} --env STAGE_NAME=${env.STAGE_NAME}'
                         }
                     }
@@ -466,7 +471,8 @@ pipeline {
                             filename 'Dockerfile.hipcc'
                             dir 'scripts/docker'
                             additionalBuildArgs '--build-arg BASE=rocm/dev-ubuntu-24.04:6.3.4-complete@sha256:76e99e263ef6ce69ba5d32905623c801fff3f85a6108e931820f6eb1d13eac67'
-                            label 'rocm-docker '
+                            label 'rocm-docker'
+                            registryCredentialsId 'dockerhub'
                             args '-v /tmp/ccache.kokkos:/tmp/ccache --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video --env HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES --env NODE_NAME=${env.NODE_NAME} --env STAGE_NAME=${env.STAGE_NAME}'
                         }
                     }
@@ -516,6 +522,7 @@ pipeline {
                             dir 'scripts/docker'
                             additionalBuildArgs '--build-arg BASE=rocm/dev-ubuntu-24.04:6.2-complete@sha256:c7049ac3ae8516c7b230deec6dc6dd678a0b3f7215d5a7f7fe2f2b71880b62f8 --build-arg ADDITIONAL_PACKAGES="clang-tidy"'
                             label 'rocm-docker'
+                            registryCredentialsId 'dockerhub'
                             args '-v /tmp/ccache.kokkos:/tmp/ccache --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video --env HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES --env NODE_NAME=${env.NODE_NAME} --env STAGE_NAME=${env.STAGE_NAME}'
                         }
                     }
