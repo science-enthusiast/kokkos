@@ -928,7 +928,10 @@ class Random_XorShift64 {
 
   KOKKOS_INLINE_FUNCTION
   int rand(const int& start, const int& end) {
-    return rand(end - start) + start;
+    // Unsigned subtraction avoids signed-overflow UB when end-start > INT_MAX.
+    const uint32_t urange =
+        static_cast<uint32_t>(end) - static_cast<uint32_t>(start);
+    return static_cast<int>(urand(urange) + static_cast<uint32_t>(start));
   }
 
   KOKKOS_INLINE_FUNCTION
@@ -944,7 +947,11 @@ class Random_XorShift64 {
 
   KOKKOS_INLINE_FUNCTION
   int64_t rand64(const int64_t& start, const int64_t& end) {
-    return rand64(end - start) + start;
+    // Unsigned subtraction avoids signed-overflow UB when end-start >
+    // INT64_MAX.
+    const uint64_t urange =
+        static_cast<uint64_t>(end) - static_cast<uint64_t>(start);
+    return static_cast<int64_t>(urand64(urange) + static_cast<uint64_t>(start));
   }
 
   KOKKOS_INLINE_FUNCTION
@@ -1189,7 +1196,10 @@ class Random_XorShift1024 {
 
   KOKKOS_INLINE_FUNCTION
   int rand(const int& start, const int& end) {
-    return rand(end - start) + start;
+    // Unsigned subtraction avoids signed-overflow UB when end-start > INT_MAX.
+    const uint32_t urange =
+        static_cast<uint32_t>(end) - static_cast<uint32_t>(start);
+    return static_cast<int>(urand(urange) + static_cast<uint32_t>(start));
   }
 
   KOKKOS_INLINE_FUNCTION
@@ -1205,7 +1215,11 @@ class Random_XorShift1024 {
 
   KOKKOS_INLINE_FUNCTION
   int64_t rand64(const int64_t& start, const int64_t& end) {
-    return rand64(end - start) + start;
+    // Unsigned subtraction avoids signed-overflow UB when end-start >
+    // INT64_MAX.
+    const uint64_t urange =
+        static_cast<uint64_t>(end) - static_cast<uint64_t>(start);
+    return static_cast<int64_t>(urand64(urange) + static_cast<uint64_t>(start));
   }
 
   KOKKOS_INLINE_FUNCTION
@@ -1474,7 +1488,10 @@ class Random_SFC64 {
 
   KOKKOS_INLINE_FUNCTION
   int rand(const int& start, const int& end) {
-    return rand(end - start) + start;
+    // Unsigned subtraction avoids signed-overflow UB when end-start > INT_MAX.
+    const uint32_t urange =
+        static_cast<uint32_t>(end) - static_cast<uint32_t>(start);
+    return static_cast<int>(urand(urange) + static_cast<uint32_t>(start));
   }
 
   KOKKOS_INLINE_FUNCTION
@@ -1490,7 +1507,11 @@ class Random_SFC64 {
 
   KOKKOS_INLINE_FUNCTION
   int64_t rand64(const int64_t& start, const int64_t& end) {
-    return rand64(end - start) + start;
+    // Unsigned subtraction avoids signed-overflow UB when end-start >
+    // INT64_MAX.
+    const uint64_t urange =
+        static_cast<uint64_t>(end) - static_cast<uint64_t>(start);
+    return static_cast<int64_t>(urand64(urange) + static_cast<uint64_t>(start));
   }
 
   KOKKOS_INLINE_FUNCTION
