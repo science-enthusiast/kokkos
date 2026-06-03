@@ -46,6 +46,7 @@ export {
   using ::Kokkos::Impl::is_view_label;
   using ::Kokkos::Impl::LabelTag;
   using ::Kokkos::Impl::MDSpanViewTraits;
+  using ::Kokkos::Impl::MirrorViewType;
   using ::Kokkos::Impl::ParseViewExtents;
   using ::Kokkos::Impl::rank_dynamic;
   using ::Kokkos::Impl::RankDataType;
