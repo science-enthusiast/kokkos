@@ -200,6 +200,16 @@
 #define KOKKOS_ENABLE_ASM 1
 #endif
 
+#if !defined(KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION)
+#if !defined(_WIN32)
+#define KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION \
+  inline __attribute__((always_inline))
+#define KOKKOS_IMPL_HOST_FORCEINLINE __attribute__((always_inline))
+#else
+#define KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION inline
+#endif
+#endif
+
 #if defined(__MIC__)
 // Compiling for Xeon Phi
 #endif
@@ -220,6 +230,12 @@
 // #define KOKKOS_ENABLE_PRAGMA_LOOPCOUNT 1
 // #define KOKKOS_ENABLE_PRAGMA_VECTOR 1
 
+#if !defined(KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION)
+#define KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION \
+  inline __attribute__((always_inline))
+#define KOKKOS_IMPL_HOST_FORCEINLINE __attribute__((always_inline))
+#endif
+
 #if !defined(KOKKOS_IMPL_ALIGN_PTR)
 #define KOKKOS_IMPL_ALIGN_PTR(size) __attribute__((aligned(size)))
 #endif
@@ -234,6 +250,12 @@
 // #define KOKKOS_ENABLE_PRAGMA_IVDEP 1
 // #define KOKKOS_ENABLE_PRAGMA_LOOPCOUNT 1
 // #define KOKKOS_ENABLE_PRAGMA_VECTOR 1
+
+#if !defined(KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION)
+#define KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION \
+  inline __attribute__((always_inline))
+#define KOKKOS_IMPL_HOST_FORCEINLINE __attribute__((always_inline))
+#endif
 
 #define KOKKOS_RESTRICT __restrict__
 
@@ -252,6 +274,12 @@
 // #define KOKKOS_ENABLE_PRAGMA_IVDEP 1
 // #define KOKKOS_ENABLE_PRAGMA_LOOPCOUNT 1
 // #define KOKKOS_ENABLE_PRAGMA_VECTOR 1
+
+#if !defined(KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION)
+#define KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION \
+  inline __attribute__((always_inline))
+#define KOKKOS_IMPL_HOST_FORCEINLINE __attribute__((always_inline))
+#endif
 
 #if !defined(KOKKOS_IMPL_ALIGN_PTR)
 #define KOKKOS_IMPL_ALIGN_PTR(size) __attribute__((aligned(size)))
@@ -279,24 +307,20 @@
 //----------------------------------------------------------------------------
 // Define function marking macros if compiler specific macros are undefined:
 
-#if !defined(KOKKOS_IMPL_FORCEINLINE_ATTRIBUTE)
-#if defined(_MSC_VER)
-#define KOKKOS_IMPL_FORCEINLINE_ATTRIBUTE [[msvc::forceinline]]
-#elif defined(__GNUC__) || defined(__clang__)
-#define KOKKOS_IMPL_FORCEINLINE_ATTRIBUTE [[gnu::always_inline]]
-#else
-#define KOKKOS_IMPL_FORCEINLINE_ATTRIBUTE
-#endif
+#if !defined(KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION)
+#define KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION inline
 #endif
 
-#if !defined(KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION)
-#define KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION \
-  KOKKOS_IMPL_FORCEINLINE_ATTRIBUTE inline
+#if !defined(KOKKOS_IMPL_HOST_FORCEINLINE)
+#define KOKKOS_IMPL_HOST_FORCEINLINE inline
 #endif
 
 #if !defined(KOKKOS_IMPL_FORCEINLINE_FUNCTION)
-#define KOKKOS_IMPL_FORCEINLINE_FUNCTION \
-  KOKKOS_IMPL_FORCEINLINE_ATTRIBUTE inline
+#define KOKKOS_IMPL_FORCEINLINE_FUNCTION KOKKOS_IMPL_HOST_FORCEINLINE_FUNCTION
+#endif
+
+#if !defined(KOKKOS_IMPL_FORCEINLINE)
+#define KOKKOS_IMPL_FORCEINLINE KOKKOS_IMPL_HOST_FORCEINLINE
 #endif
 
 #if !defined(KOKKOS_IMPL_INLINE_FUNCTION)
