@@ -16,7 +16,6 @@
 #include <Kokkos_Parallel_Reduce.hpp>
 
 #include <Cuda/Kokkos_Cuda.hpp>
-#include <Cuda/Kokkos_Cuda_Instance.hpp>
 
 namespace Kokkos {
 namespace Impl {
@@ -135,23 +134,20 @@ class GraphNodeKernelImpl<Kokkos::Cuda, PolicyType, Functor, PatternTag,
   cudaGraphNode_t* get_cuda_graph_node_ptr() const { return m_graph_node_ptr; }
   cudaGraph_t const* get_cuda_graph_ptr() const { return m_graph_ptr; }
 
-  base_t* allocate_driver_memory_buffer(
-      [[maybe_unused]] const CudaInternal& cuda_instance) const {
+  base_t* allocate_driver_memory_buffer() const {
     KOKKOS_EXPECTS(m_driver_storage == nullptr)
 
     const auto& exec = this->get_policy().space();
-
-    KOKKOS_EXPECTS(cuda_instance.m_cudaDev == exec.cuda_device());
-    KOKKOS_EXPECTS(cuda_instance.m_stream == exec.cuda_stream());
 
     std::string alloc_label =
         label + " - GraphNodeKernel global memory functor storage";
     auto mem =
         Kokkos::CudaSpace::impl_create(exec.cuda_device(), exec.cuda_stream());
+    auto* ptr = static_cast<base_t*>(
+        mem.allocate(exec, alloc_label.c_str(), sizeof(base_t)));
     m_driver_storage = std::unique_ptr<base_t, DriverStorageDeleter>(
-        static_cast<base_t*>(
-            mem.allocate(exec, alloc_label.c_str(), sizeof(base_t))),
-        DriverStorageDeleter{.label = alloc_label, .mem = mem});
+        ptr, DriverStorageDeleter{.label = std::move(alloc_label),
+                                  .mem   = std::move(mem)});
     KOKKOS_ENSURES(m_driver_storage != nullptr)
     return m_driver_storage.get();
   }
@@ -178,33 +174,24 @@ struct get_graph_node_kernel_type<KernelType, Kokkos::ParallelReduceTag>
 // <editor-fold desc="get_cuda_graph_*() helper functions"> {{{1
 
 template <class KernelType>
-auto* allocate_driver_storage_for_kernel(const CudaInternal& cuda_instance,
-                                         KernelType const& kernel) {
+auto const& get_graph_node_kernel(KernelType const& kernel) {
   using graph_node_kernel_t =
       typename get_graph_node_kernel_type<KernelType>::type;
-  auto const& kernel_as_graph_kernel =
-      static_cast<graph_node_kernel_t const&>(kernel);
-  return kernel_as_graph_kernel.allocate_driver_memory_buffer(cuda_instance);
+  return static_cast<graph_node_kernel_t const&>(kernel);
 }
 
 template <class KernelType>
 auto const& get_cuda_graph_from_kernel(KernelType const& kernel) {
-  using graph_node_kernel_t =
-      typename get_graph_node_kernel_type<KernelType>::type;
-  auto const& kernel_as_graph_kernel =
-      static_cast<graph_node_kernel_t const&>(kernel);
-  cudaGraph_t const* graph_ptr = kernel_as_graph_kernel.get_cuda_graph_ptr();
+  cudaGraph_t const* graph_ptr =
+      get_graph_node_kernel(kernel).get_cuda_graph_ptr();
   KOKKOS_EXPECTS(graph_ptr != nullptr);
   return *graph_ptr;
 }
 
 template <class KernelType>
 auto& get_cuda_graph_node_from_kernel(KernelType const& kernel) {
-  using graph_node_kernel_t =
-      typename get_graph_node_kernel_type<KernelType>::type;
-  auto const& kernel_as_graph_kernel =
-      static_cast<graph_node_kernel_t const&>(kernel);
-  auto* graph_node_ptr = kernel_as_graph_kernel.get_cuda_graph_node_ptr();
+  auto* graph_node_ptr =
+      get_graph_node_kernel(kernel).get_cuda_graph_node_ptr();
   KOKKOS_EXPECTS(graph_node_ptr != nullptr);
   return *graph_node_ptr;
 }

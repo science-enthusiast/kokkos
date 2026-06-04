@@ -47,16 +47,29 @@ class TEST_CATEGORY_FIXTURE(multi_gpu) : public ::testing::Test {
   std::vector<Kokkos::HIP> execs;
 };
 
-template <typename ViewType>
-struct ThenFunctor {
+// FIXME Copy/pasted from TestGraph.hpp.
+template <typename ViewType, size_t Count>
+struct SizedFunctor {
+ public:
+  static constexpr size_t count = Count;
+
   ViewType data;
 
+  SizedFunctor(ViewType data_) : data(std::move(data_)) {}
+
   KOKKOS_FUNCTION void operator()() const { ++data(); }
+
+ private:
+  std::byte unused[count] = {};
 };
 
-// Create a graph with a then node on any device but the default one.
-TEST_F(TEST_CATEGORY_FIXTURE(multi_gpu), then_on_non_default_device) {
+// Create a graph with a then node on the first device that is not the default
+// device. It should exercise the global launch mechanism.
+TEST_F(TEST_CATEGORY_FIXTURE(multi_gpu),
+       then_force_global_launch_on_non_default_device) {
   using view_t = Kokkos::View<int, Kokkos::HIPSpace>;
+  using functor_t =
+      SizedFunctor<view_t, Kokkos::Impl::HIPTraits::ConstantMemoryUsage + 1>;
 
   const auto exec_it = std::ranges::find_if(
       this->execs, [default_device_id =
@@ -71,8 +84,7 @@ TEST_F(TEST_CATEGORY_FIXTURE(multi_gpu), then_on_non_default_device) {
   const auto device_handle = Kokkos::Experimental::get_device_handle(*exec_it);
 
   const auto graph = Kokkos::Experimental::create_graph(
-      device_handle,
-      [&](const auto& root) { root.then(ThenFunctor<view_t>{.data = data}); });
+      device_handle, [&](const auto& root) { root.then(functor_t(data)); });
 
   graph.submit(*exec_it);
 

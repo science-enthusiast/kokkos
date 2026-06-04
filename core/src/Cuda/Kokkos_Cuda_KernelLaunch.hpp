@@ -479,7 +479,9 @@ template <class DriverType, unsigned int MaxThreadsPerBlock,
 struct CudaParallelLaunchKernelFunc<
     DriverType, Kokkos::LaunchBounds<MaxThreadsPerBlock, MinBlocksPerSM>,
     CudaLaunchMechanism::GlobalMemory> {
-  static void* get_kernel_func() {
+  static std::decay_t<decltype(cuda_parallel_launch_global_memory<
+                               DriverType, MaxThreadsPerBlock, MinBlocksPerSM>)>
+  get_kernel_func() {
     return cuda_parallel_launch_global_memory<DriverType, MaxThreadsPerBlock,
                                               MinBlocksPerSM>;
   }
@@ -549,7 +551,7 @@ struct CudaParallelLaunchKernelInvoker<DriverType, LaunchBounds,
           cuda_instance, base_t::get_kernel_func(), shmem);
 
       auto* driver_ptr =
-          Impl::allocate_driver_storage_for_kernel(*cuda_instance, driver);
+          get_graph_node_kernel(driver).allocate_driver_memory_buffer();
 
       // Unlike in the non-graph case, we can get away with doing an async copy
       // here because the `DriverType` instance is held in the GraphNodeImpl
