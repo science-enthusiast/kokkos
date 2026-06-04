@@ -921,6 +921,17 @@ inline std::enable_if_t<
 contiguous_fill_or_memset(
     const ExecutionSpace& exec_space, const View<DT, DP...>& dst,
     typename ViewTraits<DT, DP...>::const_value_type& value) {
+  // We allow user on an AMD APU with unified memory to `malloc` and wrap that
+  // in an unmanaged SharedSpace view. In ROCm <= 7.2.0 (and possibly later),
+  // hipMemsetAsync on a host-allocated pointer returns an hipErrorInvalidValue
+  // error, but accessing the data via a GPU kernel works as long as xnack is
+  // present and enabled (HSA_XNACK=1)
+#if defined(KOKKOS_IMPL_HIP_UNIFIED_MEMORY)
+  if constexpr (std::is_same_v<ExecutionSpace, Kokkos::HIP>) {
+    contiguous_fill(exec_space, dst, value);
+    return;
+  }
+#endif
   if (has_all_zero_bits(value))
     ZeroMemset(exec_space, dst.data(),
                dst.size() * sizeof(typename ViewTraits<DT, DP...>::value_type));
@@ -3394,6 +3405,12 @@ create_mirror_view_and_copy(
         std::is_void_v<typename ViewTraits<T, P...>::specialize>>* = nullptr) {
   return create_mirror_view_and_copy(
       Kokkos::view_alloc(typename Space::memory_space{}, name), src);
+}
+
+template <class T, class... P>
+auto create_mirror_view_and_copy(const Kokkos::View<T, P...>& src) {
+  return create_mirror_view_and_copy(
+      typename Kokkos::View<T, P...>::host_mirror_type::memory_space{}, src);
 }
 
 } /* namespace Kokkos */

@@ -940,12 +940,17 @@ class View : public Impl::BasicViewFromTraits<DataType, Properties...>::type {
             Impl::mapping_from_array_layout<typename mdspan_type::mapping_type>(
                 arg_layout)) {}
 
+  // Need both rvalue and lvalue versions of ctors which take
+  // things that are convertible to pointer_type.
+  // Can't take P by value since that would prevent value semantic
+  // types that allow implicit extraction of their ptr.
   template <class P, class... Args>
     requires(!std::is_null_pointer_v<P> &&
              std::is_convertible_v<P, pointer_type> &&
-             std::is_constructible_v<typename base_t::data_handle_type, P> &&
-             sizeof...(Args) != rank() + 1)
-  KOKKOS_FUNCTION explicit View(P ptr_, Args... args)
+             std::is_constructible_v<typename base_t::data_handle_type,
+                                     pointer_type> &&
+             ((sizeof...(Args)) != rank() + 1))
+  KOKKOS_FUNCTION explicit View(P&& ptr_, Args... args)
       : View(Kokkos::view_wrap(static_cast<pointer_type>(ptr_)), args...) {}
 
   // Special function to be preferred over the above for string literals
@@ -1071,16 +1076,15 @@ class View : public Impl::BasicViewFromTraits<DataType, Properties...>::type {
 #endif
 
   template <class... Args>
-  View(std::enable_if_t<
+    requires(
 #ifndef KOKKOS_COMPILER_MSVC
-           ((sizeof...(Args)) != rank() + 1) &&
-               (std::is_constructible_v<size_t, Args> && ... && true),
+        ((sizeof...(Args)) != rank() + 1) &&
+        (std::is_constructible_v<size_t, Args> && ... && true)
 #else
-           msvc_workaround_ctor_condition_1<Args...>(),
+        msvc_workaround_ctor_condition_1<Args...>()
 #endif
-           const std::string&>
-           arg_label,
-       const Args... args)
+            )
+  View(const std::string& arg_label, const Args... args)
 #ifdef KOKKOS_COMPILER_INTEL_LLVM  // FIXME_INTEL
       // Eventually we want to get rid of the array_layout thing entirely.
       // For now this avoids a bug in the intel compiler 2024.2, and 2025 tested
@@ -1126,16 +1130,15 @@ class View : public Impl::BasicViewFromTraits<DataType, Properties...>::type {
 
  public:
   template <class... Args>
-  View(std::enable_if_t<
+    requires(
 #ifndef KOKKOS_COMPILER_MSVC
-           ((sizeof...(Args)) == rank() + 1) &&
-               (std::is_constructible_v<size_t, Args> && ... && true),
+        ((sizeof...(Args)) == rank() + 1) &&
+        (std::is_constructible_v<size_t, Args> && ... && true)
 #else
-           msvc_workaround_ctor_condition_2<Args...>(),
+        msvc_workaround_ctor_condition_2<Args...>()
 #endif
-           const std::string&>
-           arg_label,
-       const Args... args)
+            )
+  View(const std::string& arg_label, const Args... args)
       : View(
             view_alloc_from_label_and_integrals(
                 std::bool_constant<traits::impl_is_customized>(), arg_label,
@@ -1152,17 +1155,15 @@ class View : public Impl::BasicViewFromTraits<DataType, Properties...>::type {
   }
 
   template <class... Args>
-  KOKKOS_FUNCTION View(
-      std::enable_if_t<
+    requires(
 #ifndef KOKKOS_COMPILER_MSVC
-          ((sizeof...(Args)) == rank() + 1) &&
-              (std::is_constructible_v<size_t, Args> && ... && true),
+        ((sizeof...(Args)) == rank() + 1) &&
+        (std::is_constructible_v<size_t, Args> && ... && true)
 #else
-           msvc_workaround_ctor_condition_2<Args...>(),
+           msvc_workaround_ctor_condition_2<Args...>()
 #endif
-          const pointer_type&>
-          arg_ptr,
-      const Args... args)
+            )
+  KOKKOS_FUNCTION View(const pointer_type& arg_ptr, const Args... args)
       : View(
             Kokkos::view_wrap(arg_ptr,
                               Kokkos::Impl::AccessorArg_t{

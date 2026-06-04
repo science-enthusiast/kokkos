@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: checkout_kokkos
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: kokkos/kokkos
           path: kokkos
@@ -89,7 +89,7 @@ jobs:
 
     steps:
       - name: checkout_kokkos
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: kokkos/kokkos
           path: kokkos
@@ -146,7 +146,7 @@ jobs:
 
     steps:
       - name: checkout_kokkos
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: kokkos/kokkos
           path: kokkos
@@ -208,7 +208,7 @@ jobs:
 
     steps:
       - name: checkout_kokkos
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: kokkos/kokkos
           path: kokkos
@@ -268,7 +268,7 @@ jobs:
 
     steps:
       - name: checkout_kokkos
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: kokkos/kokkos
           path: kokkos
@@ -316,6 +316,41 @@ jobs:
         working-directory: kokkos/build_examples
         run: ONEAPI_DEVICE_SELECTOR=level_zero:gpu ctest --output-on-failure
 
+  LLVM_14_0_6:
+    name: SNL_SERIAL_LLVM_14_0_6
+    runs-on: [llvm-14.0.6_x86-64-latest-latest]
+    continue-on-error: true
+
+    steps:
+      - name: checkout_kokkos
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          repository: kokkos/kokkos
+          path: kokkos
+
+      - name: configure_kokkos
+        run: |
+          cd kokkos
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=clang++-14 \
+            -DCMAKE_CXX_FLAGS="-stdlib=libc++ -Werror" \
+            -DKokkos_ARCH_NATIVE=ON \
+            -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
+            -DKokkos_ENABLE_DEPRECATED_CODE_5=OFF \
+            -DKokkos_ENABLE_TESTS=ON \
+            -DKokkos_ENABLE_EXAMPLES=ON
+
+      - name: build_and_install_kokkos
+        working-directory: kokkos
+        run: |
+          cmake --build build --parallel $(nproc)
+          cmake --install build --prefix install
+
+      - name: test_kokkos
+        working-directory: kokkos/build
+        run: ctest --output-on-failure --timeout 3600
+
 # FIXME_HPX: workaround for standard library calling OOM handler for failing nothrow new, remove once fixed
   HPX_GCC_15_1_1:
     name: SNL_HPX_GCC_15_1_1
@@ -324,7 +359,7 @@ jobs:
 
     steps:
       - name: checkout_kokkos
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: kokkos/kokkos
           path: kokkos
@@ -388,7 +423,7 @@ jobs:
           nextcli system terminate
 
       - name: checkout_kokkos
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: kokkos/kokkos
           path: kokkos
@@ -410,16 +445,29 @@ jobs:
       - name: build_kokkos
         working-directory: kokkos
         run: |
-          cmake --build build --parallel $(nproc) \
-            --target Kokkos_IncrementalTest_NEXTSILICON
+          cmake --build build --parallel $(nproc)
 
       # the SNL runners map a named volume to $HOME/optimizer-cache for a persistent
       # optimizer cache across runs. If this doesn't get mapped, nextsystemd will
       # create this directory and use it as a cache, but the contents will be lost
       # when the container exits
+      - name: test_kokkos_telemetryless
+        # FIXME_NEXTSILICON: re-enable when telemetry-less mode is working
+        if: false
+        working-directory: kokkos/build
+        env:
+          # FIXME_NEXTSILICON: death tests require fork, not supported by runtime
+          GTEST_FILTER: -*DeathTest*
+          KOKKOS_NEXTSILICON_TEST_TELEMETRYLESS: 1
+          XDG_CACHE_HOME: $HOME/optimizer-cache
+        run: |
+          ctest -V --timeout 3600
+
       - name: test_kokkos
         working-directory: kokkos/build
         env:
+          # FIXME_NEXTSILICON: death tests require fork, not supported by runtime
+          GTEST_FILTER: -*DeathTest*
           XDG_CACHE_HOME: $HOME/optimizer-cache
         run: |
-          ctest -V --timeout 3600 -R Kokkos_IncrementalTest_NEXTSILICON
+          ctest -V --timeout 3600
