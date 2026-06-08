@@ -18,6 +18,10 @@
 #if defined(__clang__)
 #define KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP \
   _Pragma("clang loop vectorize(assume_safety)")
+#elif defined(KOKKOS_COMPILER_GNU) && (KOKKOS_COMPILER_GNU >= 1150)
+#define KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP _Pragma("GCC ivdep")
+#elif defined(_MSC_VER)
+#define KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP
 #else
 #define KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP _Pragma("ivdep")
 #endif
@@ -25,8 +29,8 @@
 #define KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP
 #endif
 
-// FIXME: _Pragma("GCC ivdep") is preferable for GCC.
-// However, for GCC < 11.5, spurious "warning: ignoring loop annotation"
+// Note: _Pragma("GCC ivdep") is preferable for GCC.
+// However for GCC < 11.5, spurious "warning: ignoring loop annotation"
 // appears. Refer: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=114691
 
 namespace Kokkos {
