@@ -210,6 +210,24 @@ bool need_grid_stride_loop(const Kokkos::Array<array_type, 3>& max_grid_size,
   }
   return need_grid_stride;
 }
+
+// Adjust grid.z according to static batch size for CUDA and HIP
+template <typename index_type, unsigned int StaticBatchSize = 1>
+void scale_gridz_by_batch_size(dim3& grid, const dim3& block,
+                               const index_type max_grid_size_z) {
+  index_type grid_dim, block_dim, nwork;
+
+  grid_dim  = grid.z;
+  block_dim = block.z;
+
+  nwork    = grid_dim * block_dim;
+  nwork    = (nwork + StaticBatchSize - 1) / StaticBatchSize;
+  grid_dim = std::min(index_type((nwork + block_dim - 1) / block_dim),
+                      max_grid_size_z);
+
+  grid.z = grid_dim;
+}
+
 #endif
 
 // ------------------------------------------------------------------------- //
@@ -225,8 +243,8 @@ bool need_grid_stride_loop(const Kokkos::Array<array_type, 3>& max_grid_size,
 // 3. Bounds check against m_upper to filter out-of-bounds iterations.
 //
 template <int Rank, typename array_index_type, typename index_type,
-          Kokkos::Iterate IterateDir, bool grid_stride, typename StaticBatchSize, typename Functor,
-          typename Tag>
+          Kokkos::Iterate IterateDir, bool grid_stride,
+          typename StaticBatchSize, typename Functor, typename Tag>
 struct DeviceIterate {
   using array_type = Kokkos::Array<array_index_type, Rank>;
 
@@ -461,19 +479,24 @@ struct DeviceIterate {
 
     [[maybe_unused]] constexpr auto batch_size = StaticBatchSize::batch_size;
 
-// Static batch size currently implemented for CUDA backend only
-#ifdef KOKKOS_ENABLE_CUDA
+// Static batch size currently implemented for CUDA and HIP backends only
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
     // unroll only the outer-most loop of the thread grid
     // this loop is encountered when rank index == Rank - 1
     // FIXME: batch_size == 1 can be treated without nested loops but
     // Range Policy faced issue with cuda-12.6.2 on Hopper90 GPU
     // (compiler hangs) when implementing that
-    if (rankIdx == Rank - 1) {
+    if constexpr (rankIdx == Rank - 1) {
       for (index_type istride = start; istride < end;
            istride =
                istride < static_cast<index_type>(end - stride * batch_size)
                    ? istride + stride * batch_size
                    : end) {
+// Even though "#pragma unroll" directive is possible for AMD GPUs,
+// it leads to considerable warnings of the form "loop not unrolled:
+// the optimizer was unable to perform the requested transformation;
+// the transformation might be disabled or specified as part of an
+// unsupported transformation ordering"
 #if defined(KOKKOS_COMPILER_NVCC)
 #pragma unroll
 #endif
@@ -488,12 +511,11 @@ struct DeviceIterate {
         }
       }
     } else {
-#else
-    for (index_type idx = start; idx < end; idx += stride) {
-      iterate_rank_idx<R, rankIdx>(idx, idxs...);
-    }
 #endif
-#ifdef KOKKOS_ENABLE_CUDA
+      for (index_type idx = start; idx < end; idx += stride) {
+        iterate_rank_idx<R, rankIdx>(idx, idxs...);
+      }
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
     }
 #endif
   }

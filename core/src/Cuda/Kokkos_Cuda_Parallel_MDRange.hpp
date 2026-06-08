@@ -68,6 +68,7 @@ class ParallelForMDRange<FunctorType, UseStride,
   using DeviceIteratePattern =
       Kokkos::Impl::DeviceIterate<Policy::rank, array_index_type, index_type,
                                   Policy::inner_direction, UseStride,
+                                  typename Policy::static_batch_size,
                                   FunctorType, typename Policy::work_tag>;
 
   const FunctorType m_functor;
@@ -127,9 +128,9 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>, Kokkos::Cuda> {
 
   inline __device__ void operator()() const {
     Kokkos::Impl::DeviceIterate<Policy::rank, array_index_type, index_type,
-                                Policy::inner_direction, true, StaticBatchSize, FunctorType,
-                                typename Policy::work_tag>(m_lower, m_upper,
-                                                           m_extent, m_functor)
+                                Policy::inner_direction, true, StaticBatchSize,
+                                FunctorType, typename Policy::work_tag>(
+        m_lower, m_upper, m_extent, m_functor)
         .exec_range();
   }
 
@@ -169,23 +170,6 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>, Kokkos::Cuda> {
                     grid.z <= static_cast<unsigned int>(m_max_grid_size[2]));
     };
 
-    const auto scale_gridx_size = [&](dim3& grid, const dim3& block) {
-      constexpr auto batch_size = StaticBatchSize::batch_size;
-
-      typename Policy::index_type grid_dim, block_dim, nwork;
-
-      grid_dim  = grid.x;
-      block_dim = block.x;
-
-      nwork    = grid_dim * block_dim;
-      nwork    = (nwork + batch_size - 1) / batch_size;
-      grid_dim = std::min(
-          typename Policy::index_type((nwork + block_dim - 1) / block_dim),
-          typename Policy::index_type(m_max_grid_size[0]));
-
-      grid.x = grid_dim;
-    };
-
     auto [grid, block] =
         Kokkos::Impl::compute_device_launch_params(m_policy, m_max_grid_size);
 
@@ -204,8 +188,9 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>, Kokkos::Cuda> {
     } else {
       // launch the kernel with or without grid stride
       if (need_grid_stride) {
-        // adjust size of grid.x according to static batch size
-        scale_gridx_size(grid, block);
+        // adjust grid.z according to static batch size
+        scale_gridz_by_batch_size<index_type, StaticBatchSize::batch_size>(
+            grid, block, m_max_grid_size[2]);
 
         using ClosureType = ParallelForMDRange<FunctorType, true, Policy>;
         ClosureType closure(m_functor, m_policy, m_lower, m_upper, m_extent);
