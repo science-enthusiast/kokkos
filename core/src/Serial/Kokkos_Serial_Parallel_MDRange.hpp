@@ -31,14 +31,22 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
     // 1. Nested for loop directly over all the elements
     // 2. A single for loop over all the tiles, with a nested for loop
     // inside each tile
+
+    // Enable nested loops without tiles for either condition:
+    // * All tile extents are set to 1
+    // * Tile extents equal to extents of the iteration space
     bool tiling = false;
-    int i_rank  = 0;
-    while ((!tiling) && (i_rank < MDRangePolicy::rank)) {
-      if (m_rp.m_tile[i_rank] != m_rp.m_upper[i_rank] - m_rp.m_lower[i_rank]) {
-        tiling = true;
+    if (!std::all_of(m_rp.m_tile.begin(), m_rp.m_tile.end(),
+                     [](auto x) { return x == 1; })) {
+      for (int i_rank = 0; i_rank < MDRangePolicy::rank; ++i_rank) {
+        if (m_rp.m_tile[i_rank] !=
+            m_rp.m_upper[i_rank] - m_rp.m_lower[i_rank]) {
+          tiling = true;
+          break;
+        }
       }
-      ++i_rank;
     }
+
     if (tiling) {
       const typename Policy::member_type e = m_rp.m_num_tiles;
       const iter_loopwithtile_type iter(m_rp, m_func);

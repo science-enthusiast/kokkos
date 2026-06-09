@@ -29,24 +29,19 @@
 #define KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP
 #endif
 
-// Note: _Pragma("GCC ivdep") is preferable for GCC.
-// However for GCC < 11.5, spurious "warning: ignoring loop annotation"
-// appears. Refer: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=114691
-
 namespace Kokkos {
 namespace Impl {
 
 // MDRangePolicy iteration via a nested loop without tiles
 
-// Primary template for iterating via a nested loop without tiles
-template <typename RP, typename Functor, typename Tag = void,
-          typename ValueType = void, typename Enable = void>
-struct HostIterateNestLoopWoTile;
-
-// Currently, specialization for ParallelFor only
-template <typename RP, typename Functor, typename Tag, typename ValueType>
-struct HostIterateNestLoopWoTile<RP, Functor, Tag, ValueType,
-                                 std::enable_if_t<std::is_void_v<ValueType>>> {
+// Currently, only handles ParallelFor.
+// For ParallelReduce ReferenceType will be either a scalar or an array
+// the requires clause `requires std::void_v<ReferenceType>` to be removed
+// when extending for ParallelReduce.
+template <typename RP, typename Functor, typename Tag,
+          typename ReferenceType = void>
+  requires std::is_void_v<ReferenceType>
+struct HostIterateNestLoopWoTile {
   using index_type = RP::index_type;
 
   inline HostIterateNestLoopWoTile(RP const& rp, Functor const& func)
