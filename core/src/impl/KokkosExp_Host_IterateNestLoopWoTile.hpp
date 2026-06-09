@@ -36,13 +36,13 @@ namespace Impl {
 
 // Currently, only handles ParallelFor.
 // For ParallelReduce ReferenceType will be either a scalar or an array
-// the requires clause `requires std::void_v<ReferenceType>` to be removed
+// the requires clause `requires std::is_void_v<ReferenceType>` to be removed
 // when extending for ParallelReduce.
 template <typename RP, typename Functor, typename Tag,
           typename ReferenceType = void>
   requires std::is_void_v<ReferenceType>
 struct HostIterateNestLoopWoTile {
-  using index_type = RP::index_type;
+  using index_type = typename RP::index_type;
 
   inline HostIterateNestLoopWoTile(RP const& rp, Functor const& func)
       : m_rp(rp), m_func(func) {}

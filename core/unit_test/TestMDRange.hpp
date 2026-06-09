@@ -1068,7 +1068,7 @@ struct TestMDRange_2D {
       using point_type = typename range_type::point_type;
 
       range_type range(point_type{{0, 0}}, point_type{{N0, N1}},
-                       tile_type{{N0, N1}});
+                       tile_type{{1, 1}});
       TestMDRange_2D functor(N0, N1);
 
       parallel_for(range, functor);
@@ -3096,7 +3096,7 @@ struct TestMDRange_5D {
 
       range_type range(point_type{{0, 0, 0, 0, 0}},
                        point_type{{N0, N1, N2, N3, N4}},
-                       tile_type{{N0, N1, N2, N3, N4}});
+                       tile_type{{1, 1, 1, 1, 1}});
       TestMDRange_5D functor(N0, N1, N2, N3, N4);
 
       parallel_for(range, functor);
