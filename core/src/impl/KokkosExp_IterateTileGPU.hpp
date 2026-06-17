@@ -483,9 +483,14 @@ struct DeviceIterate {
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
     // unroll only the outer-most loop of the thread grid
     // this loop is encountered when rank index == Rank - 1
-    // FIXME: batch_size == 1 can be treated without nested loops but
+    // FIXME: batch_size == 1 can be treated without nested loops.
     // Range Policy faced issue with cuda-12.6.2 on Hopper90 GPU
     // (compiler hangs) when implementing that
+    // FIXME: Switching between code paths based on the check
+    // (rankIdx == Rank - 1) could lead to same compiler issues.
+    // Unlike ignoring batch_size == 1, this condition needs to be
+    // dealt with. We cannot unroll all ranks.
+    // Other compile-time approaches could be tried.
     if constexpr (rankIdx == Rank - 1) {
       for (index_type istride = start; istride < end;
            istride =
