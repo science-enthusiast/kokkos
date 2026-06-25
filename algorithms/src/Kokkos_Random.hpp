@@ -690,8 +690,7 @@ struct Random_SFC64_UseCArrayState<Kokkos::Experimental::OpenACC>
 
 template <class DeviceType = Kokkos::DefaultExecutionSpace>
 struct Random_SFC64_Pool_Init {
-  using device_type     = typename DeviceType::device_type;
-  using execution_space = typename device_type::execution_space;
+  using device_type = typename DeviceType::device_type;
 
   using locks_type      = View<int**, device_type>;
   using state_data_type = View<uint64_t* [4], device_type>;
@@ -702,18 +701,23 @@ struct Random_SFC64_Pool_Init {
   uint64_t seed_high_;
 
   KOKKOS_INLINE_FUNCTION
-  void operator()(const int i) const {
+  void operator()(const uint64_t i) const {
     state_(i, 0) = seed_low_;
     state_(i, 1) = seed_high_ + i;
     state_(i, 2) = ~state_(i, 0) ^ state_(i, 1);
     state_(i, 3) = 1;
 
-    Random_SFC64<execution_space> gen(state_, i);
+    Random_SFC64<DeviceType> gen(state_, i);
     // Mix the state to 'escape zeroland' if a bad seed is provided. The number
     // of iterations is arbitrary. PractRand historically used 18
     // (conservative), though 12 is now recommended. Kept 18 as performance
     // impact is negligible.
     for (int j = 0; j < 18; j++) gen.urand64();
+
+    state_(i, 0) = gen.state_[0];
+    state_(i, 1) = gen.state_[1];
+    state_(i, 2) = gen.state_[2];
+    state_(i, 3) = gen.state_[3];
 
     Kokkos::memory_fence();  // Ensure that the state has been written
     Kokkos::atomic_store(&locks_(i, 0), 0);  // unlock the state
@@ -1398,7 +1402,9 @@ class Random_SFC64 {
   Impl::Random_SFC64_State<
       Impl::Random_SFC64_UseCArrayState<execution_space>::value>
       state_;
+
   friend class Random_SFC64_Pool<DeviceType>;
+  friend struct Impl::Random_SFC64_Pool_Init<DeviceType>;
 
  public:
   using pool_type   = Random_SFC64_Pool<DeviceType>;
@@ -1654,7 +1660,8 @@ class Random_SFC64_Pool {
                                                            seed_low, seed_high};
     Kokkos::parallel_for(
         "Kokkos::Random_SFC64_Pool::Initialization",
-        Kokkos::RangePolicy<execution_space>(exec, 0, num_states_),
+        Kokkos::RangePolicy<execution_space, IndexType<uint64_t>>(exec, 0,
+                                                                  num_states_),
         parallel_init);
   }
 
