@@ -1161,6 +1161,26 @@ using Subdynrankview =
 template <class... DRVArgs, class SubArg0 = int, class SubArg1 = int,
           class SubArg2 = int, class SubArg3 = int, class SubArg4 = int,
           class SubArg5 = int, class SubArg6 = int>
+auto subdynrankview(const DynRankView<DRVArgs...>& drv,
+                    SubArg0 arg0 = SubArg0{}, SubArg1 arg1 = SubArg1{},
+                    SubArg2 arg2 = SubArg2{}, SubArg3 arg3 = SubArg3{},
+                    SubArg4 arg4 = SubArg4{}, SubArg5 arg5 = SubArg5{},
+                    SubArg6 arg6 = SubArg6{}) {
+  return subdynrankview(drv, Impl::convert_to_kokkos_pair_if_std_pair(arg0),
+                        Impl::convert_to_kokkos_pair_if_std_pair(arg1),
+                        Impl::convert_to_kokkos_pair_if_std_pair(arg2),
+                        Impl::convert_to_kokkos_pair_if_std_pair(arg3),
+                        Impl::convert_to_kokkos_pair_if_std_pair(arg4),
+                        Impl::convert_to_kokkos_pair_if_std_pair(arg5),
+                        Impl::convert_to_kokkos_pair_if_std_pair(arg6));
+}
+
+// std::pair isn't device-compatible
+template <class... DRVArgs, class SubArg0 = int, class SubArg1 = int,
+          class SubArg2 = int, class SubArg3 = int, class SubArg4 = int,
+          class SubArg5 = int, class SubArg6 = int>
+  requires(!Impl::ContainsStdPair<SubArg0, SubArg1, SubArg2, SubArg3, SubArg4,
+                                  SubArg5, SubArg6>)
 KOKKOS_INLINE_FUNCTION auto subdynrankview(
     const DynRankView<DRVArgs...>& drv, SubArg0 arg0 = SubArg0{},
     SubArg1 arg1 = SubArg1{}, SubArg2 arg2 = SubArg2{},

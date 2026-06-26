@@ -19,6 +19,7 @@ static_assert(false,
 #else
 
 #include <View/Kokkos_ViewTraits.hpp>
+#include <Kokkos_Pair.hpp>
 #include <Kokkos_MemoryTraits.hpp>
 
 // FIXME: This will eventually be removed
@@ -970,6 +971,14 @@ class View
   // may assign unmanaged from managed.
 
   template <class RT, class... RP, class Arg0, class... Args>
+  View(const View<RT, RP...>& src_view, const Arg0 arg0, Args... args)
+      : base_t(Impl::subview_ctor_tag, src_view,
+               Impl::convert_to_kokkos_pair_if_std_pair(arg0),
+               Impl::convert_to_kokkos_pair_if_std_pair(args)...) {}
+
+  // std::pair isn't device-compatible
+  template <class RT, class... RP, class Arg0, class... Args>
+    requires(!Impl::ContainsStdPair<Arg0, Args...>)
   KOKKOS_INLINE_FUNCTION View(const View<RT, RP...>& src_view, const Arg0 arg0,
                               Args... args)
       : base_t(Impl::subview_ctor_tag, src_view, arg0, args...) {}
@@ -1630,6 +1639,13 @@ struct ApplyToViewOfStaticRank {
 //----------------------------------------------------------------------------
 
 template <class D, class... P, class... Args>
+auto subview(const View<D, P...>& src, Args... args) {
+  return subview(src, Impl::convert_to_kokkos_pair_if_std_pair(args)...);
+}
+
+// std::pair isn't device-compatible
+template <class D, class... P, class... Args>
+  requires(!Impl::ContainsStdPair<Args...>)
 KOKKOS_INLINE_FUNCTION auto subview(const View<D, P...>& src, Args... args) {
   static_assert(View<D, P...>::rank == sizeof...(Args),
                 "subview requires one argument for each source View rank");
