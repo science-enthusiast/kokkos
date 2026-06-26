@@ -9,15 +9,20 @@
 #include <cstdint>
 #include <cstddef>
 #include <iosfwd>
+#include <mutex>
 #include <string>
 #include <memory>
 
 #include <NextSilicon/Kokkos_NextSilicon_HeapBuffer.hpp>
+#include <NextSilicon/Kokkos_NextSilicon_PageAlignedData.hpp>
 
 namespace Kokkos::Experimental::Impl {
 
 class NextSiliconInternal {
   Impl::NextSiliconHeapBuffer functorBuffer_;
+  ::Kokkos::Impl::PageAlignedData<std::recursive_mutex,
+                                  ::Kokkos::Impl::PageLocation::Device>
+      device_mutex_;
 
   NextSiliconInternal(const NextSiliconInternal&)            = delete;
   NextSiliconInternal& operator=(const NextSiliconInternal&) = delete;
@@ -48,6 +53,8 @@ class NextSiliconInternal {
   void fence(std::string const& name) const;
 
   uint32_t instance_id() const noexcept;
+
+  [[nodiscard]] std::lock_guard<std::mutex> lock_device();
 };
 
 }  // namespace Kokkos::Experimental::Impl
