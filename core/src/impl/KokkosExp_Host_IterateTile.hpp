@@ -883,28 +883,36 @@ struct HostIterateTile<RP, Functor, Tag, ValueType,
     enum { value = (int)Rank };
   };
 
-  // functor encapsulating the inner-most loop
+  // functors encapsulating the inner-most loop
+  //
+  // Inner-most loop depends on the iteration order:
+  //  Iterate::Left: Left-most index.
+  //  Iterate::Right: Right-most index.
   template <typename TileOffset, typename TileDims, typename... Idxs>
-  void func_innermost_loop(TileOffset const& offset, TileDims const& tiledims,
-                           Idxs&&... idxs) const {
-    if constexpr (RP::inner_direction == Iterate::Left) {
-      KOKKOS_ENABLE_IVDEP_MDRANGE
-      for (index_type i = offset[0]; i < offset[0] + tiledims[0]; ++i) {
-        if constexpr (std::is_void_v<Tag>) {
-          m_func(i, (Idxs&&)idxs...);
-        } else {
-          m_func(Tag{}, i, (Idxs&&)idxs...);
-        }
+  KOKKOS_FORCEINLINE_FUNCTION void func_innermost_iterate_left(
+      TileOffset const& offset, TileDims const& tiledims,
+      Idxs&&... idxs) const {
+    KOKKOS_ENABLE_IVDEP_MDRANGE
+    for (index_type i = offset[0]; i < offset[0] + tiledims[0]; ++i) {
+      if constexpr (std::is_void_v<Tag>) {
+        m_func(i, (Idxs&&)idxs...);
+      } else {
+        m_func(Tag{}, i, (Idxs&&)idxs...);
       }
-    } else {
-      KOKKOS_ENABLE_IVDEP_MDRANGE
-      for (index_type i = offset[RP::rank - 1];
-           i < offset[RP::rank - 1] + tiledims[RP::rank - 1]; ++i) {
-        if constexpr (std::is_void_v<Tag>) {
-          m_func((Idxs&&)idxs..., i);
-        } else {
-          m_func(Tag{}, (Idxs&&)idxs..., i);
-        }
+    }
+  }
+
+  template <typename TileOffset, typename TileDims, typename... Idxs>
+  KOKKOS_FORCEINLINE_FUNCTION void func_innermost_iterate_right(
+      TileOffset const& offset, TileDims const& tiledims,
+      Idxs&&... idxs) const {
+    KOKKOS_ENABLE_IVDEP_MDRANGE
+    for (index_type i = offset[RP::rank - 1];
+         i < offset[RP::rank - 1] + tiledims[RP::rank - 1]; ++i) {
+      if constexpr (std::is_void_v<Tag>) {
+        m_func((Idxs&&)idxs..., i);
+      } else {
+        m_func(Tag{}, (Idxs&&)idxs..., i);
       }
     }
   }
@@ -928,36 +936,50 @@ struct HostIterateTile<RP, Functor, Tag, ValueType,
   //    functor(i_{outer_most}, ..., i_{inner_most})
   //
   //  \tparam IterLevel iteration level of the nested loops
+  //  \tparam TileOffset Offset to the start of the tile
+  //  \tparam TileDims Tile dimensions
   //  \tparam Idxs... index pack
   template <unsigned IterLevel, typename TileOffset, typename TileDims,
             typename... Idxs>
-  inline void iterate(std::integral_constant<unsigned, IterLevel>,
-                      TileOffset const& offset, TileDims const& tiledims,
-                      Idxs... idxs) const {
-    const index_type start = (RP::inner_direction == Iterate::Left)
-                                 ? offset[RP::rank - 1 - IterLevel]
-                                 : offset[IterLevel];
-    const index_type end   = (RP::inner_direction == Iterate::Left)
-                                 ? offset[RP::rank - 1 - IterLevel] +
-                                     tiledims[RP::rank - 1 - IterLevel]
-                                 : offset[IterLevel] + tiledims[IterLevel];
+  KOKKOS_FORCEINLINE_FUNCTION void iterate_left(
+      std::integral_constant<unsigned, IterLevel>, TileOffset const& offset,
+      TileDims const& tiledims, Idxs... idxs) const {
+    const index_type start = offset[RP::rank - 1 - IterLevel];
+    const index_type end =
+        offset[RP::rank - 1 - IterLevel] + tiledims[RP::rank - 1 - IterLevel];
 
     for (index_type idx = start; idx < end; ++idx) {
-      if constexpr (RP::inner_direction == Iterate::Left) {
-        iterate(std::integral_constant<unsigned, IterLevel + 1>(), offset,
-                tiledims, idx, idxs...);
-      } else {
-        iterate(std::integral_constant<unsigned, IterLevel + 1>(), offset,
-                tiledims, idxs..., idx);
-      }
+      iterate_left(std::integral_constant<unsigned, IterLevel + 1>(), offset,
+                   tiledims, idx, idxs...);
+    }
+  }
+
+  template <unsigned IterLevel, typename TileOffset, typename TileDims,
+            typename... Idxs>
+  KOKKOS_FORCEINLINE_FUNCTION void iterate_right(
+      std::integral_constant<unsigned, IterLevel>, TileOffset const& offset,
+      TileDims const& tiledims, Idxs... idxs) const {
+    const index_type start = offset[IterLevel];
+    const index_type end   = offset[IterLevel] + tiledims[IterLevel];
+
+    for (index_type idx = start; idx < end; ++idx) {
+      iterate_right(std::integral_constant<unsigned, IterLevel + 1>(), offset,
+                    tiledims, idxs..., idx);
     }
   }
 
   template <typename TileOffset, typename TileDims, typename... Idxs>
-  inline void iterate(std::integral_constant<unsigned, RP::rank - 1>,
-                      TileOffset const& offset, TileDims const& tiledims,
-                      Idxs... idxs) const {
-    func_innermost_loop(offset, tiledims, idxs...);
+  KOKKOS_FORCEINLINE_FUNCTION void iterate_left(
+      std::integral_constant<unsigned, RP::rank - 1>, TileOffset const& offset,
+      TileDims const& tiledims, Idxs... idxs) const {
+    func_innermost_iterate_left(offset, tiledims, idxs...);
+  }
+
+  template <typename TileOffset, typename TileDims, typename... Idxs>
+  KOKKOS_FORCEINLINE_FUNCTION void iterate_right(
+      std::integral_constant<unsigned, RP::rank - 1>, TileOffset const& offset,
+      TileDims const& tiledims, Idxs... idxs) const {
+    func_innermost_iterate_right(offset, tiledims, idxs...);
   }
 
   template <typename IType>
@@ -982,7 +1004,11 @@ struct HostIterateTile<RP, Functor, Tag, ValueType,
     // Check if offset+tiledim in bounds - return actual tile dims in tiledims
     check_iteration_bounds(tiledims, offset);
 
-    iterate(std::integral_constant<unsigned, 0u>(), offset, tiledims);
+    if (RP::inner_direction == Iterate::Left) {
+      iterate_left(std::integral_constant<unsigned, 0u>(), offset, tiledims);
+    } else {
+      iterate_right(std::integral_constant<unsigned, 0u>(), offset, tiledims);
+    }
   }
 
   RP const m_rp;
