@@ -102,14 +102,6 @@
   __CUDACC_VER_MAJOR__ * 100 + __CUDACC_VER_MINOR__ * 10
 #endif  // #if defined( __NVCC__ )
 
-#if !defined(KOKKOS_LAMBDA)
-#define KOKKOS_LAMBDA [=]
-#endif
-
-#if !defined(KOKKOS_CLASS_LAMBDA)
-#define KOKKOS_CLASS_LAMBDA [ =, *this ]
-#endif
-
 // #if !defined( __CUDA_ARCH__ ) // Not compiling Cuda code to 'ptx'.
 
 // Intel compiler for host code.
@@ -329,6 +321,44 @@
 
 #if !defined(KOKKOS_IMPL_DEVICE_FUNCTION)
 #define KOKKOS_IMPL_DEVICE_FUNCTION
+#endif
+
+#if !defined(KOKKOS_LAMBDA)
+#define KOKKOS_LAMBDA [=]
+#endif
+
+#if !defined(KOKKOS_CLASS_LAMBDA)
+#define KOKKOS_CLASS_LAMBDA [ =, *this ]
+#endif
+
+#if !defined(KOKKOS_ENABLE_CXX20) && \
+    !defined(KOKKOS_COMPILER_CLANG)  // since C++23
+
+// FIXME_CLANG Clang does not accept GNU __attribute__((...)) in
+// the lambda front-attr position
+
+#if !defined(KOKKOS_FORCEINLINE_LAMBDA)
+#define KOKKOS_FORCEINLINE_LAMBDA \
+  KOKKOS_LAMBDA KOKKOS_IMPL_FORCEINLINE_ATTRIBUTE
+#endif
+
+#if !defined(KOKKOS_FORCEINLINE_CLASS_LAMBDA)
+#define KOKKOS_FORCEINLINE_CLASS_LAMBDA \
+  KOKKOS_CLASS_LAMBDA KOKKOS_IMPL_FORCEINLINE_ATTRIBUTE
+#endif
+
+#else  // C++20
+       // Attributes on lambda expressions would need to go after the parameter
+       // list which is not an option for us so we don't do anything.
+
+#if !defined(KOKKOS_FORCEINLINE_LAMBDA)
+#define KOKKOS_FORCEINLINE_LAMBDA KOKKOS_LAMBDA
+#endif
+
+#if !defined(KOKKOS_FORCEINLINE_CLASS_LAMBDA)
+#define KOKKOS_FORCEINLINE_CLASS_LAMBDA KOKKOS_CLASS_LAMBDA
+#endif
+
 #endif
 
 // FIXME_OPENACC
