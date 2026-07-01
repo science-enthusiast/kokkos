@@ -16,28 +16,32 @@ namespace {
 
 template <class NewExts, class OldExts>
 constexpr bool check_expected_static_extent_match() {
-  bool result = true;
-  // Only check the last ones - old style Views don't support arbitrary mixing
-  // of static and dynamic extents; thus the new extents could contain more
-  // static values, but never less.
-  static_assert(OldExts::rank_dynamic() >= NewExts::rank_dynamic());
-  for (size_t r = OldExts::rank_dynamic(); r < OldExts::rank(); r++)
-    if (OldExts::static_extent(r) != NewExts::static_extent(r)) result = false;
+  static_assert(OldExts::rank() == NewExts::rank());
 
-  return result;
+  // Only check the last extents - old style Views don't support arbitrary
+  // mixing of static and dynamic extents; thus the new extents could contain
+  // more static values, but never less.
+  static_assert(OldExts::rank_dynamic() >= NewExts::rank_dynamic());
+
+  // Silence warnings about pointless comparison
+  if constexpr (OldExts::rank() > 0) {
+    for (size_t r = OldExts::rank_dynamic(); r < OldExts::rank(); r++)
+      if (OldExts::static_extent(r) != NewExts::static_extent(r)) return false;
+  }
+  return true;
 }
 
-template <size_t Rank, class Layout, class... Slices>
+template <class Layout, class... Slices>
 constexpr bool new_subview_retains_padded_layout_old_uses_strided() {
   if constexpr (std::is_same_v<Layout,
                                Kokkos::Experimental::layout_right_padded<>>) {
-    if constexpr (Rank == 4 &&
+    if constexpr (sizeof...(Slices) == 4 &&
                   std::is_same_v<
                       std::tuple<Slices...>,
                       std::tuple<Kokkos::ALL_t, Kokkos::ALL_t, Kokkos::ALL_t,
                                  Kokkos::pair<int, int>>>)
       return true;
-    if constexpr (Rank == 8 &&
+    if constexpr (sizeof...(Slices) == 8 &&
                   std::is_same_v<
                       std::tuple<Slices...>,
                       std::tuple<Kokkos::ALL_t, Kokkos::ALL_t, Kokkos::ALL_t,
@@ -45,15 +49,6 @@ constexpr bool new_subview_retains_padded_layout_old_uses_strided() {
                                  Kokkos::ALL_t, Kokkos::pair<int, int>>>)
       return true;
   }
-  /*
-  else if constexpr (std::is_same_v<Layout,
-  Kokkos::Experimental::layout_left_padded<>>) { if constexpr (Rank == 4 &&
-  std::is_same_v<std::tuple<Slices...>, std::tuple<Kokkos::pair<int, int>,
-  Kokkos::ALL_t, Kokkos::ALL_t, Kokkos::ALL_t>>) return true; if constexpr (Rank
-  == 8 && std::is_same_v<std::tuple<Slices...>, std::tuple<Kokkos::pair<int,
-  int>, Kokkos::ALL_t, Kokkos::ALL_t, Kokkos::ALL_t, Kokkos::ALL_t,
-  Kokkos::ALL_t, Kokkos::ALL_t, Kokkos::ALL_t>>) return true;
-    }*/
   return false;
 }
 
@@ -107,7 +102,7 @@ void compare_subview(V v, Slices... slices) {
     // Deal with the case where submdspan and thus subview with new style args
     // optimizes return type better and does not fall back to layout_stride.
     if constexpr (new_subview_retains_padded_layout_old_uses_strided<
-                      V::rank(), typename V::layout_type, Slices...>()) {
+                      typename V::layout_type, Slices...>()) {
       static_assert(!std::is_same_v<typename old_sub_t::layout_type,
                                     typename new_sub_t::layout_type>);
       static_assert(std::is_same_v<typename old_sub_t::layout_type,
@@ -122,7 +117,7 @@ void compare_subview(V v, Slices... slices) {
 // TODO: full_extent is not yet supported as an argument for subview with the
 // old View style
 
-constexpr Kokkos::pair<int, int> pair00 = {0, 0};
+constexpr std::pair<int, int> pair00    = {0, 0};
 constexpr Kokkos::pair<int, int> pair37 = {3, 7};
 constexpr Kokkos::ALL_t all{};
 
@@ -198,8 +193,14 @@ void test_subview_args(V v) {
     compare_subview(v, pair37, 3, all, 3, all, pair37, 3, pair37);
     compare_subview(v, pair37, all, all, all, all, all, all, all);
     compare_subview(v, all, pair37, pair37, all, 3, 5, all, 1);
+// Newer GCC produces warnings deep inside mdspan for these cases
+// The warnings are a false positive where access to a staticly
+// sized array with an r>=size is only protected by a runtime
+// condition.
+#if !(defined(KOKKOS_COMPILER_GNU) && __GNUC__ > 11)
     compare_subview(v, all, all, all, all, all, all, all, pair37);
     compare_subview(v, all, all, 1, all, all, pair37, 3, all);
+#endif
   }
 }
 

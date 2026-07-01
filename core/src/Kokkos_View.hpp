@@ -1658,21 +1658,34 @@ KOKKOS_INLINE_FUNCTION auto subview(const View<D, P...>& src, Args... args) {
 }
 
 #ifdef KOKKOS_ENABLE_IMPL_MDSPAN
+// Constructing the return type inline in the subview function body
+// led to compiler errors with CUDA 12.2 - related to the weird issue
+// where it tries to inject C++ Ranges function somewhere
+// However, this does not make the code more complex so I use the extra
+// struct unconditionally.
+namespace Impl {
+template <class V, class... Slices>
+struct SubviewReturnType {
+  using sub_mapping_t =
+      decltype(submdspan_mapping(std::declval<typename V::mapping_type>(),
+                                 transform_kokkos_slice_to_mdspan_slice(
+                                     std::declval<Slices>())...)
+                   .mapping);
+  using sub_extents_t  = typename sub_mapping_t::extents_type;
+  using sub_layout_t   = typename sub_mapping_t::layout_type;
+  using sub_accessor_t = typename V::accessor_type::offset_policy;
+  using sub_view_t = View<typename V::element_type, sub_extents_t, sub_layout_t,
+                          sub_accessor_t>;
+};
+}  // namespace Impl
+
 // std::pair isn't device-compatible
 template <class E, class I, size_t... Exts, class L, class A, class... Slices>
   requires(!Impl::ContainsStdPair<Slices...>)
 KOKKOS_INLINE_FUNCTION auto subview(
     const View<E, Kokkos::extents<I, Exts...>, L, A>& src, Slices... slices) {
-  using sub_mapping_t =
-      decltype(submdspan_mapping(
-                   src.mapping(),
-                   Impl::transform_kokkos_slice_to_mdspan_slice(slices)...)
-                   .mapping);
-
-  using sub_extents_t  = typename sub_mapping_t::extents_type;
-  using sub_layout_t   = typename sub_mapping_t::layout_type;
-  using sub_accessor_t = typename A::offset_policy;
-  using sub_view_t     = View<E, sub_extents_t, sub_layout_t, sub_accessor_t>;
+  using sub_view_t = typename Impl::SubviewReturnType<
+      View<E, Kokkos::extents<I, Exts...>, L, A>, Slices...>::sub_view_t;
   return sub_view_t(src, slices...);
 }
 #endif
