@@ -363,8 +363,14 @@ foreach(Tag Threads;Serial;OpenMP;Cuda;HPX;OpenACC;HIP;SYCL;NextSilicon)
           ViewCtorConvertibleToPtr
       )
       if(NOT Kokkos_ENABLE_IMPL_VIEW_LEGACY AND NOT Kokkos_ENABLE_OPENACC)
-        list(APPEND BV_TestNames ViewCustomizationAccessorArg ViewCustomizationAllocationType
-             ViewCustomizationAccessorFromMapping MinimalViewMDSpanTemplateArgumentViability
+        list(
+          APPEND
+          BV_TestNames
+          ViewCustomizationAccessorArg
+          ViewCustomizationAllocationType
+          ViewCustomizationAccessorFromMapping
+          MinimalViewMDSpanTemplateArgumentViability
+          ViewMDSpanTemplateArgumentSubview
         )
       endif()
       if(NOT Kokkos_ENABLE_IMPL_VIEW_LEGACY)

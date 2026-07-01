@@ -1657,6 +1657,26 @@ KOKKOS_INLINE_FUNCTION auto subview(const View<D, P...>& src, Args... args) {
       Args...>::type(src, args...);
 }
 
+#ifdef KOKKOS_ENABLE_IMPL_MDSPAN
+// std::pair isn't device-compatible
+template <class E, class I, size_t... Exts, class L, class A, class... Slices>
+  requires(!Impl::ContainsStdPair<Slices...>)
+KOKKOS_INLINE_FUNCTION auto subview(
+    const View<E, Kokkos::extents<I, Exts...>, L, A>& src, Slices... slices) {
+  using sub_mapping_t =
+      decltype(submdspan_mapping(
+                   src.mapping(),
+                   Impl::transform_kokkos_slice_to_mdspan_slice(slices)...)
+                   .mapping);
+
+  using sub_extents_t  = typename sub_mapping_t::extents_type;
+  using sub_layout_t   = typename sub_mapping_t::layout_type;
+  using sub_accessor_t = typename A::offset_policy;
+  using sub_view_t     = View<E, sub_extents_t, sub_layout_t, sub_accessor_t>;
+  return sub_view_t(src, slices...);
+}
+#endif
+
 template <class V, class... Args>
 using Subview = decltype(subview(std::declval<V>(), std::declval<Args>()...));
 
