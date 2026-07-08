@@ -7,6 +7,7 @@
 
 #include <NextSilicon/Kokkos_NextSilicon.hpp>
 #include <NextSilicon/Kokkos_NextSiliconSpace.hpp>
+#include <impl/Kokkos_Error.hpp>
 #include <impl/Kokkos_Profiling_Interface.hpp>
 
 #include <cstdlib>
@@ -87,6 +88,10 @@ void *NextSiliconSharedSpace::impl_allocate(
   // good performance from the UVM migration runtime.
   size_t alignment = pick_desired_page_size(arg_alloc_size);
   void *ptr        = std::aligned_alloc(alignment, arg_alloc_size);
+
+  if (ptr == nullptr) {
+    Kokkos::Impl::throw_bad_alloc(name(), arg_alloc_size, arg_label);
+  }
 
   if (Kokkos::Profiling::profileLibraryLoaded()) {
     const size_t reported_size =
