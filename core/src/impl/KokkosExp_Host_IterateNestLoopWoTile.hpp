@@ -47,11 +47,16 @@ struct HostIterateNestLoopWoTile {
   inline HostIterateNestLoopWoTile(RP const& rp, Functor const& func)
       : m_rp(rp), m_func(func) {}
 
+  // inner-most loop inside a separate function to encourage vectorization.
+  // Proof of vectorization with GCC using -fopt-info-vec-all.
+  // The loop variable has to be int in order to encourage
+  // auto-vectorization. References in this comment:
+  // https://github.com/kokkos/kokkos/pull/8721#issuecomment-4936232872
   template <typename... Idxs>
   void func_innermost_loop(Idxs&&... idxs) const {
-    if constexpr (RP::outer_direction == Iterate::Left) {
+    if constexpr (RP::inner_direction == Iterate::Left) {
       KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP
-      for (index_type i = m_rp.m_lower[0]; i < m_rp.m_upper[0]; ++i) {
+      for (int i = m_rp.m_lower[0]; i < m_rp.m_upper[0]; ++i) {
         if constexpr (std::is_void_v<Tag>) {
           m_func(i, (Idxs&&)idxs...);
         } else {
@@ -60,8 +65,8 @@ struct HostIterateNestLoopWoTile {
       }
     } else {
       KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP
-      for (index_type i = m_rp.m_lower[RP::rank - 1];
-           i < m_rp.m_upper[RP::rank - 1]; ++i) {
+      for (int i = m_rp.m_lower[RP::rank - 1]; i < m_rp.m_upper[RP::rank - 1];
+           ++i) {
         if constexpr (std::is_void_v<Tag>) {
           m_func((Idxs&&)idxs..., i);
         } else {

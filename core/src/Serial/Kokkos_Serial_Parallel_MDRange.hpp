@@ -5,6 +5,7 @@
 #define KOKKOS_SERIAL_PARALLEL_MDRANGE_HPP
 
 #include <algorithm>
+#include <limits>
 
 #include <Kokkos_Parallel.hpp>
 #include <KokkosExp_MDRangePolicy.hpp>
@@ -34,9 +35,10 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
     // 2. A single for loop over all the tiles, with a nested for loop
     // inside each tile
 
-    // Enable nested loops without tiles for either condition:
-    // * All tile extents are set to 1
-    // * Tile extents equal to extents of the iteration space
+    // Enable nested loops without tiles for these conditions:
+    // * All tile extents are set to 1 or tile extents equal to extents
+    //   of the iteration space
+    // * The inner-most dimension index fits in an int variable
     bool tiling = false;
     if (!std::all_of(m_rp.m_tile.begin(), m_rp.m_tile.end(),
                      [](auto x) { return x == 1; })) {
@@ -46,6 +48,23 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
           tiling = true;
           break;
         }
+      }
+    }
+
+    // Ensure that the inner-most loop index variable can be of int type
+    // for approach based on nested loop without tiles
+    // Otherwise, take tiles based approach
+    if (!tiling) {
+      if constexpr (MDRangePolicy::inner_direction == Kokkos::Iterate::Left) {
+        if ((m_rp.m_upper[0] > std::numeric_limits<int>::max()) ||
+            (m_rp.m_lower[0] < std::numeric_limits<int>::min()))
+          tiling = true;
+      } else {
+        if ((m_rp.m_upper[MDRangePolicy::rank - 1] >
+             std::numeric_limits<int>::max()) ||
+            (m_rp.m_lower[MDRangePolicy::rank - 1] <
+             std::numeric_limits<int>::min()))
+          tiling = true;
       }
     }
 
