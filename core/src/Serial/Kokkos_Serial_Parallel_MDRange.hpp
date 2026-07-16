@@ -36,36 +36,20 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
     // inside each tile
 
     // Enable nested loops without tiles for these conditions:
-    // * All tile extents are set to 1 or tile extents equal to extents
-    //   of the iteration space
-    // * The inner-most dimension index fits in an int variable
+    // * All tile extents are set to 1
+    // * The loop indices fit in int type
     bool tiling = false;
-    if (!std::all_of(m_rp.m_tile.begin(), m_rp.m_tile.end(),
-                     [](auto x) { return x == 1; })) {
+    if (std::all_of(m_rp.m_tile.begin(), m_rp.m_tile.end(),
+                    [](auto x) { return x == 1; })) {
       for (int i_rank = 0; i_rank < MDRangePolicy::rank; ++i_rank) {
-        if (m_rp.m_tile[i_rank] !=
-            m_rp.m_upper[i_rank] - m_rp.m_lower[i_rank]) {
+        if ((m_rp.m_upper[i_rank] > std::numeric_limits<int>::max()) ||
+            (m_rp.m_lower[i_rank] < std::numeric_limits<int>::min())) {
           tiling = true;
           break;
         }
       }
-    }
-
-    // Ensure that the inner-most loop index variable can be of int type
-    // for approach based on nested loop without tiles
-    // Otherwise, take tiles based approach
-    if (!tiling) {
-      if constexpr (MDRangePolicy::inner_direction == Kokkos::Iterate::Left) {
-        if ((m_rp.m_upper[0] > std::numeric_limits<int>::max()) ||
-            (m_rp.m_lower[0] < std::numeric_limits<int>::min()))
-          tiling = true;
-      } else {
-        if ((m_rp.m_upper[MDRangePolicy::rank - 1] >
-             std::numeric_limits<int>::max()) ||
-            (m_rp.m_lower[MDRangePolicy::rank - 1] <
-             std::numeric_limits<int>::min()))
-          tiling = true;
-      }
+    } else {
+      tiling = true;
     }
 
     if (tiling) {

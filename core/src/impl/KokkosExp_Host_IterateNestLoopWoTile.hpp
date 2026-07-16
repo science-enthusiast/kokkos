@@ -42,39 +42,17 @@ template <typename RP, typename Functor, typename Tag,
           typename ReferenceType = void>
   requires std::is_void_v<ReferenceType>
 struct HostIterateNestLoopWoTile {
-  using index_type = typename RP::index_type;
+  // The loop variable has to be int in order to encourage
+  // auto-vectorization. References in this comment:
+  // https://github.com/kokkos/kokkos/pull/8721#issuecomment-4936232872
+  // FIXME: better to obtain this via RP::tile_type::value_type
+  using loop_var_type = int;
 
   inline HostIterateNestLoopWoTile(RP const& rp, Functor const& func)
       : m_rp(rp), m_func(func) {}
 
   // inner-most loop inside a separate function to encourage vectorization.
   // Proof of vectorization with GCC using -fopt-info-vec-all.
-  // The loop variable has to be int in order to encourage
-  // auto-vectorization. References in this comment:
-  // https://github.com/kokkos/kokkos/pull/8721#issuecomment-4936232872
-  template <typename... Idxs>
-  void func_innermost_loop(Idxs&&... idxs) const {
-    if constexpr (RP::inner_direction == Iterate::Left) {
-      KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP
-      for (int i = m_rp.m_lower[0]; i < m_rp.m_upper[0]; ++i) {
-        if constexpr (std::is_void_v<Tag>) {
-          m_func(i, (Idxs&&)idxs...);
-        } else {
-          m_func(Tag{}, i, (Idxs&&)idxs...);
-        }
-      }
-    } else {
-      KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP
-      for (int i = m_rp.m_lower[RP::rank - 1]; i < m_rp.m_upper[RP::rank - 1];
-           ++i) {
-        if constexpr (std::is_void_v<Tag>) {
-          m_func((Idxs&&)idxs..., i);
-        } else {
-          m_func(Tag{}, (Idxs&&)idxs..., i);
-        }
-      }
-    }
-  }
 
   // ----------------------------------------------------------------------- //
   // \brief Nested loops with recursive template instantiation
@@ -99,15 +77,15 @@ struct HostIterateNestLoopWoTile {
   template <unsigned IterLevel, typename... Idxs>
   inline void iterate(std::integral_constant<unsigned, IterLevel>,
                       Idxs... idxs) const {
-    const index_type start = (RP::inner_direction == Iterate::Left)
-                                 ? m_rp.m_lower[RP::rank - 1 - IterLevel]
-                                 : m_rp.m_lower[IterLevel];
-    const index_type end   = (RP::inner_direction == Iterate::Left)
-                                 ? m_rp.m_upper[RP::rank - 1 - IterLevel]
-                                 : m_rp.m_upper[IterLevel];
+    const loop_var_type start = (RP::outer_direction == Iterate::Left)
+                                    ? m_rp.m_lower[RP::rank - 1 - IterLevel]
+                                    : m_rp.m_lower[IterLevel];
+    const loop_var_type end   = (RP::outer_direction == Iterate::Left)
+                                    ? m_rp.m_upper[RP::rank - 1 - IterLevel]
+                                    : m_rp.m_upper[IterLevel];
 
-    for (index_type idx = start; idx < end; ++idx) {
-      if constexpr (RP::inner_direction == Iterate::Left) {
+    for (loop_var_type idx = start; idx < end; ++idx) {
+      if constexpr (RP::outer_direction == Iterate::Left) {
         iterate(std::integral_constant<unsigned, IterLevel + 1>(), idx,
                 idxs...);
       } else {
@@ -120,7 +98,26 @@ struct HostIterateNestLoopWoTile {
   template <typename... Idxs>
   inline void iterate(std::integral_constant<unsigned, RP::rank - 1>,
                       Idxs... idxs) const {
-    func_innermost_loop(idxs...);
+    if constexpr (RP::outer_direction == Iterate::Left) {
+      KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP
+      for (loop_var_type i = m_rp.m_lower[0]; i < m_rp.m_upper[0]; ++i) {
+        if constexpr (std::is_void_v<Tag>) {
+          m_func(i, idxs...);
+        } else {
+          m_func(Tag{}, i, idxs...);
+        }
+      }
+    } else {
+      KOKKOS_ENABLE_IVDEP_INNERMOST_LOOP
+      for (loop_var_type i = m_rp.m_lower[RP::rank - 1];
+           i < m_rp.m_upper[RP::rank - 1]; ++i) {
+        if constexpr (std::is_void_v<Tag>) {
+          m_func(idxs..., i);
+        } else {
+          m_func(Tag{}, idxs..., i);
+        }
+      }
+    }
   }
 
   inline void execute() const {
