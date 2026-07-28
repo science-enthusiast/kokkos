@@ -526,11 +526,6 @@ class DynRankView : private View<DataType*******, Properties...> {
                                        typename drvtraits::array_layout,
                                        typename drvtraits::host_mirror_space>;
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  /** \brief  Compatible HostMirror view */
-  using HostMirror KOKKOS_DEPRECATED_WITH_COMMENT(
-      "Use host_mirror_type instead.") = host_mirror_type;
-#endif
   //----------------------------------------
   // Domain rank and extents
 
