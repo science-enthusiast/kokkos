@@ -22,12 +22,6 @@ static_assert(false,
 #include <Kokkos_Pair.hpp>
 #include <Kokkos_MemoryTraits.hpp>
 
-// FIXME: This will eventually be removed
-namespace Kokkos::Impl {
-template <class, class...>
-class ViewMapping;
-}
-#include <View/Kokkos_ViewMapping.hpp>
 #include <Kokkos_MinMax.hpp>
 
 namespace Kokkos {
@@ -1632,26 +1626,6 @@ struct ApplyToViewOfStaticRank {
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 
-template <class D, class... P, class... Args>
-auto subview(const View<D, P...>& src, Args... args) {
-  return subview(src, Impl::convert_to_kokkos_pair_if_std_pair(args)...);
-}
-
-// std::pair isn't device-compatible
-template <class D, class... P, class... Args>
-  requires(!Impl::ContainsStdPair<Args...>)
-KOKKOS_INLINE_FUNCTION auto subview(const View<D, P...>& src, Args... args) {
-  static_assert(View<D, P...>::rank == sizeof...(Args),
-                "subview requires one argument for each source View rank");
-
-  return typename Kokkos::Impl::ViewMapping<
-      void /* deduce subview type from source view traits */
-      ,
-      typename Impl::RemoveAlignedMemoryTrait<D, P...>::type,
-      Args...>::type(src, args...);
-}
-
-#ifdef KOKKOS_ENABLE_IMPL_MDSPAN
 // Constructing the return type inline in the subview function body
 // led to compiler errors with CUDA 12.2 - related to the weird issue
 // where it tries to inject C++ Ranges function somewhere
@@ -1668,10 +1642,53 @@ struct SubviewReturnType {
   using sub_extents_t  = typename sub_mapping_t::extents_type;
   using sub_layout_t   = typename sub_mapping_t::layout_type;
   using sub_accessor_t = typename V::accessor_type::offset_policy;
-  using sub_view_t = View<typename V::element_type, sub_extents_t, sub_layout_t,
-                          sub_accessor_t>;
+
+  using data_type =
+      typename DataTypeFromExtents<typename sub_accessor_t::element_type,
+                                   sub_extents_t>::type;
+  using array_layout  = typename ArrayLayoutFromLayout<sub_layout_t>::type;
+  using device_type   = typename V::device_type;
+  using memory_traits = MemoryTraitsFromAccessor<sub_accessor_t>;
+  using sub_view_t = View<data_type, array_layout, device_type, memory_traits>;
+};
+
+template <class ElementType, class IndexType, size_t... Extents, class L,
+          class A, class... Slices>
+struct SubviewReturnType<
+    Kokkos::View<ElementType, Kokkos::extents<IndexType, Extents...>, L, A>,
+    Slices...> {
+  using view_t =
+      Kokkos::View<ElementType, Kokkos::extents<IndexType, Extents...>, L, A>;
+  using sub_mapping_t =
+      decltype(submdspan_mapping(std::declval<typename view_t::mapping_type>(),
+                                 transform_kokkos_slice_to_mdspan_slice(
+                                     std::declval<Slices>())...)
+                   .mapping);
+  using sub_extents_t  = typename sub_mapping_t::extents_type;
+  using sub_layout_t   = typename sub_mapping_t::layout_type;
+  using sub_accessor_t = typename view_t::accessor_type::offset_policy;
+  using sub_view_t     = View<typename view_t::element_type, sub_extents_t,
+                          sub_layout_t, sub_accessor_t>;
 };
 }  // namespace Impl
+
+template <class D, class... P, class... Slices>
+auto subview(const View<D, P...>& src, Slices... slices) {
+  return subview(src, Impl::convert_to_kokkos_pair_if_std_pair(slices)...);
+}
+
+// std::pair isn't device-compatible
+template <class D, class... P, class... Slices>
+  requires(!Impl::ContainsStdPair<Slices...>)
+KOKKOS_INLINE_FUNCTION auto subview(const View<D, P...>& src,
+                                    Slices... slices) {
+  static_assert(View<D, P...>::rank == sizeof...(Slices),
+                "subview requires one argument for each source View rank");
+
+  using sub_view_t =
+      typename Impl::SubviewReturnType<View<D, P...>, Slices...>::sub_view_t;
+  return sub_view_t(src, slices...);
+}
 
 // std::pair isn't device-compatible
 template <class E, class I, size_t... Exts, class L, class A, class... Slices>
@@ -1682,10 +1699,9 @@ KOKKOS_INLINE_FUNCTION auto subview(
       View<E, Kokkos::extents<I, Exts...>, L, A>, Slices...>::sub_view_t;
   return sub_view_t(src, slices...);
 }
-#endif
 
-template <class V, class... Args>
-using Subview = decltype(subview(std::declval<V>(), std::declval<Args>()...));
+template <class V, class... Slices>
+using Subview = decltype(subview(std::declval<V>(), std::declval<Slices>()...));
 
 } /* namespace Kokkos */
 

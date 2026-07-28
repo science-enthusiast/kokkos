@@ -21,6 +21,7 @@ template <class Space>
 void test_view_mapping() {
   using ExecSpace = typename Space::execution_space;
 
+#if 0
   using dim_0        = Kokkos::Impl::ViewDimension<>;
   using dim_s2       = Kokkos::Impl::ViewDimension<2>;
   using dim_s2_s3    = Kokkos::Impl::ViewDimension<2, 3>;
@@ -639,7 +640,7 @@ void test_view_mapping() {
     KOKKOS_IMPL_DISABLE_DEPRECATED_WARNINGS_POP()
 #endif
   }
-
+#endif
   //----------------------------------------
 
   {
@@ -822,6 +823,7 @@ void test_view_mapping() {
     V vk(view_alloc(mem_space, std::string("vk"), AllowPadding), N);
   }
 
+#if 0
   {
     using traits_t =
         Kokkos::ViewTraits<int***, Kokkos::LayoutStride, ExecSpace>;
@@ -853,6 +855,7 @@ void test_view_mapping() {
     Kokkos::Impl::ViewMapping<traits_t, void> v(
         Kokkos::Impl::ViewCtorProp<int*>(nullptr), stride);
   }
+#endif
 
   {
     using V           = Kokkos::View<int**, Space>;

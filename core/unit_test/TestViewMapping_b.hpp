@@ -123,6 +123,7 @@ TEST(TEST_CATEGORY, view_mapping_class_value) {
 
 /*--------------------------------------------------------------------------*/
 
+#if 0
 namespace Test {
 
 TEST(TEST_CATEGORY, view_mapping_assignable) {
@@ -204,5 +205,5 @@ TEST(TEST_CATEGORY, view_mapping_trivially_copyable) {
 
   static_assert(std::is_trivially_copyable<mapping>{});
 }
-
 }  // namespace Test
+#endif

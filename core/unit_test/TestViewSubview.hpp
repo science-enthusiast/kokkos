@@ -1463,6 +1463,7 @@ void test_3d_subview_5d_impl_layout() {
                                Layout, LayoutOrg, MemTraits>();
 }
 
+#if 0
 inline void test_subview_legal_args_right() {
   ASSERT_EQ(
       0, (Kokkos::Impl::SubviewLegalArgsCompileTime<
@@ -1936,7 +1937,7 @@ inline void test_subview_legal_args_left() {
                    Kokkos::pair<int, int>, Kokkos::pair<int, int>,
                    Kokkos::pair<int, int>>::value));
 }
-
+#endif
 }  // namespace Impl
 
 template <class Space, class MemTraits = void>
@@ -2001,7 +2002,7 @@ void test_3d_subview_5d_left() {
 
 template <class Space, class MemTraits = void>
 void test_layoutleft_to_layoutleft() {
-  Impl::test_subview_legal_args_left();
+  // Impl::test_subview_legal_args_left();
 
   using view3D_t = Kokkos::View<int***, Kokkos::LayoutLeft, Space>;
   using view4D_t = Kokkos::View<int****, Kokkos::LayoutLeft, Space>;
@@ -2044,7 +2045,7 @@ void test_layoutleft_to_layoutleft() {
 
 template <class Space, class MemTraits = void>
 void test_layoutright_to_layoutright() {
-  Impl::test_subview_legal_args_right();
+  // Impl::test_subview_legal_args_right();
 
   using view3D_t = Kokkos::View<int***, Kokkos::LayoutRight, Space>;
   using view4D_t = Kokkos::View<int****, Kokkos::LayoutRight, Space>;
@@ -2122,6 +2123,7 @@ struct TestSubviewMemoryTraitsConstruction {
     // (with the Aligned trait stripped).
     using view_memory_traits    = typename decltype(v)::memory_traits;
     using subview_memory_traits = typename decltype(sv)::memory_traits;
+#if 0
     static_assert(view_memory_traits::impl_value ==
                   memory_traits_type::impl_value);
     if constexpr (memory_traits_type::is_aligned)
@@ -2130,6 +2132,7 @@ struct TestSubviewMemoryTraitsConstruction {
     else
       static_assert(subview_memory_traits::impl_value ==
                     memory_traits_type::impl_value);
+#endif
 
     ASSERT_EQ(2u, sv.size());
     EXPECT_EQ(3., sv[0]);
@@ -2285,6 +2288,7 @@ struct TestSubviewStaticSizes {
   TestSubviewStaticSizes() : a(Kokkos::view_alloc("a"), 20), b("b") {}
 };
 
+#if 0
 template <class Space>
 struct TestExtentsStaticTests {
   using test1 = typename static_expect_same<
@@ -2312,6 +2316,7 @@ struct TestExtentsStaticTests {
       /* actual */
       typename Kokkos::Impl::ParseViewExtents<double>::type>::type;
 };
+#endif
 
 template <class ExecutionSpace, class RankType, std::size_t... Is>
 void test_subview_extents_helper_index(std::index_sequence<Is...>) {

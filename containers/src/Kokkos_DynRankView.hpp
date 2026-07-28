@@ -24,6 +24,7 @@ import kokkos.core_impl;
 #include <KokkosExp_InterOp.hpp>
 #include <impl/Kokkos_Error.hpp>
 #include <type_traits>
+#include <View/Kokkos_ViewMapping.hpp>
 
 namespace Kokkos {
 
