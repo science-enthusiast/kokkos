@@ -29,7 +29,6 @@ kokkos_enable_option(CUDA_RELOCATABLE_DEVICE_CODE OFF "Whether to enable relocat
 kokkos_enable_option(IMPL_CUDA_MALLOC_ASYNC OFF "Whether to enable CudaMallocAsync (requires CUDA Toolkit 11.2)")
 kokkos_enable_option(IMPL_CUDA_UNIFIED_MEMORY OFF "Whether to leverage unified memory architectures for CUDA")
 
-kokkos_enable_option(DEPRECATED_CODE_4 OFF "Whether code deprecated in major release 4 is available")
 kokkos_enable_option(DEPRECATED_CODE_5 ON "Whether code deprecated in major release 5 is available")
 kokkos_enable_option(DEPRECATION_WARNINGS ON "Whether to emit deprecation warnings")
 kokkos_enable_option(HIP_RELOCATABLE_DEVICE_CODE OFF "Whether to enable relocatable device code (RDC) for HIP")
@@ -119,11 +118,6 @@ kokkos_enable_option(EXPERIMENTAL_CXX20_MODULES OFF "Whether to export C++20 mod
 if(Kokkos_ENABLE_EXPERIMENTAL_CXX20_MODULES)
   if(CMAKE_VERSION VERSION_LESS 3.28.2)
     message(FATAL_ERROR "Enabling Kokkos_ENABLE_EXPERIMENTAL_CXX20_MODULES requires at least CMake 3.28.2")
-  endif()
-  if(Kokkos_ENABLE_DEPRECATED_CODE_4)
-    message(
-      FATAL_ERROR "Enabling Kokkos_ENABLE_EXPERIMENTAL_CXX20_MODULES requires Kokkos_ENABLE_DEPRECATED_CODE_4=OFF"
-    )
   endif()
 endif()
 
