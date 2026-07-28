@@ -464,11 +464,7 @@ class DynRankView : private View<DataType*******, Properties...> {
   using non_const_scalar_array_type KOKKOS_DEPRECATED_WITH_COMMENT(
       "Use non_const_data_type instead.") = non_const_data_type;
 #endif
-#ifndef KOKKOS_ENABLE_IMPL_VIEW_LEGACY
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  using specialize KOKKOS_DEPRECATED = void;
-#endif
-#else
+#ifdef KOKKOS_ENABLE_IMPL_VIEW_LEGACY
   using specialize = typename view_type::specialize;
 #endif
 
