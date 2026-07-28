@@ -721,27 +721,6 @@ class DynRankView : private View<DataType*******, Properties...> {
   }
 #endif
 
-// This is an accomodation for Phalanx, that is usint the operator[] to access
-// all elements in a linear fashion even when the rank is not 1
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  KOKKOS_FUNCTION reference_type operator[](index_type i0) const {
-    if constexpr (std::is_same_v<typename drvtraits::value_type,
-                                 typename drvtraits::data_type>) {
-      return view_type::data()[i0];
-    } else {
-      const size_t dim_scalar = view_type::impl_map().dimension_scalar();
-      const size_t bytes      = view_type::span() / dim_scalar;
-
-      using tmp_view_type =
-          Kokkos::View<DataType*, typename traits::array_layout,
-                       typename traits::device_type,
-                       Kokkos::MemoryTraits<traits::memory_traits::impl_value |
-                                            unsigned(Kokkos::Unmanaged)>>;
-      tmp_view_type rankone_view(view_type::data(), bytes, dim_scalar);
-      return rankone_view(i0);
-    }
-  }
-#else
   KOKKOS_FUNCTION reference_type operator[](index_type i0) const {
 #ifdef KOKKOS_ENABLE_DEBUG
     if (rank() != 1u)
@@ -749,7 +728,6 @@ class DynRankView : private View<DataType*******, Properties...> {
 #endif
     return view_type::operator()(i0, 0, 0, 0, 0, 0, 0);
   }
-#endif
 
   KOKKOS_FUNCTION reference_type access(index_type i0 = 0, index_type i1 = 0,
                                         index_type i2 = 0, index_type i3 = 0,
