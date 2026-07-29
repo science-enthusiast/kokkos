@@ -420,12 +420,6 @@ class View
   using array_type KOKKOS_DEPRECATED_WITH_COMMENT("Use type instead.") = type;
 #endif
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  /** \brief  Compatible HostMirror view */
-  using HostMirror KOKKOS_DEPRECATED_WITH_COMMENT(
-      "Use host_mirror_type instead.") = host_mirror_type;
-#endif
-
   // Unified types
   using uniform_type = typename Impl::ViewUniformType<View, 0>::type;
   using uniform_const_type =

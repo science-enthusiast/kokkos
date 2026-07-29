@@ -289,12 +289,6 @@ class View : public ViewTraits<DataType, Properties...> {
            Device<DefaultHostExecutionSpace,
                   typename traits::host_mirror_space::memory_space>>>;
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  /** \brief  Compatible host mirror view */
-  using HostMirror KOKKOS_DEPRECATED_WITH_COMMENT(
-      "Use host_mirror_type instead.") = host_mirror_type;
-#endif
-
   /** \brief Unified types */
   using uniform_type = typename Impl::ViewUniformType<View, 0>::type;
   using uniform_const_type =

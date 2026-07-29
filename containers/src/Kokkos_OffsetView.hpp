@@ -238,12 +238,6 @@ class OffsetView : public View<DataType, Properties...> {
                                       typename traits::array_layout,
                                       typename traits::host_mirror_space>;
 
-#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_4
-  /** \brief  Compatible HostMirror view */
-  using HostMirror KOKKOS_DEPRECATED_WITH_COMMENT(
-      "Use host_mirror_type instead.") = host_mirror_type;
-#endif
-
   template <size_t... I, class... OtherIndexTypes>
   KOKKOS_FUNCTION typename base_t::reference_type offset_operator(
       std::integer_sequence<size_t, I...>, OtherIndexTypes... indices) const {

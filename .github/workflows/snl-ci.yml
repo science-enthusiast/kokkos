@@ -44,7 +44,6 @@ jobs:
             -DCMAKE_CXX_FLAGS="-Werror" \
             -DBUILD_SHARED_LIBS=OFF \
             -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
-            -DKokkos_ENABLE_DEPRECATED_CODE_4=OFF \
             -DKokkos_ENABLE_DEPRECATED_CODE_5=${{ matrix.dep_code_5 }}  \
             -DKokkos_ENABLE_TESTS=ON \
             -DKokkos_ENABLE_EXAMPLES=ON \
@@ -101,7 +100,6 @@ jobs:
             -DCMAKE_CXX_FLAGS="-Werror -Wno-unused-command-line-argument" \
             -DBUILD_SHARED_LIBS=OFF \
             -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
-            -DKokkos_ENABLE_DEPRECATED_CODE_4=OFF \
             -DKokkos_ENABLE_DEPRECATED_CODE_5=OFF \
             -DKokkos_ENABLE_TESTS=ON \
             -DKokkos_ENABLE_EXAMPLES=ON \
@@ -158,7 +156,6 @@ jobs:
             -DCMAKE_CXX_FLAGS="-Werror -Wno-unused-command-line-argument" \
             -DBUILD_SHARED_LIBS=OFF \
             -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
-            -DKokkos_ENABLE_DEPRECATED_CODE_4=OFF \
             -DKokkos_ENABLE_DEPRECATED_CODE_5=OFF \
             -DKokkos_ENABLE_TESTS=ON \
             -DKokkos_ENABLE_EXAMPLES=ON \
@@ -216,7 +213,6 @@ jobs:
             -DKokkos_ENABLE_SERIAL=ON \
             -DKokkos_ARCH_SPR=ON \
             -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
-            -DKokkos_ENABLE_DEPRECATED_CODE_4=OFF \
             -DKokkos_ENABLE_DEPRECATED_CODE_5=${{ matrix.dep_code_5 }}  \
             -DKokkos_ENABLE_TESTS=ON \
             -DKokkos_ENABLE_EXAMPLES=ON \
@@ -271,7 +267,6 @@ jobs:
             -DKokkos_ENABLE_SYCL=ON \
             -DKokkos_ARCH_INTEL_PVC=ON \
             -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
-            -DKokkos_ENABLE_DEPRECATED_CODE_4=OFF \
             -DKokkos_ENABLE_DEPRECATED_CODE_5=OFF \
             -DKokkos_ENABLE_TESTS=ON \
             -DKokkos_ENABLE_EXAMPLES=ON \
@@ -365,7 +360,6 @@ jobs:
             -DKokkos_ENABLE_BENCHMARKS=ON \
             -DKokkos_ENABLE_BENCHMARKS_HEAVY=ON \
             -DKokkos_ENABLE_EXAMPLES=ON \
-            -DKokkos_ENABLE_DEPRECATED_CODE_4=ON \
             -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
             -DCMAKE_CXX_FLAGS="-Werror" \
             -DCMAKE_CXX_STANDARD=23 \

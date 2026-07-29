@@ -70,7 +70,7 @@ jobs:
             -DKokkos_ARCH_NATIVE=ON
             -DKokkos_ENABLE_COMPILER_WARNINGS=ON
             ${{ matrix.cmake_extra_opts }}
-            -DKokkos_ENABLE_DEPRECATED_CODE_4=OFF
+            -DKokkos_ENABLE_DEPRECATED_CODE_5=OFF
             -DKokkos_ENABLE_TESTS=ON
             -DKokkos_ENABLE_DEBUG_BOUNDS_CHECK=ON
             -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
