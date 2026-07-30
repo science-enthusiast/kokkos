@@ -16,16 +16,12 @@ namespace Test {
 namespace Impl {
 template <class ViewTypeDst, class ViewTypeSrc>
 struct TestAssignability {
-  static void try_assign(ViewTypeDst& dst, ViewTypeSrc& src)
-    requires(std::is_assignable_v<ViewTypeDst, ViewTypeSrc>)
-  {
-    dst = src;
-  }
-
-  static void try_assign(ViewTypeDst& dst, ViewTypeSrc& src)
-    requires(!std::is_assignable_v<ViewTypeDst, ViewTypeSrc>)
-  {
-    FAIL() << "TestAssignability::try_assign: Unexpected call path";
+  static void try_assign(ViewTypeDst& dst, ViewTypeSrc& src) {
+    if constexpr (std::is_assignable_v<ViewTypeDst, ViewTypeSrc>) {
+      dst = src;
+    } else {
+      FAIL() << "TestAssignability::try_assign: Unexpected call path";
+    }
   }
 
   template <class... Dimensions>
