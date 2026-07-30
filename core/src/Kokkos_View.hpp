@@ -11,12 +11,7 @@ static_assert(false,
 #define KOKKOS_VIEW_HPP
 
 #include <Kokkos_Macros.hpp>
-#ifdef KOKKOS_ENABLE_IMPL_MDSPAN
 #include <View/Kokkos_BasicView.hpp>
-#endif
-#ifdef KOKKOS_ENABLE_IMPL_VIEW_LEGACY
-#include <View/Kokkos_ViewLegacy.hpp>
-#else
 
 #include <View/Kokkos_ViewTraits.hpp>
 #include <Kokkos_Pair.hpp>
@@ -505,7 +500,6 @@ class View
   }
 
  private:
-
 #ifdef KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK
   template <typename... Is>
   static KOKKOS_FUNCTION void check_access_member_function_valid_args(
@@ -1753,7 +1747,6 @@ struct ViewTraits<ElementType, extents<IndexType, Extents...>, Prop...>
 // out
 #include <View/Kokkos_ViewCommonType.hpp>
 #include <View/Kokkos_ViewUniformType.hpp>
-#include <View/Kokkos_ViewAtomic.hpp>
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
