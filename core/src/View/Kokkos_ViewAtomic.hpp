@@ -184,27 +184,6 @@ class AtomicDataElement {
   operator value_type() const { return Kokkos::atomic_load(ptr); }
 };
 
-template <class ViewTraits>
-class AtomicViewDataHandle {
- public:
-  typename ViewTraits::value_type* ptr;
-
-  KOKKOS_INLINE_FUNCTION
-  AtomicViewDataHandle() : ptr(nullptr) {}
-
-  KOKKOS_INLINE_FUNCTION
-  AtomicViewDataHandle(typename ViewTraits::value_type* ptr_) : ptr(ptr_) {}
-
-  template <class iType>
-  KOKKOS_INLINE_FUNCTION AtomicDataElement<ViewTraits> operator[](
-      const iType& i) const {
-    return AtomicDataElement<ViewTraits>(ptr + i, AtomicViewConstTag());
-  }
-
-  KOKKOS_INLINE_FUNCTION
-  operator typename ViewTraits::value_type *() const { return ptr; }
-};
-
 }  // namespace Impl
 }  // namespace Kokkos
 

@@ -24,7 +24,6 @@ import kokkos.core_impl;
 #include <KokkosExp_InterOp.hpp>
 #include <impl/Kokkos_Error.hpp>
 #include <type_traits>
-#include <View/Kokkos_ViewMapping.hpp>
 
 namespace Kokkos {
 
@@ -303,7 +302,7 @@ struct ViewToDynRankViewTag {};
 }  // namespace Impl
 
 namespace Impl {
-
+#if 0
 template <class DstTraits, class SrcTraits>
 class ViewMapping<
     DstTraits, SrcTraits,
@@ -376,7 +375,7 @@ class ViewMapping<
     dst.m_rank = Kokkos::View<ST, SP...>::rank();
   }
 };
-
+#endif
 }  // namespace Impl
 
 /* \class DynRankView
@@ -416,8 +415,6 @@ class DynRankView : private View<DataType*******, Properties...> {
  private:
   template <class, class...>
   friend class DynRankView;
-  template <class, class...>
-  friend class Kokkos::Impl::ViewMapping;
 
   size_t m_rank{};
 
@@ -591,7 +588,6 @@ class DynRankView : private View<DataType*******, Properties...> {
 #ifndef KOKKOS_ENABLE_IMPL_VIEW_LEGACY
   using view_type::extents;
 #endif
-  using view_type::impl_map;  // FIXME: not tested
   using view_type::is_allocated;
   using view_type::label;
   using view_type::size;
@@ -774,7 +770,6 @@ class DynRankView : private View<DataType*******, Properties...> {
     return *this;
   }
 
-#ifndef KOKKOS_ENABLE_IMPL_VIEW_LEGACY
  private:
   template <class Ext>
   KOKKOS_FUNCTION typename view_type::extents_type create_rank7_extents(
@@ -814,36 +809,6 @@ class DynRankView : private View<DataType*******, Properties...> {
     m_rank = rhs.rank();
     return *this;
   }
-#else
-  template <class RT, class... RP>
-  KOKKOS_FUNCTION DynRankView(const View<RT, RP...>& rhs, size_t new_rank) {
-    using SrcTraits = typename View<RT, RP...>::traits;
-    using Mapping =
-        Kokkos::Impl::ViewMapping<traits, SrcTraits,
-                                  Kokkos::Impl::ViewToDynRankViewTag>;
-    static_assert(Mapping::is_assignable,
-                  "Incompatible View to DynRankView copy assignment");
-    if (new_rank > View<RT, RP...>::rank())
-      Kokkos::abort(
-          "Attempting to construct DynRankView from View and new rank, with "
-          "the new rank being too large.");
-    Mapping::assign(*this, rhs);
-    m_rank = new_rank;
-  }
-
-  template <class RT, class... RP>
-  KOKKOS_FUNCTION DynRankView& operator=(const View<RT, RP...>& rhs) {
-    using SrcTraits = typename View<RT, RP...>::traits;
-    using Mapping =
-        Kokkos::Impl::ViewMapping<traits, SrcTraits,
-                                  Kokkos::Impl::ViewToDynRankViewTag>;
-    static_assert(Mapping::is_assignable,
-                  "Incompatible View to DynRankView copy assignment");
-    Mapping::assign(*this, rhs);
-    m_rank = View<RT, RP...>::rank();
-    return *this;
-  }
-#endif
 
   template <class RT, class... RP>
   KOKKOS_FUNCTION DynRankView(const View<RT, RP...>& rhs)
@@ -1115,21 +1080,6 @@ KOKKOS_FUNCTION constexpr unsigned rank(const DynRankView<D, P...>& DRV) {
 }  // needed for transition to common constexpr method in view and dynrankview
    // to return rank
 
-//----------------------------------------------------------------------------
-// Subview mapping.
-// Deduce destination view type from source view traits and subview arguments
-
-namespace Impl {
-
-struct DynRankSubviewTag {};
-
-}  // namespace Impl
-
-template <class V, class... Args>
-using Subdynrankview =
-    typename Kokkos::Impl::ViewMapping<Kokkos::Impl::DynRankSubviewTag, V,
-                                       Args...>::ret_type;
-
 template <class... DRVArgs, class SubArg0 = int, class SubArg1 = int,
           class SubArg2 = int, class SubArg3 = int, class SubArg4 = int,
           class SubArg5 = int, class SubArg6 = int>
@@ -1186,6 +1136,10 @@ KOKKOS_INLINE_FUNCTION auto subview(
     SubArg5 arg5 = SubArg5{}, SubArg6 arg6 = SubArg6{}) {
   return subdynrankview(drv, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
 }
+
+template <class V, class... Args>
+using Subdynrankview =
+    decltype(subdynrankview(std::declval<V>(), std::declval<Args>()...));
 
 }  // namespace Kokkos
 

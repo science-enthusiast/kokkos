@@ -70,10 +70,7 @@ export {
   using ::Kokkos::Impl::ViewCtorProp;
   using ::Kokkos::Impl::ViewCustomArguments;
   using ::Kokkos::Impl::ViewDataAnalysis;
-  using ::Kokkos::Impl::ViewDataHandle;
   using ::Kokkos::Impl::ViewDimension;
-  using ::Kokkos::Impl::ViewMapping;
-  using ::Kokkos::Impl::ViewOffset;
   using ::Kokkos::Impl::ViewRemap;
   using ::Kokkos::Impl::with_properties_if_unset;
   using ::Kokkos::Impl::WithoutInitializing_t;

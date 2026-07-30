@@ -487,13 +487,6 @@ class View
   // Allow specializations to query their specialized map
 
   KOKKOS_INLINE_FUNCTION
-  auto impl_map() const {
-    using map_type =
-        Kokkos::Impl::ViewMapping<traits, typename traits::specialize>;
-    return map_type(Kokkos::view_wrap(data()), layout());
-  }
-
-  KOKKOS_INLINE_FUNCTION
   const Kokkos::Impl::SharedAllocationTracker& impl_track() const {
     if constexpr (traits::memory_traits::is_unmanaged) {
       static const Kokkos::Impl::SharedAllocationTracker empty_tracker = {};
@@ -1432,9 +1425,10 @@ class View
       const typename traits::array_layout& arg_layout)
       : View(Impl::ViewCtorProp<pointer_type>(
                  static_cast<pointer_type>(arg_space.get_shmem_aligned(
-                     Kokkos::Impl::ViewMapping<
-                         traits,
-                         typename traits::specialize>::memory_span(arg_layout),
+                     Impl::mapping_from_array_layout<
+                         typename base_t::mapping_type>(arg_layout)
+                             .required_span_size() *
+                         sizeof(raw_allocation_value_type),
                      scratch_value_alignment))),
              arg_layout) {}
 

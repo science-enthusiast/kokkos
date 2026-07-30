@@ -16,18 +16,6 @@ namespace Test {
 namespace Impl {
 template <class ViewTypeDst, class ViewTypeSrc>
 struct TestAssignability {
-  using mapping_type =
-      Kokkos::Impl::ViewMapping<typename ViewTypeDst::traits,
-                                typename ViewTypeSrc::traits
-#ifdef KOKKOS_ENABLE_IMPL_VIEW_LEGACY
-                                ,
-                                typename ViewTypeDst::specialize
-#else
-                                ,
-                                void
-#endif
-                                >;
-
   static void try_assign(ViewTypeDst& dst, ViewTypeSrc& src)
     requires(std::is_assignable_v<ViewTypeDst, ViewTypeSrc>)
   {
