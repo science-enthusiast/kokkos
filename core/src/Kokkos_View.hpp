@@ -1748,8 +1748,4 @@ struct ViewTraits<ElementType, extents<IndexType, Extents...>, Prop...>
 #include <View/Kokkos_ViewCommonType.hpp>
 #include <View/Kokkos_ViewUniformType.hpp>
 
-//----------------------------------------------------------------------------
-//----------------------------------------------------------------------------
-
-#endif /* !KOKKOS_ENABLE_IMPL_VIEW_LEGACY */
 #endif /* #ifndef KOKKOS_VIEW_HPP */

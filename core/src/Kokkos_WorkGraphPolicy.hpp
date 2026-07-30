@@ -10,6 +10,7 @@ static_assert(false,
 #define KOKKOS_WORKGRAPHPOLICY_HPP
 
 #include <impl/Kokkos_AnalyzePolicy.hpp>
+#include <Kokkos_Atomic.hpp>
 #include <Kokkos_Crs.hpp>
 
 namespace Kokkos {
