@@ -3,7 +3,6 @@ variables:
 
 stages:
   - test
-  - clean_up
 
 hipcc:
   stage: test
