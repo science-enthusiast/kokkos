@@ -148,6 +148,7 @@ foreach(Tag Threads;Serial;OpenMP;Cuda;HPX;OpenACC;HIP;SYCL;NextSilicon)
       AtomicOperations_unsignedint
       AtomicOperations_unsignedlongint
       AtomicViews
+      BadAlloc
       BitManipulationBuiltins
       CheckedIntegerOps
       CommonPolicyConstructors
@@ -829,6 +830,7 @@ endif()
 if(Kokkos_ENABLE_NEXTSILICON)
   set(NEXTSILICON_SOURCES
       ${CMAKE_CURRENT_BINARY_DIR}/nextsilicon/TestNextSilicon_Abort.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/nextsilicon/TestNextSilicon_BadAlloc.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/nextsilicon/TestNextSilicon_MinMaxClamp.cpp
       # ${CMAKE_CURRENT_BINARY_DIR}/nextsilicon/TestNextSilicon_DeepCopyAlignment.cpp # MDRange parallel for
   )
