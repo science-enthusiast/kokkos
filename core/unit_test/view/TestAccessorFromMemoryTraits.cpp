@@ -9,6 +9,8 @@ import kokkos.core_impl;
 #include <Kokkos_Core.hpp>
 #endif
 
+#include <desul/atomics.hpp>
+
 #include <type_traits>
 
 // Checking requirement of explict type conversion to View
