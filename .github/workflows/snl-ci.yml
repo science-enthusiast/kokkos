@@ -417,9 +417,9 @@ jobs:
         working-directory: kokkos/build
         run: ctest --output-on-failure --timeout 3600
 
-  NextSilicon_1_2_0:
-    name: SNL_NextSilicon_1_2_0
-    runs-on: [ns-1.2.0]
+  NextSilicon_Latest:
+    name: SNL_NextSilicon_Latest
+    runs-on: [next-latest]
     continue-on-error: true
 
     steps:
