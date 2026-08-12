@@ -102,7 +102,7 @@ static_assert(
         Kokkos::Impl::SpaceAwareAccessor<
             Kokkos::HostSpace,
             Kokkos::Impl::ReferenceCountedAccessor<
-                float, Kokkos::HostSpace,
+                Kokkos::HostSpace,
                 Kokkos::Impl::AtomicAccessorRelaxed<float, memory_scope>>>>);
 
 static_assert(test_equivalence<float, Kokkos::DefaultExecutionSpace>());

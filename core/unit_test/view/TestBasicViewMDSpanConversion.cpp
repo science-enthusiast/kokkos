@@ -41,10 +41,10 @@ static_assert(
                       const long long, Kokkos::HostSpace>>>);
 #endif
 
-static_assert(std::is_convertible_v<Kokkos::default_accessor<double>,
-                                    Kokkos::Impl::ReferenceCountedAccessor<
-                                        double, Kokkos::HostSpace,
-                                        Kokkos::default_accessor<double>>>);
+static_assert(std::is_convertible_v<
+              Kokkos::default_accessor<double>,
+              Kokkos::Impl::ReferenceCountedAccessor<
+                  Kokkos::HostSpace, Kokkos::default_accessor<double>>>);
 
 static_assert(std::is_constructible_v<Kokkos::default_accessor<const double>,
                                       Kokkos::default_accessor<double>>);
@@ -52,31 +52,27 @@ static_assert(std::is_constructible_v<Kokkos::default_accessor<const double>,
 static_assert(std::is_convertible_v<Kokkos::default_accessor<double>,
                                     Kokkos::default_accessor<const double>>);
 
-static_assert(
-    std::is_constructible_v<
-        Kokkos::Impl::ReferenceCountedAccessor<
-            const double, Kokkos::HostSpace,
-            Kokkos::default_accessor<const double>>,
-        Kokkos::Impl::ReferenceCountedAccessor<
-            double, Kokkos::HostSpace, Kokkos::default_accessor<double>>>);
+static_assert(std::is_constructible_v<
+              Kokkos::Impl::ReferenceCountedAccessor<
+                  Kokkos::HostSpace, Kokkos::default_accessor<const double>>,
+              Kokkos::Impl::ReferenceCountedAccessor<
+                  Kokkos::HostSpace, Kokkos::default_accessor<double>>>);
 
 static_assert(std::is_convertible_v<
               Kokkos::Impl::ReferenceCountedAccessor<
-                  double, Kokkos::HostSpace, Kokkos::default_accessor<double>>,
+                  Kokkos::HostSpace, Kokkos::default_accessor<double>>,
               Kokkos::Impl::ReferenceCountedAccessor<
-                  const double, Kokkos::HostSpace,
-                  Kokkos::default_accessor<const double>>>);
+                  Kokkos::HostSpace, Kokkos::default_accessor<const double>>>);
 
-static_assert(std::is_constructible_v<Kokkos::default_accessor<const double>,
-                                      Kokkos::Impl::ReferenceCountedAccessor<
-                                          double, Kokkos::HostSpace,
-                                          Kokkos::default_accessor<double>>>);
+static_assert(std::is_constructible_v<
+              Kokkos::default_accessor<const double>,
+              Kokkos::Impl::ReferenceCountedAccessor<
+                  Kokkos::HostSpace, Kokkos::default_accessor<double>>>);
 
-static_assert(
-    std::is_convertible_v<
-        Kokkos::Impl::SpaceAwareAccessor<
-            Kokkos::HostSpace,
-            Kokkos::Impl::ReferenceCountedAccessor<
-                double, Kokkos::HostSpace, Kokkos::default_accessor<double>>>,
-        Kokkos::Impl::SpaceAwareAccessor<
-            Kokkos::HostSpace, Kokkos::default_accessor<const double>>>);
+static_assert(std::is_convertible_v<
+              Kokkos::Impl::SpaceAwareAccessor<
+                  Kokkos::HostSpace,
+                  Kokkos::Impl::ReferenceCountedAccessor<
+                      Kokkos::HostSpace, Kokkos::default_accessor<double>>>,
+              Kokkos::Impl::SpaceAwareAccessor<
+                  Kokkos::HostSpace, Kokkos::default_accessor<const double>>>);
