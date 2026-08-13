@@ -1020,8 +1020,8 @@ class View
   KOKKOS_FUNCTION
   explicit View(const typename base_t::data_handle_type& handle,
                 const LayoutLeft& arg_layout)
-    requires(std::is_same_v<typename base_t::layout_type,
-                            Experimental::layout_left_padded<> >)
+    requires(
+        std::is_same_v<typename base_t::layout_type, layout_left_padded<> >)
       : base_t(
             handle,
             Impl::mapping_from_array_layout<typename mdspan_type::mapping_type>(
@@ -1030,8 +1030,8 @@ class View
   KOKKOS_FUNCTION
   explicit View(const typename base_t::data_handle_type& handle,
                 const LayoutRight& arg_layout)
-    requires(std::is_same_v<typename base_t::layout_type,
-                            Experimental::layout_right_padded<> >)
+    requires(
+        std::is_same_v<typename base_t::layout_type, layout_right_padded<> >)
       : base_t(
             handle,
             Impl::mapping_from_array_layout<typename mdspan_type::mapping_type>(

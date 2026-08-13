@@ -17,18 +17,18 @@ static_assert(
     std::is_convertible_v<
         Kokkos::View<long long ****, Kokkos::LayoutRight, Kokkos::HostSpace>,
         BasicView<long long, Kokkos::dextents<size_t, 4>,
-                  Kokkos::Experimental::layout_right_padded<>,
+                  Kokkos::layout_right_padded<>,
                   Kokkos::Impl::CheckedReferenceCountedAccessor<
                       long long, Kokkos::HostSpace>>>);
 #endif
 
 static_assert(std::is_convertible_v<
               BasicView<long long, Kokkos::dextents<size_t, 4>,
-                        Kokkos::Experimental::layout_right_padded<>,
+                        Kokkos::layout_right_padded<>,
                         Kokkos::Impl::CheckedReferenceCountedAccessor<
                             long long, Kokkos::HostSpace>>,
               BasicView<const long long, Kokkos::dextents<size_t, 4>,
-                        Kokkos::Experimental::layout_right_padded<>,
+                        Kokkos::layout_right_padded<>,
                         Kokkos::Impl::CheckedReferenceCountedAccessor<
                             const long long, Kokkos::HostSpace>>>);
 #ifndef KOKKOS_ENABLE_IMPL_VIEW_LEGACY
@@ -36,7 +36,7 @@ static_assert(
     std::is_convertible_v<
         Kokkos::View<long long ****, Kokkos::LayoutRight, Kokkos::HostSpace>,
         BasicView<const long long, Kokkos::dextents<size_t, 4>,
-                  Kokkos::Experimental::layout_right_padded<>,
+                  Kokkos::layout_right_padded<>,
                   Kokkos::Impl::CheckedReferenceCountedAccessor<
                       const long long, Kokkos::HostSpace>>>);
 #endif
