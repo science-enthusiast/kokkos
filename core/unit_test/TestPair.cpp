@@ -15,7 +15,7 @@ namespace {
 
 TEST(defaultdevicetype, pair_construction_and_std_interop) {
   // value construction and member access
-  constexpr Kokkos::pair<int, int> p1{1, 2};
+  constexpr Kokkos::pair p1{1, 2};
   static_assert(p1.first == 1 && p1.second == 2);
   EXPECT_EQ(p1.first, 1);
   EXPECT_EQ(p1.second, 2);
@@ -28,7 +28,7 @@ TEST(defaultdevicetype, pair_construction_and_std_interop) {
 
   // construction from std::pair and to_std_pair()
   const std::pair<int, int> sp{3, 4};
-  Kokkos::pair<int, int> kp_from_std(sp);
+  Kokkos::pair kp_from_std(sp);
   EXPECT_EQ(kp_from_std.first, 3);
   EXPECT_EQ(kp_from_std.second, 4);
 
@@ -46,7 +46,7 @@ TEST(defaultdevicetype, pair_construction_and_std_interop) {
 }
 
 TEST(defaultdevicetype, pair_copy_and_assignment_templates) {
-  Kokkos::pair<int, int> p1{10, 11};
+  Kokkos::pair p1{10, 11};
 
   // templated copy construction to different, but convertible types
   Kokkos::pair<long, long> pcopy(p1);
@@ -66,9 +66,9 @@ TEST(defaultdevicetype, pair_copy_and_assignment_templates) {
 }
 
 TEST(defaultdevicetype, pair_relational_operators_and_constexpr) {
-  constexpr Kokkos::pair<int, int> a{1, 2};
-  constexpr Kokkos::pair<int, int> b{2, 1};
-  constexpr Kokkos::pair<int, int> a_same{1, 2};
+  constexpr Kokkos::pair a{1, 2};
+  constexpr Kokkos::pair b{2, 1};
+  constexpr Kokkos::pair a_same{1, 2};
 
   static_assert(a == a_same);
   static_assert(!(a != a_same));
@@ -100,7 +100,7 @@ TEST(defaultdevicetype, tie_and_reference_specialization_assignment) {
   // assignment operator template on reference specialization
   int a = 1, b = 2;
   Kokkos::pair<int&, int&> p_ref = Kokkos::tie(a, b);
-  Kokkos::pair<int, int> p_val{42, 43};
+  Kokkos::pair p_val{42, 43};
   p_ref = p_val;  // templated operator= should copy into a,b
   EXPECT_EQ(a, 42);
   EXPECT_EQ(b, 43);
@@ -113,7 +113,7 @@ struct DeviceTest {
 
   KOKKOS_FUNCTION void operator()(const int) const {
     // value construction
-    Kokkos::pair<int, int> p{1, 2};
+    Kokkos::pair p{1, 2};
     if (p.first == 1 && p.second == 2) results(0) = 1;
 
     // make_pair
@@ -121,7 +121,7 @@ struct DeviceTest {
     if (mp.first == 5 && mp.second == 6) results(1) = 1;
 
     // relational
-    Kokkos::pair<int, int> a{1, 2}, b{2, 1};
+    Kokkos::pair a{1, 2}, b{2, 1};
     if (a < b) results(2) = 1;
 
     // tie and reference assignment
@@ -137,7 +137,7 @@ struct DeviceTest {
     // reference specialization assignment from value pair
     int a2 = 0, b2 = 0;
     Kokkos::pair<int&, int&> pref = Kokkos::tie(a2, b2);
-    pref                          = Kokkos::pair<int, int>(42, 43);
+    pref                          = Kokkos::pair(42, 43);
     if (a2 == 42 && b2 == 43) results(5) = 1;
   }
 };
