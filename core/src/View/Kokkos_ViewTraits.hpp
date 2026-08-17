@@ -185,24 +185,6 @@ struct AccessorFromViewTraits {
                          default_accessor<typename Traits::value_type>>;
 };
 
-#ifdef KOKKOS_ENABLE_IMPL_VIEW_LEGACY
-template <class Traits>
-struct AccessorFromViewTraits<
-    Traits, std::enable_if_t<!Traits::memory_traits::is_unmanaged &&
-                             !Traits::memory_traits::is_atomic>> {
-  using type =
-      SpaceAwareAccessor<typename Traits::memory_space,
-                         default_accessor<typename Traits::value_type>>;
-};
-
-template <class Traits>
-struct AccessorFromViewTraits<
-    Traits, std::enable_if_t<!Traits::memory_traits::is_unmanaged &&
-                             Traits::memory_traits::is_atomic>> {
-  using type = CheckedRelaxedAtomicAccessor<typename Traits::value_type,
-                                            typename Traits::memory_space>;
-};
-#else
 template <class Traits>
 struct AccessorFromViewTraits<
     Traits, std::enable_if_t<!Traits::memory_traits::is_unmanaged &&
@@ -218,7 +200,6 @@ struct AccessorFromViewTraits<
   using type = CheckedReferenceCountedRelaxedAtomicAccessor<
       typename Traits::value_type, typename Traits::memory_space>;
 };
-#endif
 
 template <class Traits>
 struct AccessorFromViewTraits<
@@ -447,38 +428,19 @@ struct ViewTraits {
  public:
   //------------------------------------
   // Data type traits:
-#if defined(KOKKOS_ENABLE_IMPL_VIEW_LEGACY) && \
-    defined(KOKKOS_ENABLE_DEPRECATED_CODE_5)
-  using data_type           = typename data_analysis::type;
-  using const_data_type     = typename data_analysis::const_type;
-  using non_const_data_type = typename data_analysis::non_const_type;
-#else
   using data_type           = typename data_analysis::data_type;
   using const_data_type     = typename data_analysis::const_data_type;
   using non_const_data_type = typename data_analysis::non_const_data_type;
-#endif
 
 #ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
   //------------------------------------
   // Compatible array of trivial type traits:
-#ifdef KOKKOS_ENABLE_IMPL_VIEW_LEGACY
-  using scalar_array_type KOKKOS_DEPRECATED_WITH_COMMENT(
-      "Only supported with KOKKOS_ENABLE_IMPL_VIEW_LEGACY, to be removed after "
-      "5.0 release") = typename data_analysis::scalar_array_type;
-  using const_scalar_array_type KOKKOS_DEPRECATED_WITH_COMMENT(
-      "Only supported with KOKKOS_ENABLE_IMPL_VIEW_LEGACY, to be removed after "
-      "5.0 release.") = typename data_analysis::const_scalar_array_type;
-  using non_const_scalar_array_type KOKKOS_DEPRECATED_WITH_COMMENT(
-      "Only supported with KOKKOS_ENABLE_IMPL_VIEW_LEGACY, to be removed after "
-      "5.0 release.") = typename data_analysis::non_const_scalar_array_type;
-#else
   using scalar_array_type KOKKOS_DEPRECATED_WITH_COMMENT(
       "Use data_type instead.") = data_type;
   using const_scalar_array_type KOKKOS_DEPRECATED_WITH_COMMENT(
       "Use const_data_type instead.") = const_data_type;
   using non_const_scalar_array_type KOKKOS_DEPRECATED_WITH_COMMENT(
       "Use non_const_data_type instead.") = non_const_data_type;
-#endif
 #endif
   //------------------------------------
   // Value type traits:

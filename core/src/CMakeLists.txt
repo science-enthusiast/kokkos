@@ -174,10 +174,6 @@ if(Kokkos_ENABLE_IMPL_MDSPAN)
   endif()
 endif()
 
-if(Kokkos_ENABLE_IMPL_VIEW_LEGACY)
-  global_set(KOKKOS_MDSPAN_VERSION "not applicable")
-endif()
-
 kokkos_link_tpl(kokkoscore PUBLIC HWLOC)
 kokkos_link_tpl(kokkoscore PUBLIC CUDA)
 kokkos_link_tpl(kokkoscore PUBLIC HPX)
