@@ -76,13 +76,6 @@ if(NOT Kokkos_ENABLE_IMPL_MDSPAN OR KOKKOS_CXX_COMPILER_ID STREQUAL "Intel")
   list(REMOVE_ITEM COMPILE_ONLY_SOURCES view/TestBasicViewMDSpanConversion.cpp)
 endif()
 
-if(NOT Kokkos_ENABLE_IMPL_MDSPAN OR Kokkos_ENABLE_IMPL_VIEW_LEGACY)
-  list(REMOVE_ITEM COMPILE_ONLY_SOURCES view/TestAccessorFromMemoryTraits.cpp)
-  list(REMOVE_ITEM COMPILE_ONLY_SOURCES view/TestViewCustomization.cpp)
-  list(REMOVE_ITEM COMPILE_ONLY_SOURCES view/TestViewMDSpanTemplateArgumentEquivalence.cpp)
-  list(REMOVE_ITEM COMPILE_ONLY_SOURCES view/TestViewMDSpanTemplateArgumentTypeDefs.cpp)
-endif()
-
 #testing if windows.h and Kokkos_Core.hpp can be included
 if(WIN32)
   list(APPEND COMPILE_ONLY_SOURCES TestWindowsInclude.cpp)
@@ -363,8 +356,10 @@ foreach(Tag Threads;Serial;OpenMP;Cuda;HPX;OpenACC;HIP;SYCL;NextSilicon)
           ReferenceCountedDataHandle
           ViewEqualityOperator
           ViewCtorConvertibleToPtr
+          ViewCtorDataHandle
       )
-      if(NOT Kokkos_ENABLE_IMPL_VIEW_LEGACY AND NOT Kokkos_ENABLE_OPENACC)
+      # FIXME_OPENACC
+      if(NOT Kokkos_ENABLE_OPENACC)
         list(
           APPEND
           BV_TestNames
@@ -374,9 +369,6 @@ foreach(Tag Threads;Serial;OpenMP;Cuda;HPX;OpenACC;HIP;SYCL;NextSilicon)
           MinimalViewMDSpanTemplateArgumentViability
           ViewMDSpanTemplateArgumentSubview
         )
-      endif()
-      if(NOT Kokkos_ENABLE_IMPL_VIEW_LEGACY)
-        list(APPEND BV_TestNames ViewCtorDataHandle)
       endif()
       set(${Tag}_VIEWSUPPORT)
       foreach(Name IN LISTS BV_TestNames)
