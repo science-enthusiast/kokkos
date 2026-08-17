@@ -98,18 +98,8 @@ void compare_subview(V v, Slices... slices) {
                                    typename new_sub_t::layout_type>);
     }
   } else {  // new_sub_t::rank() >= 2
-    // Deal with the case where submdspan and thus subview with new style args
-    // optimizes return type better and does not fall back to layout_stride.
-    if constexpr (new_subview_retains_padded_layout_old_uses_strided<
-                      typename V::layout_type, Slices...>()) {
-      static_assert(!std::is_same_v<typename old_sub_t::layout_type,
-                                    typename new_sub_t::layout_type>);
-      static_assert(std::is_same_v<typename old_sub_t::layout_type,
-                                   Kokkos::layout_stride>);
-    } else {
-      static_assert(std::is_same_v<typename old_sub_t::layout_type,
-                                   typename new_sub_t::layout_type>);
-    }
+    static_assert(std::is_same_v<typename old_sub_t::layout_type,
+                                 typename new_sub_t::layout_type>);
   }
 }
 

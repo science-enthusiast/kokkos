@@ -301,83 +301,6 @@ struct ViewToDynRankViewTag {};
 
 }  // namespace Impl
 
-namespace Impl {
-
-template <class DstTraits, class SrcTraits>
-class ViewMapping<
-    DstTraits, SrcTraits,
-    std::enable_if_t<
-        (std::is_same_v<typename DstTraits::memory_space,
-                        typename SrcTraits::memory_space> &&
-         std::is_void_v<typename DstTraits::specialize> &&
-         std::is_void_v<typename SrcTraits::specialize> &&
-         (std::is_same_v<typename DstTraits::array_layout,
-                         typename SrcTraits::array_layout> ||
-          ((std::is_same_v<typename DstTraits::array_layout,
-                           Kokkos::LayoutLeft> ||
-            std::is_same_v<typename DstTraits::array_layout,
-                           Kokkos::LayoutRight> ||
-            std::is_same_v<
-                typename DstTraits::array_layout,
-                Kokkos::LayoutStride>)&&(std::is_same_v<typename SrcTraits::
-                                                            array_layout,
-                                                        Kokkos::LayoutLeft> ||
-                                         std::is_same_v<
-                                             typename SrcTraits::array_layout,
-                                             Kokkos::LayoutRight> ||
-                                         std::is_same_v<
-                                             typename SrcTraits::array_layout,
-                                             Kokkos::LayoutStride>)))),
-        Kokkos::Impl::ViewToDynRankViewTag>> {
- private:
-  enum {
-    is_assignable_value_type =
-        std::is_same_v<typename DstTraits::value_type,
-                       typename SrcTraits::value_type> ||
-        std::is_same_v<typename DstTraits::value_type,
-                       typename SrcTraits::const_value_type>
-  };
-
-  enum {
-    is_assignable_layout =
-        std::is_same_v<typename DstTraits::array_layout,
-                       typename SrcTraits::array_layout> ||
-        std::is_same_v<typename DstTraits::array_layout, Kokkos::LayoutStride>
-  };
-
- public:
-  enum { is_assignable = is_assignable_value_type && is_assignable_layout };
-
-  using DstType = ViewMapping<DstTraits, typename DstTraits::specialize>;
-  using SrcType = ViewMapping<SrcTraits, typename SrcTraits::specialize>;
-
-  template <typename DT, typename... DP, typename ST, typename... SP>
-  KOKKOS_INLINE_FUNCTION static void assign(
-      Kokkos::DynRankView<DT, DP...>& dst, const Kokkos::View<ST, SP...>& src) {
-    static_assert(
-        is_assignable_value_type,
-        "View assignment must have same value type or const = non-const");
-
-    static_assert(
-        is_assignable_layout,
-        "View assignment must have compatible layout or have rank <= 1");
-
-    // Removed dimension checks...
-
-    using dst_offset_type   = typename DstType::offset_type;
-    dst.m_map.m_impl_offset = dst_offset_type(
-        std::integral_constant<unsigned, 0>(),
-        src.layout());  // Check this for integer input1 for padding, etc
-    dst.m_map.m_impl_handle = Kokkos::Impl::ViewDataHandle<DstTraits>::assign(
-        src.m_map.m_impl_handle, src.m_track.m_tracker);
-    dst.m_track.m_tracker.assign(src.m_track.m_tracker,
-                                 !DstTraits::memory_traits::is_unmanaged);
-    dst.m_rank = Kokkos::View<ST, SP...>::rank();
-  }
-};
-
-}  // namespace Impl
-
 /* \class DynRankView
  * \brief Container that creates a Kokkos view with rank determined at runtime.
  *   Essentially this is a rank 7 view
@@ -415,8 +338,6 @@ class DynRankView : private View<DataType*******, Properties...> {
  private:
   template <class, class...>
   friend class DynRankView;
-  template <class, class...>
-  friend class Kokkos::Impl::ViewMapping;
 
   size_t m_rank{};
 
@@ -590,7 +511,6 @@ class DynRankView : private View<DataType*******, Properties...> {
 #ifndef KOKKOS_ENABLE_IMPL_VIEW_LEGACY
   using view_type::extents;
 #endif
-  using view_type::impl_map;  // FIXME: not tested
   using view_type::is_allocated;
   using view_type::label;
   using view_type::size;
@@ -773,7 +693,6 @@ class DynRankView : private View<DataType*******, Properties...> {
     return *this;
   }
 
-#ifndef KOKKOS_ENABLE_IMPL_VIEW_LEGACY
  private:
   template <class Ext>
   KOKKOS_FUNCTION typename view_type::extents_type create_rank7_extents(
@@ -813,36 +732,6 @@ class DynRankView : private View<DataType*******, Properties...> {
     m_rank = rhs.rank();
     return *this;
   }
-#else
-  template <class RT, class... RP>
-  KOKKOS_FUNCTION DynRankView(const View<RT, RP...>& rhs, size_t new_rank) {
-    using SrcTraits = typename View<RT, RP...>::traits;
-    using Mapping =
-        Kokkos::Impl::ViewMapping<traits, SrcTraits,
-                                  Kokkos::Impl::ViewToDynRankViewTag>;
-    static_assert(Mapping::is_assignable,
-                  "Incompatible View to DynRankView copy assignment");
-    if (new_rank > View<RT, RP...>::rank())
-      Kokkos::abort(
-          "Attempting to construct DynRankView from View and new rank, with "
-          "the new rank being too large.");
-    Mapping::assign(*this, rhs);
-    m_rank = new_rank;
-  }
-
-  template <class RT, class... RP>
-  KOKKOS_FUNCTION DynRankView& operator=(const View<RT, RP...>& rhs) {
-    using SrcTraits = typename View<RT, RP...>::traits;
-    using Mapping =
-        Kokkos::Impl::ViewMapping<traits, SrcTraits,
-                                  Kokkos::Impl::ViewToDynRankViewTag>;
-    static_assert(Mapping::is_assignable,
-                  "Incompatible View to DynRankView copy assignment");
-    Mapping::assign(*this, rhs);
-    m_rank = View<RT, RP...>::rank();
-    return *this;
-  }
-#endif
 
   template <class RT, class... RP>
   KOKKOS_FUNCTION DynRankView(const View<RT, RP...>& rhs)
@@ -1114,21 +1003,6 @@ KOKKOS_FUNCTION constexpr unsigned rank(const DynRankView<D, P...>& DRV) {
 }  // needed for transition to common constexpr method in view and dynrankview
    // to return rank
 
-//----------------------------------------------------------------------------
-// Subview mapping.
-// Deduce destination view type from source view traits and subview arguments
-
-namespace Impl {
-
-struct DynRankSubviewTag {};
-
-}  // namespace Impl
-
-template <class V, class... Args>
-using Subdynrankview =
-    typename Kokkos::Impl::ViewMapping<Kokkos::Impl::DynRankSubviewTag, V,
-                                       Args...>::ret_type;
-
 template <class... DRVArgs, class SubArg0 = int, class SubArg1 = int,
           class SubArg2 = int, class SubArg3 = int, class SubArg4 = int,
           class SubArg5 = int, class SubArg6 = int>
@@ -1185,6 +1059,10 @@ KOKKOS_INLINE_FUNCTION auto subview(
     SubArg5 arg5 = SubArg5{}, SubArg6 arg6 = SubArg6{}) {
   return subdynrankview(drv, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
 }
+
+template <class V, class... Args>
+using Subdynrankview =
+    decltype(subdynrankview(std::declval<V>(), std::declval<Args>()...));
 
 }  // namespace Kokkos
 

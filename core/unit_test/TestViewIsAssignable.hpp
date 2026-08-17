@@ -16,30 +16,12 @@ namespace Test {
 namespace Impl {
 template <class ViewTypeDst, class ViewTypeSrc>
 struct TestAssignability {
-  using mapping_type =
-      Kokkos::Impl::ViewMapping<typename ViewTypeDst::traits,
-                                typename ViewTypeSrc::traits
-#ifdef KOKKOS_ENABLE_IMPL_VIEW_LEGACY
-                                ,
-                                typename ViewTypeDst::specialize
-#else
-                                ,
-                                void
-#endif
-                                >;
-
-  template <class MappingType>
-  static void try_assign(
-      ViewTypeDst& dst, ViewTypeSrc& src,
-      std::enable_if_t<MappingType::is_assignable>* = nullptr) {
-    dst = src;
-  }
-
-  template <class MappingType>
-  static void try_assign(
-      ViewTypeDst&, ViewTypeSrc&,
-      std::enable_if_t<!MappingType::is_assignable>* = nullptr) {
-    FAIL() << "TestAssignability::try_assign: Unexpected call path";
+  static void try_assign(ViewTypeDst& dst, ViewTypeSrc& src) {
+    if constexpr (std::is_assignable_v<ViewTypeDst, ViewTypeSrc>) {
+      dst = src;
+    } else {
+      FAIL() << "TestAssignability::try_assign: Unexpected call path";
+    }
   }
 
   template <class... Dimensions>
@@ -52,7 +34,7 @@ struct TestAssignability {
     bool is_assignable = Kokkos::is_assignable(dst, src);
 
     if (sometimes) {
-      try_assign<mapping_type>(dst, src);
+      try_assign(dst, src);
     }
     ASSERT_EQ(always, is_always_assignable)
         << Kokkos::Impl::TypeInfo<ViewTypeSrc>::name() << " to "
