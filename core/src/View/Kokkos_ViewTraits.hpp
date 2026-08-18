@@ -14,10 +14,8 @@ static_assert(false,
 #include <Kokkos_MemoryTraits.hpp>
 #include <Kokkos_ExecPolicy.hpp>
 #include <View/Hooks/Kokkos_ViewHooks.hpp>
-#ifdef KOKKOS_ENABLE_IMPL_MDSPAN
 #include <View/MDSpan/Kokkos_MDSpan_Layout.hpp>
 #include <View/MDSpan/Kokkos_MDSpan_Accessor.hpp>
-#endif
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
@@ -174,7 +172,6 @@ constexpr void customize_view_arguments(
 
 }  // namespace Impl
 
-#ifdef KOKKOS_ENABLE_IMPL_MDSPAN
 namespace Impl {
 struct UnsupportedKokkosArrayLayout;
 
@@ -258,7 +255,6 @@ struct MDSpanViewTraits<Traits, ViewCustomArguments<IndexType, AccessorType>,
 };
 
 }  // namespace Impl
-#endif  // KOKKOS_ENABLE_IMPL_MDSPAN
 
 /** \class ViewTraits
  *  \brief Traits class for accessing attributes of a View.

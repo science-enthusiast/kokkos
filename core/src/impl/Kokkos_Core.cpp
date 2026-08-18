@@ -521,8 +521,6 @@ void pre_initialize_internal(const Kokkos::InitializationSettings& settings) {
 
   declare_configuration_metadata("atomics", "desul atomics version", KOKKOS_IMPL_DESUL_VERSION);
 
-  // TODO: this can probably be removed since we can't disable mdspan
-  declare_configuration_metadata("view", "mdspan", "enabled");
   declare_configuration_metadata("view", "mdspan version", KOKKOS_IMPL_MDSPAN_VERSION);
 
 #ifdef KOKKOS_ENABLE_PRAGMA_IVDEP
