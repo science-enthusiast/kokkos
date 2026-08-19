@@ -60,6 +60,11 @@ KOKKOS_INLINE_FUNCTION constexpr bool view_equal_strides(
 namespace Kokkos {
 namespace Impl {
 
+template <class ViewType, class Layout = typename ViewType::array_layout,
+          class ExecSpace = typename ViewType::execution_space,
+          int Rank = ViewType::rank, typename iType = int64_t>
+struct ViewFill;
+
 template <class ViewType, class Layout, class ExecSpace, typename iType>
 struct ViewFill<ViewType, Layout, ExecSpace, 0, iType> {
   ViewType a;
@@ -313,6 +318,10 @@ struct ViewFill<ViewType, Layout, ExecSpace, 8, iType> {
         a(i0, i1, i2, i3, i4, i5, i6, i7) = val;
   }
 };
+
+template <class ViewTypeA, class ViewTypeB, class Layout, class ExecSpace,
+          int Rank, typename iType>
+struct ViewCopy;
 
 template <class ViewTypeA, class ViewTypeB, class Layout, class ExecSpace,
           typename iType>
