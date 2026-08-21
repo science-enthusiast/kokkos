@@ -825,6 +825,7 @@ endif()
 
 set(DEFAULT_DEVICE_SOURCES
     UnitTestMainInit.cpp
+    TestPair.cpp
     TestCStyleMemoryManagement.cpp
     TestSharedSpace.cpp
     TestSharedHostPinnedSpace.cpp
