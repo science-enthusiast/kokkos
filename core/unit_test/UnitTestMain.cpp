@@ -5,6 +5,7 @@
 
 #include <cstdlib>
 
+// NOLINTNEXTLINE(bugprone-exception-escape)
 int main(int argc, char *argv[]) {
   // We want to use "threadsafe" by default while the default in GTest on Linux
   // is "fast"

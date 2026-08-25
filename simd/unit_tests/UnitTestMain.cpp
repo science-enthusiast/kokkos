@@ -11,6 +11,7 @@ import kokkos.core;
 
 #include <cstdlib>
 
+// NOLINTNEXTLINE(bugprone-exception-escape)
 int main(int argc, char *argv[]) {
   Kokkos::initialize(argc, argv);
   // We want to use "threadsafe" by default while the default in GTest on Linux
