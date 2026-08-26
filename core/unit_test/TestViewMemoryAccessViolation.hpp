@@ -153,7 +153,7 @@ TEST(TEST_CATEGORY_DEATH, view_memory_access_violations_from_host) {
 }
 
 TEST(TEST_CATEGORY_DEATH, view_memory_access_violations_from_device) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  GTEST_FLAG_SET(death_test_style, "threadsafe");
 
   using ExecutionSpace = TEST_EXECSPACE;
 
