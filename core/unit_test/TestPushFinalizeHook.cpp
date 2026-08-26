@@ -99,4 +99,16 @@ TEST_F(PushFinalizeHook_DeathTest, terminate_on_throw) {
   std::set_terminate(terminate_handler);
 }
 
+TEST_F(PushFinalizeHook_DeathTest, ignore_late_registration) {
+  EXPECT_EXIT(
+      {
+        Kokkos::initialize();
+        Kokkos::finalize();
+        // legal to register after finalize but will never be called
+        Kokkos::push_finalize_hook([] { throw 42; });
+        std::exit(EXIT_SUCCESS);
+      },
+      ::testing::ExitedWithCode(EXIT_SUCCESS), "");
+}
+
 }  // namespace
