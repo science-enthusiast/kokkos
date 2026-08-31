@@ -101,12 +101,34 @@ void sort_by_key_cudathrust(
     const Kokkos::View<KeysDataType, KeysProperties...>& keys,
     const Kokkos::View<ValuesDataType, ValuesProperties...>& values,
     MaybeComparator&&... maybeComparator) {
+  using KeysType    = Kokkos::View<KeysDataType, KeysProperties...>;
+  using ValuesType  = Kokkos::View<ValuesDataType, ValuesProperties...>;
   const auto policy = thrust::cuda::par.on(exec.cuda_stream());
-  auto keys_first   = ::Kokkos::Experimental::begin(keys);
-  auto keys_last    = ::Kokkos::Experimental::end(keys);
-  auto values_first = ::Kokkos::Experimental::begin(values);
-  thrust::sort_by_key(policy, keys_first, keys_last, values_first,
-                      std::forward<MaybeComparator>(maybeComparator)...);
+  static constexpr bool keys_are_contiguous =
+      KeysType::rank() == 1 &&
+      (std::is_same_v<typename KeysType::traits::array_layout,
+                      Kokkos::LayoutLeft> ||
+       std::is_same_v<typename KeysType::traits::array_layout,
+                      Kokkos::LayoutRight>);
+  static constexpr bool values_are_contiguous =
+      ValuesType::rank() == 1 &&
+      (std::is_same_v<typename ValuesType::traits::array_layout,
+                      Kokkos::LayoutLeft> ||
+       std::is_same_v<typename ValuesType::traits::array_layout,
+                      Kokkos::LayoutRight>);
+  if constexpr (keys_are_contiguous && values_are_contiguous) {
+    auto keys_first   = keys.data();
+    auto keys_last    = keys.data() + keys.extent(0);
+    auto values_first = values.data();
+    thrust::sort_by_key(policy, keys_first, keys_last, values_first,
+                        std::forward<MaybeComparator>(maybeComparator)...);
+  } else {
+    auto keys_first   = ::Kokkos::Experimental::begin(keys);
+    auto keys_last    = ::Kokkos::Experimental::end(keys);
+    auto values_first = ::Kokkos::Experimental::begin(values);
+    thrust::sort_by_key(policy, keys_first, keys_last, values_first,
+                        std::forward<MaybeComparator>(maybeComparator)...);
+  }
 }
 #endif
 
@@ -121,12 +143,34 @@ void sort_by_key_rocthrust(
     const Kokkos::View<KeysDataType, KeysProperties...>& keys,
     const Kokkos::View<ValuesDataType, ValuesProperties...>& values,
     MaybeComparator&&... maybeComparator) {
+  using KeysType    = Kokkos::View<KeysDataType, KeysProperties...>;
+  using ValuesType  = Kokkos::View<ValuesDataType, ValuesProperties...>;
   const auto policy = thrust::hip::par.on(exec.hip_stream());
-  auto keys_first   = ::Kokkos::Experimental::begin(keys);
-  auto keys_last    = ::Kokkos::Experimental::end(keys);
-  auto values_first = ::Kokkos::Experimental::begin(values);
-  thrust::sort_by_key(policy, keys_first, keys_last, values_first,
-                      std::forward<MaybeComparator>(maybeComparator)...);
+  static constexpr bool keys_are_contiguous =
+      KeysType::rank() == 1 &&
+      (std::is_same_v<typename KeysType::traits::array_layout,
+                      Kokkos::LayoutLeft> ||
+       std::is_same_v<typename KeysType::traits::array_layout,
+                      Kokkos::LayoutRight>);
+  static constexpr bool values_are_contiguous =
+      ValuesType::rank() == 1 &&
+      (std::is_same_v<typename ValuesType::traits::array_layout,
+                      Kokkos::LayoutLeft> ||
+       std::is_same_v<typename ValuesType::traits::array_layout,
+                      Kokkos::LayoutRight>);
+  if constexpr (keys_are_contiguous && values_are_contiguous) {
+    auto keys_first   = keys.data();
+    auto keys_last    = keys.data() + keys.extent(0);
+    auto values_first = values.data();
+    thrust::sort_by_key(policy, keys_first, keys_last, values_first,
+                        std::forward<MaybeComparator>(maybeComparator)...);
+  } else {
+    auto keys_first   = ::Kokkos::Experimental::begin(keys);
+    auto keys_last    = ::Kokkos::Experimental::end(keys);
+    auto values_first = ::Kokkos::Experimental::begin(values);
+    thrust::sort_by_key(policy, keys_first, keys_last, values_first,
+                        std::forward<MaybeComparator>(maybeComparator)...);
+  }
 }
 #endif
 
