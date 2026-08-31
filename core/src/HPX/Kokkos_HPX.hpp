@@ -147,6 +147,7 @@ class HPX {
           name,
           Kokkos::Tools::Experimental::Impl::DirectFenceIDHandle{m_instance_id},
           [&]() {
+            if (hpx::get_runtime_ptr() == nullptr) return;
             auto &s = m_sender;
             hpx::this_thread::experimental::sync_wait(std::move(s));
             s = hpx::execution::experimental::unique_any_sender<>(
