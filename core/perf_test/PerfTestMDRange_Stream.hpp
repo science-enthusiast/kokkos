@@ -196,17 +196,27 @@ struct MDStreamTest {
     long N6 = N3 * N3;
     std::string view_name(name);
     if constexpr (Rank == 1) {
-      return view_type(view_name, N6);
+      return view_type(
+          Kokkos::view_alloc(view_name, Kokkos::WithoutInitializing), N6);
     } else if constexpr (Rank == 2) {
-      return view_type(view_name, N3, N3);
+      return view_type(
+          Kokkos::view_alloc(view_name, Kokkos::WithoutInitializing), N3, N3);
     } else if constexpr (Rank == 3) {
-      return view_type(view_name, N2, N2, N2);
+      return view_type(
+          Kokkos::view_alloc(view_name, Kokkos::WithoutInitializing), N2, N2,
+          N2);
     } else if constexpr (Rank == 4) {
-      return view_type(view_name, N2, N1, N1, N2);
+      return view_type(
+          Kokkos::view_alloc(view_name, Kokkos::WithoutInitializing), N2, N1,
+          N1, N2);
     } else if constexpr (Rank == 5) {
-      return view_type(view_name, N1, N1, N2, N1, N1);
+      return view_type(
+          Kokkos::view_alloc(view_name, Kokkos::WithoutInitializing), N1, N1,
+          N2, N1, N1);
     } else if constexpr (Rank == 6) {
-      return view_type(view_name, N1, N1, N1, N1, N1, N1);
+      return view_type(
+          Kokkos::view_alloc(view_name, Kokkos::WithoutInitializing), N1, N1,
+          N1, N1, N1, N1);
     }
   }
 
