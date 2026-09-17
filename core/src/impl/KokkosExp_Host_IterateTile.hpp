@@ -1167,6 +1167,7 @@ struct Tile_Loop_Type<8, IsLeft, IType, Tagged> {
 // end Structs for calling loops
 
 template <typename RP, typename Functor, typename Tag, typename ReferenceType>
+  requires(!std::is_same_v<typename RP::index_type, int>)
 struct HostIterateTile {
   using index_type = typename RP::index_type;
   using point_type = typename RP::point_type;
